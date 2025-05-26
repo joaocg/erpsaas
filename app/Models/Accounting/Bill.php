@@ -266,88 +266,132 @@ class Bill extends Document
     public function createInitialTransaction(?Carbon $postedAt = null): void
     {
         $postedAt ??= $this->date;
+        $baseDescription = "{$this->vendor->name}: Bill #{$this->bill_number}";
 
-        $total = $this->formatAmountToDefaultCurrency($this->getRawOriginal('total'));
+        $journalEntryData = [];
 
+        $totalInBillCurrency = $this->getRawOriginal('total');
+        $journalEntryData[] = [
+            'type' => JournalEntryType::Credit,
+            'account_id' => Account::getAccountsPayableAccount($this->company_id)->id,
+            'amount_in_bill_currency' => $totalInBillCurrency,
+            'description' => $baseDescription,
+        ];
+
+        $totalLineItemSubtotalInBillCurrency = (int) $this->lineItems()->sum('subtotal');
+        $billDiscountTotalInBillCurrency = (int) $this->getRawOriginal('discount_total');
+        $remainingDiscountInBillCurrency = $billDiscountTotalInBillCurrency;
+
+        foreach ($this->lineItems as $index => $lineItem) {
+            $lineItemDescription = "{$baseDescription} › {$lineItem->offering->name}";
+            $lineItemSubtotalInBillCurrency = $lineItem->getRawOriginal('subtotal');
+
+            $journalEntryData[] = [
+                'type' => JournalEntryType::Debit,
+                'account_id' => $lineItem->offering->expense_account_id,
+                'amount_in_bill_currency' => $lineItemSubtotalInBillCurrency,
+                'description' => $lineItemDescription,
+            ];
+
+            foreach ($lineItem->adjustments as $adjustment) {
+                $adjustmentAmountInBillCurrency = $lineItem->calculateAdjustmentTotalAmount($adjustment);
+
+                if ($adjustment->isNonRecoverablePurchaseTax()) {
+                    $journalEntryData[] = [
+                        'type' => JournalEntryType::Debit,
+                        'account_id' => $lineItem->offering->expense_account_id,
+                        'amount_in_bill_currency' => $adjustmentAmountInBillCurrency,
+                        'description' => "{$lineItemDescription} ({$adjustment->name})",
+                    ];
+                } elseif ($adjustment->account_id) {
+                    $journalEntryData[] = [
+                        'type' => $adjustment->category->isDiscount() ? JournalEntryType::Credit : JournalEntryType::Debit,
+                        'account_id' => $adjustment->account_id,
+                        'amount_in_bill_currency' => $adjustmentAmountInBillCurrency,
+                        'description' => $lineItemDescription,
+                    ];
+                }
+            }
+
+            // Handle per-document discount allocation
+            if ($this->discount_method->isPerDocument() && $totalLineItemSubtotalInBillCurrency > 0) {
+                $lineItemSubtotalInBillCurrency = (int) $lineItem->getRawOriginal('subtotal');
+
+                if ($index === $this->lineItems->count() - 1) {
+                    $lineItemDiscountInBillCurrency = $remainingDiscountInBillCurrency;
+                } else {
+                    $lineItemDiscountInBillCurrency = (int) round(
+                        ($lineItemSubtotalInBillCurrency / $totalLineItemSubtotalInBillCurrency) * $billDiscountTotalInBillCurrency
+                    );
+                    $remainingDiscountInBillCurrency -= $lineItemDiscountInBillCurrency;
+                }
+
+                if ($lineItemDiscountInBillCurrency > 0) {
+                    $journalEntryData[] = [
+                        'type' => JournalEntryType::Credit,
+                        'account_id' => Account::getPurchaseDiscountAccount($this->company_id)->id,
+                        'amount_in_bill_currency' => $lineItemDiscountInBillCurrency,
+                        'description' => "{$lineItemDescription} (Proportional Discount)",
+                    ];
+                }
+            }
+        }
+
+        // Convert amounts to default currency
+        $totalDebitsInDefaultCurrency = 0;
+        $totalCreditsInDefaultCurrency = 0;
+
+        foreach ($journalEntryData as &$entry) {
+            $entry['amount_in_default_currency'] = $this->formatAmountToDefaultCurrency($entry['amount_in_bill_currency']);
+
+            if ($entry['type'] === JournalEntryType::Debit) {
+                $totalDebitsInDefaultCurrency += $entry['amount_in_default_currency'];
+            } else {
+                $totalCreditsInDefaultCurrency += $entry['amount_in_default_currency'];
+            }
+        }
+
+        unset($entry);
+
+        // Handle currency conversion imbalance
+        $imbalance = $totalDebitsInDefaultCurrency - $totalCreditsInDefaultCurrency;
+        if ($imbalance !== 0) {
+            $targetType = $imbalance > 0 ? JournalEntryType::Credit : JournalEntryType::Debit;
+            $adjustmentAmount = abs($imbalance);
+
+            // Find last entry of target type and adjust it
+            $lastKey = array_key_last(array_filter($journalEntryData, fn ($entry) => $entry['type'] === $targetType, ARRAY_FILTER_USE_BOTH));
+            $journalEntryData[$lastKey]['amount_in_default_currency'] += $adjustmentAmount;
+
+            if ($targetType === JournalEntryType::Debit) {
+                $totalDebitsInDefaultCurrency += $adjustmentAmount;
+            } else {
+                $totalCreditsInDefaultCurrency += $adjustmentAmount;
+            }
+        }
+
+        if ($totalDebitsInDefaultCurrency !== $totalCreditsInDefaultCurrency) {
+            throw new \Exception('Journal entries do not balance for Bill #' . $this->bill_number . '. Debits: ' . $totalDebitsInDefaultCurrency . ', Credits: ' . $totalCreditsInDefaultCurrency);
+        }
+
+        // Create the transaction using the sum of debits
         $transaction = $this->transactions()->create([
             'company_id' => $this->company_id,
             'type' => TransactionType::Journal,
             'posted_at' => $postedAt,
-            'amount' => $total,
+            'amount' => $totalDebitsInDefaultCurrency,
             'description' => 'Bill Creation for Bill #' . $this->bill_number,
         ]);
 
-        $baseDescription = "{$this->vendor->name}: Bill #{$this->bill_number}";
-
-        $transaction->journalEntries()->create([
-            'company_id' => $this->company_id,
-            'type' => JournalEntryType::Credit,
-            'account_id' => Account::getAccountsPayableAccount($this->company_id)->id,
-            'amount' => $total,
-            'description' => $baseDescription,
-        ]);
-
-        $totalLineItemSubtotalCents = $this->convertAmountToDefaultCurrency((int) $this->lineItems()->sum('subtotal'));
-        $billDiscountTotalCents = $this->convertAmountToDefaultCurrency((int) $this->getRawOriginal('discount_total'));
-        $remainingDiscountCents = $billDiscountTotalCents;
-
-        foreach ($this->lineItems as $index => $lineItem) {
-            $lineItemDescription = "{$baseDescription} › {$lineItem->offering->name}";
-
-            $lineItemSubtotal = $this->formatAmountToDefaultCurrency($lineItem->getRawOriginal('subtotal'));
-
+        // Create all journal entries
+        foreach ($journalEntryData as $entry) {
             $transaction->journalEntries()->create([
                 'company_id' => $this->company_id,
-                'type' => JournalEntryType::Debit,
-                'account_id' => $lineItem->offering->expense_account_id,
-                'amount' => $lineItemSubtotal,
-                'description' => $lineItemDescription,
+                'type' => $entry['type'],
+                'account_id' => $entry['account_id'],
+                'amount' => $entry['amount_in_default_currency'],
+                'description' => $entry['description'],
             ]);
-
-            foreach ($lineItem->adjustments as $adjustment) {
-                $adjustmentAmount = $this->formatAmountToDefaultCurrency($lineItem->calculateAdjustmentTotalAmount($adjustment));
-
-                if ($adjustment->isNonRecoverablePurchaseTax()) {
-                    $transaction->journalEntries()->create([
-                        'company_id' => $this->company_id,
-                        'type' => JournalEntryType::Debit,
-                        'account_id' => $lineItem->offering->expense_account_id,
-                        'amount' => $adjustmentAmount,
-                        'description' => "{$lineItemDescription} ({$adjustment->name})",
-                    ]);
-                } elseif ($adjustment->account_id) {
-                    $transaction->journalEntries()->create([
-                        'company_id' => $this->company_id,
-                        'type' => $adjustment->category->isDiscount() ? JournalEntryType::Credit : JournalEntryType::Debit,
-                        'account_id' => $adjustment->account_id,
-                        'amount' => $adjustmentAmount,
-                        'description' => $lineItemDescription,
-                    ]);
-                }
-            }
-
-            if ($this->discount_method->isPerDocument() && $totalLineItemSubtotalCents > 0) {
-                $lineItemSubtotalCents = $this->convertAmountToDefaultCurrency((int) $lineItem->getRawOriginal('subtotal'));
-
-                if ($index === $this->lineItems->count() - 1) {
-                    $lineItemDiscount = $remainingDiscountCents;
-                } else {
-                    $lineItemDiscount = (int) round(
-                        ($lineItemSubtotalCents / $totalLineItemSubtotalCents) * $billDiscountTotalCents
-                    );
-                    $remainingDiscountCents -= $lineItemDiscount;
-                }
-
-                if ($lineItemDiscount > 0) {
-                    $transaction->journalEntries()->create([
-                        'company_id' => $this->company_id,
-                        'type' => JournalEntryType::Credit,
-                        'account_id' => Account::getPurchaseDiscountAccount($this->company_id)->id,
-                        'amount' => CurrencyConverter::convertCentsToFormatSimple($lineItemDiscount),
-                        'description' => "{$lineItemDescription} (Proportional Discount)",
-                    ]);
-                }
-            }
         }
     }
 
@@ -374,11 +418,9 @@ class Bill extends Document
         return $amountCents;
     }
 
-    public function formatAmountToDefaultCurrency(int $amountCents): string
+    public function formatAmountToDefaultCurrency(int $amountCents): int
     {
-        $convertedCents = $this->convertAmountToDefaultCurrency($amountCents);
-
-        return CurrencyConverter::convertCentsToFormatSimple($convertedCents);
+        return $this->convertAmountToDefaultCurrency($amountCents);
     }
 
     public static function getReplicateAction(string $action = ReplicateAction::class): MountableAction

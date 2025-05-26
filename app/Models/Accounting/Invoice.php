@@ -478,7 +478,7 @@ class Invoice extends Document
         }
 
         if ($totalDebitsInDefaultCurrency !== $totalCreditsInDefaultCurrency) {
-            throw new \Exception('Journal entries do not balance. Debits: ' . $totalDebitsInDefaultCurrency . ', Credits: ' . $totalCreditsInDefaultCurrency);
+            throw new \Exception('Journal entries do not balance for Invoice #' . $this->invoice_number . '. Debits: ' . $totalDebitsInDefaultCurrency . ', Credits: ' . $totalCreditsInDefaultCurrency);
         }
 
         // Create the transaction using the sum of debits
