@@ -60,21 +60,7 @@ class TransactionAmountCast implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): int
     {
-        $bankAccountId = $attributes['bank_account_id'] ?? null;
-
-        if ($bankAccountId !== null && ! isset(self::$currencyCache[$bankAccountId])) {
-            $this->loadMissingBankAccounts([$bankAccountId]);
-        }
-
-        $currencyCode = $this->getCurrencyCodeFromBankAccountId($bankAccountId);
-
-        if (is_numeric($value)) {
-            $value = (string) $value;
-        } elseif (! is_string($value)) {
-            throw new UnexpectedValueException('Expected string or numeric value for money cast');
-        }
-
-        return CurrencyConverter::prepareForAccessor($value, $currencyCode);
+        return (int) $value;
     }
 
     /**

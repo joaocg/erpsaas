@@ -183,7 +183,7 @@ class TransactionObserver
         }
 
         $invoice->update([
-            'amount_paid' => CurrencyConverter::convertCentsToFormatSimple($totalPaidInInvoiceCurrencyCents, $invoiceCurrency),
+            'amount_paid' => $totalPaidInInvoiceCurrencyCents,
             'status' => $newStatus,
             'paid_at' => $paidAt,
         ]);
@@ -236,7 +236,7 @@ class TransactionObserver
         }
 
         $bill->update([
-            'amount_paid' => CurrencyConverter::convertCentsToFormatSimple($totalPaidInBillCurrencyCents, $billCurrency),
+            'amount_paid' => $totalPaidInBillCurrencyCents,
             'status' => $newStatus,
             'paid_at' => $paidAt,
         ]);

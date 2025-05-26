@@ -110,7 +110,7 @@ class Transaction extends Model
     public function updateAmountIfBalanced(): void
     {
         if ($this->journalEntries->areBalanced() && $this->journalEntries->sumDebits()->formatSimple() !== $this->getAttributeValue('amount')) {
-            $this->setAttribute('amount', $this->journalEntries->sumDebits()->formatSimple());
+            $this->setAttribute('amount', $this->journalEntries->sumDebits()->getAmount());
             $this->save();
         }
     }

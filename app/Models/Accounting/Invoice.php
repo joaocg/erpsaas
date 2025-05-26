@@ -332,7 +332,7 @@ class Invoice extends Document
         $requiresConversion = $invoiceCurrency !== $bankAccountCurrency;
 
         // Store the original payment amount in invoice currency before any conversion
-        $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $invoiceCurrency);
+        $amountInInvoiceCurrencyCents = $data['amount'];
 
         if ($requiresConversion) {
             $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
@@ -340,12 +340,9 @@ class Invoice extends Document
                 $invoiceCurrency,
                 $bankAccountCurrency
             );
-            $formattedAmountForBankCurrency = CurrencyConverter::convertCentsToFormatSimple(
-                $amountInBankCurrencyCents,
-                $bankAccountCurrency
-            );
+            $formattedAmountForBankCurrency = $amountInBankCurrencyCents;
         } else {
-            $formattedAmountForBankCurrency = $data['amount']; // Already in simple format
+            $formattedAmountForBankCurrency = $amountInInvoiceCurrencyCents;
         }
 
         // Create transaction
@@ -451,7 +448,7 @@ class Invoice extends Document
                         'company_id' => $this->company_id,
                         'type' => JournalEntryType::Debit,
                         'account_id' => Account::getSalesDiscountAccount($this->company_id)->id,
-                        'amount' => CurrencyConverter::convertCentsToFormatSimple($lineItemDiscount),
+                        'amount' => $lineItemDiscount,
                         'description' => "{$lineItemDescription} (Proportional Discount)",
                     ]);
                 }
@@ -482,11 +479,9 @@ class Invoice extends Document
         return $amountCents;
     }
 
-    public function formatAmountToDefaultCurrency(int $amountCents): string
+    public function formatAmountToDefaultCurrency(int $amountCents): int
     {
-        $convertedCents = $this->convertAmountToDefaultCurrency($amountCents);
-
-        return CurrencyConverter::convertCentsToFormatSimple($convertedCents);
+        return $this->convertAmountToDefaultCurrency($amountCents);
     }
 
     // TODO: Potentially handle this another way

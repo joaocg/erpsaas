@@ -20,6 +20,7 @@ use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Support\Enums\IconPosition;
+use Filament\Support\RawJs;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Support\Htmlable;
@@ -64,11 +65,23 @@ class MacroServiceProvider extends ServiceProvider
                     });
             }
 
-            $this->mask(static function (TextInput $component) use ($currency) {
-                $currency = $component->evaluate($currency);
+            $this->mask(RawJs::make('$money($input)'))
+                ->dehydrateStateUsing(function (?string $state): ?int {
+                    if (blank($state)) {
+                        return null;
+                    }
 
-                return moneyMask($currency);
-            });
+                    // Remove thousand separators
+                    $cleaned = str_replace(',', '', $state);
+
+                    // If no decimal point, assume it's whole dollars (add .00)
+                    if (! str_contains($cleaned, '.')) {
+                        $cleaned .= '.00';
+                    }
+
+                    // Convert to float then to cents (integer)
+                    return (int) round((float) $cleaned * 100);
+                });
 
             return $this;
         });
