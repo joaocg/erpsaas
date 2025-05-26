@@ -185,7 +185,7 @@ class RecurringInvoiceResource extends Resource
                                                 return;
                                             }
 
-                                            $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, $get('../../currency_code') ?? CurrencyAccessor::getDefaultCurrency());
+                                            $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, CurrencyAccessor::getDefaultCurrency());
 
                                             $set('description', $offeringRecord->description);
                                             $set('unit_price', $unitPrice);
