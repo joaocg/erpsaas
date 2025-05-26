@@ -228,7 +228,7 @@ class Bill extends Document
         $requiresConversion = $billCurrency !== $bankAccountCurrency;
 
         // Store the original payment amount in bill currency before any conversion
-        $amountInBillCurrencyCents = CurrencyConverter::convertToCents($data['amount'], $billCurrency);
+        $amountInBillCurrencyCents = $data['amount'];
 
         if ($requiresConversion) {
             $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
@@ -236,12 +236,9 @@ class Bill extends Document
                 $billCurrency,
                 $bankAccountCurrency
             );
-            $formattedAmountForBankCurrency = CurrencyConverter::convertCentsToFormatSimple(
-                $amountInBankCurrencyCents,
-                $bankAccountCurrency
-            );
+            $formattedAmountForBankCurrency = $amountInBankCurrencyCents;
         } else {
-            $formattedAmountForBankCurrency = $data['amount']; // Already in simple format
+            $formattedAmountForBankCurrency = $amountInBillCurrencyCents;
         }
 
         // Create transaction with converted amount

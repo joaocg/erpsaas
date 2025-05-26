@@ -624,7 +624,7 @@ class BillResource extends Resource
                                 ->label('Notes'),
                         ])
                         ->before(function (Collection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = CurrencyConverter::convertToCents($data['amount']);
+                            $totalPaymentAmount = $data['amount'] ?? 0;
                             $totalAmountDue = $records->sum(fn (Bill $bill) => $bill->getRawOriginal('amount_due'));
 
                             if ($totalPaymentAmount > $totalAmountDue) {
@@ -641,7 +641,7 @@ class BillResource extends Resource
                             }
                         })
                         ->action(function (Collection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = CurrencyConverter::convertToCents($data['amount']);
+                            $totalPaymentAmount = $data['amount'] ?? 0;
                             $remainingAmount = $totalPaymentAmount;
 
                             $records->each(function (Bill $record) use (&$remainingAmount, $data) {
@@ -652,7 +652,7 @@ class BillResource extends Resource
                                 }
 
                                 $paymentAmount = min($amountDue, $remainingAmount);
-                                $data['amount'] = CurrencyConverter::convertCentsToFormatSimple($paymentAmount);
+                                $data['amount'] = $paymentAmount;
 
                                 $record->recordPayment($data);
                                 $remainingAmount -= $paymentAmount;

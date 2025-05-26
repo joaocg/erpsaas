@@ -737,7 +737,7 @@ class InvoiceResource extends Resource
                                 ->label('Notes'),
                         ])
                         ->before(function (DocumentCollection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = CurrencyConverter::convertToCents($data['amount']);
+                            $totalPaymentAmount = $data['amount'] ?? 0;
                             $totalAmountDue = $records->sumMoneyInCents('amount_due');
 
                             if ($totalPaymentAmount > $totalAmountDue) {
@@ -754,7 +754,7 @@ class InvoiceResource extends Resource
                             }
                         })
                         ->action(function (DocumentCollection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = CurrencyConverter::convertToCents($data['amount']);
+                            $totalPaymentAmount = $data['amount'] ?? 0;
 
                             $remainingAmount = $totalPaymentAmount;
 
@@ -767,7 +767,7 @@ class InvoiceResource extends Resource
 
                                 $paymentAmount = min($amountDue, $remainingAmount);
 
-                                $data['amount'] = CurrencyConverter::convertCentsToFormatSimple($paymentAmount);
+                                $data['amount'] = $paymentAmount;
 
                                 $record->recordPayment($data);
 

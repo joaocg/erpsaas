@@ -250,7 +250,7 @@ class TransactionService
         });
     }
 
-    private function getConvertedTransactionAmount(Transaction $transaction): string
+    private function getConvertedTransactionAmount(Transaction $transaction): int
     {
         $defaultCurrency = CurrencyAccessor::getDefaultCurrency();
         $bankAccountCurrency = $transaction->bankAccount->account->currency_code;
@@ -259,7 +259,7 @@ class TransactionService
             return $this->convertToDefaultCurrency($transaction->amount, $bankAccountCurrency, $defaultCurrency);
         }
 
-        return $transaction->amount;
+        return CurrencyConverter::prepareForAccessor($transaction->amount, $defaultCurrency);
     }
 
     private function convertToDefaultCurrency(string $amount, string $fromCurrency, string $toCurrency): string
@@ -268,7 +268,7 @@ class TransactionService
 
         $convertedAmountInCents = CurrencyConverter::convertBalance($amountInCents, $fromCurrency, $toCurrency);
 
-        return CurrencyConverter::prepareForMutator($convertedAmountInCents, $toCurrency);
+        return $convertedAmountInCents;
     }
 
     private function hasRelevantChanges(Transaction $transaction): bool
@@ -276,7 +276,7 @@ class TransactionService
         return $transaction->wasChanged(['amount', 'account_id', 'bank_account_id', 'type']);
     }
 
-    private function updateJournalEntryForTransaction(JournalEntry $journalEntry, Account $account, string $convertedTransactionAmount): void
+    private function updateJournalEntryForTransaction(JournalEntry $journalEntry, Account $account, int $convertedTransactionAmount): void
     {
         DB::transaction(static function () use ($journalEntry, $account, $convertedTransactionAmount) {
             $journalEntry->update([

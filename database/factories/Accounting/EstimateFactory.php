@@ -10,7 +10,6 @@ use App\Models\Accounting\Estimate;
 use App\Models\Common\Client;
 use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
-use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -231,7 +230,7 @@ class EstimateFactory extends Factory
                 $scaledRate = RateCalculator::parseLocalizedRate($estimate->discount_rate);
                 $discountTotalCents = RateCalculator::calculatePercentage($subtotalCents, $scaledRate);
             } else {
-                $discountTotalCents = CurrencyConverter::convertToCents($estimate->discount_rate, $estimate->currency_code);
+                $discountTotalCents = $estimate->getRawOriginal('discount_rate');
             }
         }
 
@@ -239,10 +238,10 @@ class EstimateFactory extends Factory
         $currencyCode = $estimate->currency_code;
 
         $estimate->update([
-            'subtotal' => CurrencyConverter::convertCentsToFormatSimple($subtotalCents, $currencyCode),
-            'tax_total' => CurrencyConverter::convertCentsToFormatSimple($taxTotalCents, $currencyCode),
-            'discount_total' => CurrencyConverter::convertCentsToFormatSimple($discountTotalCents, $currencyCode),
-            'total' => CurrencyConverter::convertCentsToFormatSimple($grandTotalCents, $currencyCode),
+            'subtotal' => $subtotalCents,
+            'tax_total' => $taxTotalCents,
+            'discount_total' => $discountTotalCents,
+            'total' => $grandTotalCents,
         ]);
     }
 }

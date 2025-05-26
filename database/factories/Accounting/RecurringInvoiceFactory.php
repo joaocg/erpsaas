@@ -16,7 +16,6 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\RecurringInvoice;
 use App\Models\Common\Client;
 use App\Models\Company;
-use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -325,7 +324,7 @@ class RecurringInvoiceFactory extends Factory
                 $scaledRate = RateCalculator::parseLocalizedRate($recurringInvoice->discount_rate);
                 $discountTotalCents = RateCalculator::calculatePercentage($subtotalCents, $scaledRate);
             } else {
-                $discountTotalCents = CurrencyConverter::convertToCents($recurringInvoice->discount_rate, $recurringInvoice->currency_code);
+                $discountTotalCents = $recurringInvoice->getRawOriginal('discount_rate');
             }
         }
 
@@ -333,10 +332,10 @@ class RecurringInvoiceFactory extends Factory
         $currencyCode = $recurringInvoice->currency_code;
 
         $recurringInvoice->update([
-            'subtotal' => CurrencyConverter::convertCentsToFormatSimple($subtotalCents, $currencyCode),
-            'tax_total' => CurrencyConverter::convertCentsToFormatSimple($taxTotalCents, $currencyCode),
-            'discount_total' => CurrencyConverter::convertCentsToFormatSimple($discountTotalCents, $currencyCode),
-            'total' => CurrencyConverter::convertCentsToFormatSimple($grandTotalCents, $currencyCode),
+            'subtotal' => $subtotalCents,
+            'tax_total' => $taxTotalCents,
+            'discount_total' => $discountTotalCents,
+            'total' => $grandTotalCents,
         ]);
     }
 }

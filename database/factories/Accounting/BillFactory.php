@@ -12,7 +12,6 @@ use App\Models\Banking\BankAccount;
 use App\Models\Common\Vendor;
 use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
-use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -174,7 +173,7 @@ class BillFactory extends Factory
 
                 $data = [
                     'posted_at' => $postedAt,
-                    'amount' => CurrencyConverter::convertCentsToFormatSimple($amount, $bill->currency_code),
+                    'amount' => $amount,
                     'payment_method' => $this->faker->randomElement(PaymentMethod::class),
                     'bank_account_id' => BankAccount::where('company_id', $bill->company_id)->inRandomOrder()->value('id'),
                     'notes' => $this->faker->sentence,
@@ -250,7 +249,7 @@ class BillFactory extends Factory
                 $scaledRate = RateCalculator::parseLocalizedRate($bill->discount_rate);
                 $discountTotalCents = RateCalculator::calculatePercentage($subtotalCents, $scaledRate);
             } else {
-                $discountTotalCents = CurrencyConverter::convertToCents($bill->discount_rate, $bill->currency_code);
+                $discountTotalCents = $bill->getRawOriginal('discount_rate');
             }
         }
 
@@ -258,10 +257,10 @@ class BillFactory extends Factory
         $currencyCode = $bill->currency_code;
 
         $bill->update([
-            'subtotal' => CurrencyConverter::convertCentsToFormatSimple($subtotalCents, $currencyCode),
-            'tax_total' => CurrencyConverter::convertCentsToFormatSimple($taxTotalCents, $currencyCode),
-            'discount_total' => CurrencyConverter::convertCentsToFormatSimple($discountTotalCents, $currencyCode),
-            'total' => CurrencyConverter::convertCentsToFormatSimple($grandTotalCents, $currencyCode),
+            'subtotal' => $subtotalCents,
+            'tax_total' => $taxTotalCents,
+            'discount_total' => $discountTotalCents,
+            'total' => $grandTotalCents,
         ]);
     }
 }
