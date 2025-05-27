@@ -100,7 +100,7 @@ class PaymentsRelationManager extends RelationManager
                                     return 'Please enter a valid positive amount';
                                 }
 
-                                $currentPaymentAmount = $record?->getRawOriginal('amount') ?? 0;
+                                $currentPaymentAmount = $record?->amount ?? 0;
 
                                 if ($ownerRecord->status === InvoiceStatus::Overpaid) {
                                     $newAmountDue = $amountDue + $amount - $currentPaymentAmount;

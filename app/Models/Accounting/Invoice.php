@@ -386,7 +386,7 @@ class Invoice extends Document
 
         $journalEntryData = [];
 
-        $totalInInvoiceCurrency = $this->getRawOriginal('total');
+        $totalInInvoiceCurrency = $this->total;
         $journalEntryData[] = [
             'type' => JournalEntryType::Debit,
             'account_id' => Account::getAccountsReceivableAccount($this->company_id)->id,
@@ -395,7 +395,7 @@ class Invoice extends Document
         ];
 
         $totalLineItemSubtotalInInvoiceCurrency = (int) $this->lineItems()->sum('subtotal');
-        $invoiceDiscountTotalInInvoiceCurrency = (int) $this->getRawOriginal('discount_total');
+        $invoiceDiscountTotalInInvoiceCurrency = (int) $this->discount_total;
         $remainingDiscountInInvoiceCurrency = $invoiceDiscountTotalInInvoiceCurrency;
 
         foreach ($this->lineItems as $index => $lineItem) {
