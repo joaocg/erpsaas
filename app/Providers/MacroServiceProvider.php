@@ -66,13 +66,12 @@ class MacroServiceProvider extends ServiceProvider
             }
 
             $this->mask(RawJs::make('$money($input)'))
-                ->afterStateHydrated(function (TextInput $component, ?int $state) use ($currency) {
+                ->afterStateHydrated(function (TextInput $component, ?int $state) {
                     if (blank($state)) {
                         return;
                     }
 
-                    $currencyCode = $component->evaluate($currency);
-                    $formatted = CurrencyConverter::convertCentsToFormatSimple($state, $currencyCode);
+                    $formatted = CurrencyConverter::convertCentsToFormatSimple($state, 'USD');
                     $component->state($formatted);
                 })
                 ->dehydrateStateUsing(function (?string $state): ?int {
