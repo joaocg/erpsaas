@@ -2,7 +2,6 @@
 
 namespace App\Models\Accounting;
 
-use App\Casts\TransactionAmountCast;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\AccountCategory;
@@ -60,7 +59,6 @@ class Transaction extends Model
     protected $casts = [
         'type' => TransactionType::class,
         'payment_method' => PaymentMethod::class,
-        'amount' => TransactionAmountCast::class,
         'pending' => 'boolean',
         'reviewed' => 'boolean',
         'posted_at' => 'date',

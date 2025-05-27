@@ -2,7 +2,6 @@
 
 namespace App\Models\Accounting;
 
-use App\Casts\MoneyCast;
 use App\Casts\RateCast;
 use App\Collections\Accounting\DocumentCollection;
 use App\Enums\Accounting\AdjustmentComputation;
@@ -87,12 +86,6 @@ class Invoice extends Document
         'discount_method' => DocumentDiscountMethod::class,
         'discount_computation' => AdjustmentComputation::class,
         'discount_rate' => RateCast::class,
-        'subtotal' => MoneyCast::class,
-        'tax_total' => MoneyCast::class,
-        'discount_total' => MoneyCast::class,
-        'total' => MoneyCast::class,
-        'amount_paid' => MoneyCast::class,
-        'amount_due' => MoneyCast::class,
     ];
 
     protected $appends = [
