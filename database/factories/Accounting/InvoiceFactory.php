@@ -279,7 +279,6 @@ class InvoiceFactory extends Factory
         }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
-        $currencyCode = $invoice->currency_code;
 
         $invoice->update([
             'subtotal' => $subtotalCents,

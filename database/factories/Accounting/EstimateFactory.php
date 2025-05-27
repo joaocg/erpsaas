@@ -235,7 +235,6 @@ class EstimateFactory extends Factory
         }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
-        $currencyCode = $estimate->currency_code;
 
         $estimate->update([
             'subtotal' => $subtotalCents,

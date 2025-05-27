@@ -254,7 +254,6 @@ class BillFactory extends Factory
         }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
-        $currencyCode = $bill->currency_code;
 
         $bill->update([
             'subtotal' => $subtotalCents,

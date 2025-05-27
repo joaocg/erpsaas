@@ -329,7 +329,6 @@ class RecurringInvoiceFactory extends Factory
         }
 
         $grandTotalCents = $subtotalCents + $taxTotalCents - $discountTotalCents;
-        $currencyCode = $recurringInvoice->currency_code;
 
         $recurringInvoice->update([
             'subtotal' => $subtotalCents,
