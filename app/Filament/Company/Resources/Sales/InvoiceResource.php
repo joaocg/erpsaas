@@ -272,7 +272,7 @@ class InvoiceResource extends Resource
                                                 return;
                                             }
 
-                                            $unitPrice = CurrencyConverter::convertToFloat($offeringRecord->price, CurrencyAccessor::getDefaultCurrency());
+                                            $unitPrice = CurrencyConverter::convertCentsToFloat($offeringRecord->price, CurrencyAccessor::getDefaultCurrency());
 
                                             $set('description', $offeringRecord->description);
                                             $set('unit_price', $unitPrice);
@@ -697,7 +697,7 @@ class InvoiceResource extends Resource
                             }
                         })
                         ->mountUsing(function (DocumentCollection $records, Form $form) {
-                            $totalAmountDue = $records->sumMoneyFormattedSimple('amount_due');
+                            $totalAmountDue = $records->sum('amount_due');
 
                             $form->fill([
                                 'posted_at' => now(),
@@ -738,7 +738,7 @@ class InvoiceResource extends Resource
                         ])
                         ->before(function (DocumentCollection $records, Tables\Actions\BulkAction $action, array $data) {
                             $totalPaymentAmount = $data['amount'] ?? 0;
-                            $totalAmountDue = $records->sumMoneyInCents('amount_due');
+                            $totalAmountDue = $records->sum('amount_due');
 
                             if ($totalPaymentAmount > $totalAmountDue) {
                                 $formattedTotalAmountDue = CurrencyConverter::formatCentsToMoney($totalAmountDue);
@@ -759,7 +759,7 @@ class InvoiceResource extends Resource
                             $remainingAmount = $totalPaymentAmount;
 
                             $records->each(function (Invoice $record) use (&$remainingAmount, $data) {
-                                $amountDue = $record->getRawOriginal('amount_due');
+                                $amountDue = $record->amount_due;
 
                                 if ($amountDue <= 0 || $remainingAmount <= 0) {
                                     return;

@@ -66,6 +66,15 @@ class MacroServiceProvider extends ServiceProvider
             }
 
             $this->mask(RawJs::make('$money($input)'))
+                ->afterStateHydrated(function (TextInput $component, ?int $state) use ($currency) {
+                    if (blank($state)) {
+                        return;
+                    }
+
+                    $currencyCode = $component->evaluate($currency);
+                    $formatted = CurrencyConverter::convertCentsToFormatSimple($state, $currencyCode);
+                    $component->state($formatted);
+                })
                 ->dehydrateStateUsing(function (?string $state): ?int {
                     if (blank($state)) {
                         return null;
@@ -187,7 +196,7 @@ class MacroServiceProvider extends ServiceProvider
 
         TextColumn::macro('currency', function (string | Closure | null $currency = null, ?bool $convert = null): static {
             $currency ??= CurrencyAccessor::getDefaultCurrency();
-            $convert ??= true;
+            $convert ??= false;
 
             $this->formatStateUsing(static function (TextColumn $column, $state) use ($currency, $convert): ?string {
                 if (blank($state)) {
@@ -205,7 +214,7 @@ class MacroServiceProvider extends ServiceProvider
 
         TextEntry::macro('currency', function (string | Closure | null $currency = null, ?bool $convert = null): static {
             $currency ??= CurrencyAccessor::getDefaultCurrency();
-            $convert ??= true;
+            $convert ??= false;
 
             $this->formatStateUsing(static function (TextEntry $entry, $state) use ($currency, $convert): ?string {
                 if (blank($state)) {
@@ -223,7 +232,7 @@ class MacroServiceProvider extends ServiceProvider
 
         TextColumn::macro('currencyWithConversion', function (string | Closure | null $currency = null, ?bool $convertFromCents = null): static {
             $currency ??= CurrencyAccessor::getDefaultCurrency();
-            $convertFromCents ??= false;
+            $convertFromCents ??= true;
 
             $this->formatStateUsing(static function (TextColumn $column, $state) use ($currency, $convertFromCents): ?string {
                 if (blank($state)) {

@@ -14,7 +14,6 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Form;
-use Filament\Support\RawJs;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 
@@ -328,23 +327,7 @@ trait HasTransactionAction
             Forms\Components\TextInput::make('amount')
                 ->label('Amount')
                 ->live()
-                ->mask(RawJs::make('$money($input)'))
-                ->dehydrateStateUsing(function (?string $state): ?int {
-                    if (blank($state)) {
-                        return null;
-                    }
-
-                    // Remove thousand separators
-                    $cleaned = str_replace(',', '', $state);
-
-                    // If no decimal point, assume it's whole dollars (add .00)
-                    if (! str_contains($cleaned, '.')) {
-                        $cleaned .= '.00';
-                    }
-
-                    // Convert to float then to cents (integer)
-                    return (int) round((float) $cleaned * 100);
-                })
+                ->money()
                 ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state, ?string $old) {
                     $this->updateJournalEntryAmount(JournalEntryType::parse($get('type')), $state, $old);
                 })

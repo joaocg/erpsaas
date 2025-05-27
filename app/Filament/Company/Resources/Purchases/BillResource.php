@@ -584,11 +584,11 @@ class BillResource extends Resource
                             }
                         })
                         ->mountUsing(function (Collection $records, Form $form) {
-                            $totalAmountDue = $records->sum(fn (Bill $bill) => $bill->getRawOriginal('amount_due'));
+                            $totalAmountDue = $records->sum('amount_due');
 
                             $form->fill([
                                 'posted_at' => now(),
-                                'amount' => CurrencyConverter::convertCentsToFormatSimple($totalAmountDue),
+                                'amount' => $totalAmountDue,
                             ]);
                         })
                         ->form([
@@ -625,7 +625,7 @@ class BillResource extends Resource
                         ])
                         ->before(function (Collection $records, Tables\Actions\BulkAction $action, array $data) {
                             $totalPaymentAmount = $data['amount'] ?? 0;
-                            $totalAmountDue = $records->sum(fn (Bill $bill) => $bill->getRawOriginal('amount_due'));
+                            $totalAmountDue = $records->sum('amount_due');
 
                             if ($totalPaymentAmount > $totalAmountDue) {
                                 $formattedTotalAmountDue = CurrencyConverter::formatCentsToMoney($totalAmountDue);
@@ -645,7 +645,7 @@ class BillResource extends Resource
                             $remainingAmount = $totalPaymentAmount;
 
                             $records->each(function (Bill $record) use (&$remainingAmount, $data) {
-                                $amountDue = $record->getRawOriginal('amount_due');
+                                $amountDue = $record->amount_due;
 
                                 if ($amountDue <= 0 || $remainingAmount <= 0) {
                                     return;

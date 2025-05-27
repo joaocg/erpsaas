@@ -267,7 +267,7 @@ class Bill extends Document
 
         $journalEntryData = [];
 
-        $totalInBillCurrency = $this->getRawOriginal('total');
+        $totalInBillCurrency = $this->total;
         $journalEntryData[] = [
             'type' => JournalEntryType::Credit,
             'account_id' => Account::getAccountsPayableAccount($this->company_id)->id,
@@ -276,7 +276,7 @@ class Bill extends Document
         ];
 
         $totalLineItemSubtotalInBillCurrency = (int) $this->lineItems()->sum('subtotal');
-        $billDiscountTotalInBillCurrency = (int) $this->getRawOriginal('discount_total');
+        $billDiscountTotalInBillCurrency = (int) $this->discount_total;
         $remainingDiscountInBillCurrency = $billDiscountTotalInBillCurrency;
 
         foreach ($this->lineItems as $index => $lineItem) {

@@ -4,7 +4,6 @@ namespace App\Casts;
 
 use App\Models\Banking\BankAccount;
 use App\Utilities\Currency\CurrencyAccessor;
-use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use UnexpectedValueException;
@@ -37,22 +36,9 @@ class TransactionAmountCast implements CastsAttributes
         }
     }
 
-    public function get(Model $model, string $key, mixed $value, array $attributes): string
+    public function get(Model $model, string $key, mixed $value, array $attributes): int
     {
-        // Attempt to retrieve the currency code from the related bankAccount->account model
-        $bankAccountId = $attributes['bank_account_id'] ?? null;
-
-        if ($bankAccountId !== null && ! isset(self::$currencyCache[$bankAccountId])) {
-            $this->loadMissingBankAccounts([$bankAccountId]);
-        }
-
-        $currencyCode = $this->getCurrencyCodeFromBankAccountId($bankAccountId);
-
-        if ($value !== null) {
-            return CurrencyConverter::prepareForMutator($value, $currencyCode);
-        }
-
-        return '';
+        return (int) $value;
     }
 
     /**

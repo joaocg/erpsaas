@@ -259,16 +259,12 @@ class TransactionService
             return $this->convertToDefaultCurrency($transaction->amount, $bankAccountCurrency, $defaultCurrency);
         }
 
-        return CurrencyConverter::prepareForAccessor($transaction->amount, $defaultCurrency);
+        return $transaction->amount;
     }
 
-    private function convertToDefaultCurrency(string $amount, string $fromCurrency, string $toCurrency): string
+    private function convertToDefaultCurrency(int $amount, string $fromCurrency, string $toCurrency): int
     {
-        $amountInCents = CurrencyConverter::prepareForAccessor($amount, $fromCurrency);
-
-        $convertedAmountInCents = CurrencyConverter::convertBalance($amountInCents, $fromCurrency, $toCurrency);
-
-        return $convertedAmountInCents;
+        return CurrencyConverter::convertBalance($amount, $fromCurrency, $toCurrency);
     }
 
     private function hasRelevantChanges(Transaction $transaction): bool
