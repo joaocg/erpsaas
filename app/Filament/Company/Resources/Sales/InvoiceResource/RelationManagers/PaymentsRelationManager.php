@@ -92,7 +92,7 @@ class PaymentsRelationManager extends RelationManager
                                     return null;
                                 }
 
-                                $amountDue = $ownerRecord->getRawOriginal('amount_due');
+                                $amountDue = $ownerRecord->amount_due;
 
                                 $amount = CurrencyConverter::convertToCents($state, 'USD');
 

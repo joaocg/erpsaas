@@ -518,13 +518,13 @@ class InvoiceResource extends Resource
                                     ->live(onBlur: true)
                                     ->helperText(function (Invoice $record, $state) {
                                         $invoiceCurrency = $record->currency_code;
-                                        if (! CurrencyConverter::isValidAmount($state, $invoiceCurrency)) {
+                                        if (! CurrencyConverter::isValidAmount($state, 'USD')) {
                                             return null;
                                         }
 
-                                        $amountDue = $record->getRawOriginal('amount_due');
+                                        $amountDue = $record->amount_due;
 
-                                        $amount = CurrencyConverter::convertToCents($state, $invoiceCurrency);
+                                        $amount = CurrencyConverter::convertToCents($state, 'USD');
 
                                         if ($amount <= 0) {
                                             return 'Please enter a valid positive amount';
@@ -543,8 +543,8 @@ class InvoiceResource extends Resource
                                         };
                                     })
                                     ->rules([
-                                        static fn (Invoice $record): Closure => static function (string $attribute, $value, Closure $fail) use ($record) {
-                                            if (! CurrencyConverter::isValidAmount($value, $record->currency_code)) {
+                                        static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
+                                            if (! CurrencyConverter::isValidAmount($value, 'USD')) {
                                                 $fail('Please enter a valid amount');
                                             }
                                         },

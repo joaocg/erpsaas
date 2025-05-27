@@ -466,12 +466,12 @@ class BillResource extends Resource
                                     ->live(onBlur: true)
                                     ->helperText(function (Bill $record, $state) {
                                         $billCurrency = $record->currency_code;
-                                        if (! CurrencyConverter::isValidAmount($state, $billCurrency)) {
+                                        if (! CurrencyConverter::isValidAmount($state, 'USD')) {
                                             return null;
                                         }
 
-                                        $amountDue = $record->getRawOriginal('amount_due');
-                                        $amount = CurrencyConverter::convertToCents($state, $billCurrency);
+                                        $amountDue = $record->amount_due;
+                                        $amount = CurrencyConverter::convertToCents($state, 'USD');
 
                                         if ($amount <= 0) {
                                             return 'Please enter a valid positive amount';
@@ -486,8 +486,8 @@ class BillResource extends Resource
                                         };
                                     })
                                     ->rules([
-                                        static fn (Bill $record): Closure => static function (string $attribute, $value, Closure $fail) use ($record) {
-                                            if (! CurrencyConverter::isValidAmount($value, $record->currency_code)) {
+                                        static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
+                                            if (! CurrencyConverter::isValidAmount($value, 'USD')) {
                                                 $fail('Please enter a valid amount');
                                             }
                                         },
