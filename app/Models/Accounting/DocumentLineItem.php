@@ -41,14 +41,6 @@ class DocumentLineItem extends Model
         'updated_by',
     ];
 
-    protected $casts = [
-        'unit_price' => DocumentMoneyCast::class,
-        'subtotal' => DocumentMoneyCast::class,
-        'tax_total' => DocumentMoneyCast::class,
-        'discount_total' => DocumentMoneyCast::class,
-        'total' => DocumentMoneyCast::class,
-    ];
-
     public function documentable(): MorphTo
     {
         return $this->morphTo();

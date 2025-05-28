@@ -393,7 +393,7 @@ class Invoice extends Document
 
         foreach ($this->lineItems as $index => $lineItem) {
             $lineItemDescription = "{$baseDescription} › {$lineItem->offering->name}";
-            $lineItemSubtotalInInvoiceCurrency = $lineItem->getRawOriginal('subtotal');
+            $lineItemSubtotalInInvoiceCurrency = $lineItem->subtotal;
 
             $journalEntryData[] = [
                 'type' => JournalEntryType::Credit,
@@ -415,7 +415,7 @@ class Invoice extends Document
 
             // Handle per-document discount allocation
             if ($this->discount_method->isPerDocument() && $totalLineItemSubtotalInInvoiceCurrency > 0) {
-                $lineItemSubtotalInInvoiceCurrency = (int) $lineItem->getRawOriginal('subtotal');
+                $lineItemSubtotalInInvoiceCurrency = $lineItem->subtotal;
 
                 if ($index === $this->lineItems->count() - 1) {
                     $lineItemDiscountInInvoiceCurrency = $remainingDiscountInInvoiceCurrency;

@@ -272,7 +272,7 @@ class InvoiceResource extends Resource
                                                 return;
                                             }
 
-                                            $unitPrice = CurrencyConverter::convertCentsToFloat($offeringRecord->price, CurrencyAccessor::getDefaultCurrency());
+                                            $unitPrice = CurrencyConverter::convertCentsToFormatSimple($offeringRecord->price, 'USD');
 
                                             $set('description', $offeringRecord->description);
                                             $set('unit_price', $unitPrice);
@@ -294,7 +294,7 @@ class InvoiceResource extends Resource
                                     ->default(1),
                                 Forms\Components\TextInput::make('unit_price')
                                     ->hiddenLabel()
-                                    ->numeric()
+                                    ->money(useAffix: false)
                                     ->live()
                                     ->maxValue(9999999999.99)
                                     ->default(0),
@@ -337,7 +337,9 @@ class InvoiceResource extends Resource
                                     ->extraAttributes(['class' => 'text-left sm:text-right'])
                                     ->content(function (Forms\Get $get) {
                                         $quantity = max((float) ($get('quantity') ?? 0), 0);
-                                        $unitPrice = max((float) ($get('unit_price') ?? 0), 0);
+                                        $unitPrice = CurrencyConverter::isValidAmount($get('unit_price'), 'USD')
+                                            ? CurrencyConverter::convertToFloat($get('unit_price'), 'USD')
+                                            : 0;
                                         $salesTaxes = $get('salesTaxes') ?? [];
                                         $salesDiscounts = $get('salesDiscounts') ?? [];
                                         $currencyCode = $get('../../currency_code') ?? CurrencyAccessor::getDefaultCurrency();
