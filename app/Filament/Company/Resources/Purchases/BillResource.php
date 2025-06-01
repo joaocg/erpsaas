@@ -282,11 +282,9 @@ class BillResource extends Resource
                                     ->maxValue(9999999999.99)
                                     ->default(1),
                                 Forms\Components\TextInput::make('unit_price')
-                                    ->label('Price')
                                     ->hiddenLabel()
                                     ->money(useAffix: false)
                                     ->live()
-                                    ->maxValue(9999999999.99)
                                     ->default(0),
                                 Forms\Components\Group::make([
                                     CreateAdjustmentSelect::make('purchaseTaxes')

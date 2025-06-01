@@ -296,7 +296,6 @@ class InvoiceResource extends Resource
                                     ->hiddenLabel()
                                     ->money(useAffix: false)
                                     ->live()
-                                    ->maxValue(9999999999.99)
                                     ->default(0),
                                 Forms\Components\Group::make([
                                     CreateAdjustmentSelect::make('salesTaxes')
