@@ -163,7 +163,7 @@ class InvoiceResource extends Resource
                                         $invoiceDate = $get('date');
                                         $paymentTerms = $get('payment_terms');
 
-                                        if (! $invoiceDate || $paymentTerms === 'custom') {
+                                        if (! $invoiceDate || $paymentTerms === 'custom' || ! $paymentTerms) {
                                             return;
                                         }
 
