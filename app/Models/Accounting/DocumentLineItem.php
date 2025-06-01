@@ -3,7 +3,6 @@
 namespace App\Models\Accounting;
 
 use Akaunting\Money\Money;
-use App\Casts\DocumentMoneyCast;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Enums\Accounting\AdjustmentCategory;
