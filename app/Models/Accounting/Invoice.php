@@ -198,11 +198,9 @@ class Invoice extends Document
             ->where('status', InvoiceStatus::Overdue);
     }
 
-    protected function isCurrentlyOverdue(): Attribute
+    public function shouldBeOverdue(): bool
     {
-        return Attribute::get(function () {
-            return $this->due_date->isBefore(today()) && $this->canBeOverdue();
-        });
+        return $this->due_date->isBefore(today()) && $this->canBeOverdue();
     }
 
     public function isDraft(): bool

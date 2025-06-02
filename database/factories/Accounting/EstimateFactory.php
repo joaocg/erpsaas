@@ -181,7 +181,7 @@ class EstimateFactory extends Factory
                 'reference_number' => "REF-{$number}",
             ]);
 
-            if ($estimate->wasApproved() && $estimate->is_currently_expired) {
+            if ($estimate->wasApproved() && $estimate->shouldBeExpired()) {
                 $estimate->updateQuietly([
                     'status' => EstimateStatus::Expired,
                 ]);

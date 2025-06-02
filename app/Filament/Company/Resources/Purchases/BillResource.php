@@ -152,7 +152,7 @@ class BillResource extends Resource
                                         $date = $get('date');
                                         $paymentTerms = $get('payment_terms');
 
-                                        if (! $date || $paymentTerms === 'custom') {
+                                        if (! $date || $paymentTerms === 'custom' || ! $paymentTerms) {
                                             return;
                                         }
 

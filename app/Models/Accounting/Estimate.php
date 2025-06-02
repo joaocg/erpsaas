@@ -130,11 +130,9 @@ class Estimate extends Document
         return $this->total;
     }
 
-    protected function isCurrentlyExpired(): Attribute
+    public function shouldBeExpired(): bool
     {
-        return Attribute::get(function () {
-            return $this->expiration_date?->isBefore(today());
-        });
+        return $this->expiration_date?->isBefore(today()) && $this->canBeExpired();
     }
 
     public function isDraft(): bool

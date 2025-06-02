@@ -23,7 +23,6 @@ use Filament\Actions\ReplicateAction;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -130,11 +129,9 @@ class Bill extends Document
         return $this->amount_due;
     }
 
-    protected function isCurrentlyOverdue(): Attribute
+    public function shouldBeOverdue(): bool
     {
-        return Attribute::get(function () {
-            return $this->due_date->isBefore(today()) && $this->canBeOverdue();
-        });
+        return $this->due_date->isBefore(today()) && $this->canBeOverdue();
     }
 
     public function wasInitialized(): bool

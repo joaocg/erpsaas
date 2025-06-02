@@ -232,7 +232,7 @@ class InvoiceFactory extends Factory
                 'order_number' => "ORD-{$number}",
             ]);
 
-            if ($invoice->wasApproved() && $invoice->is_currently_overdue) {
+            if ($invoice->wasApproved() && $invoice->shouldBeOverdue()) {
                 $invoice->updateQuietly([
                     'status' => InvoiceStatus::Overdue,
                 ]);

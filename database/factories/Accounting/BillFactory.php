@@ -207,7 +207,7 @@ class BillFactory extends Factory
                 'order_number' => "PO-{$number}",
             ]);
 
-            if ($bill->wasInitialized() && $bill->is_currently_overdue) {
+            if ($bill->wasInitialized() && $bill->shouldBeOverdue()) {
                 $bill->updateQuietly([
                     'status' => BillStatus::Overdue,
                 ]);
