@@ -125,7 +125,7 @@ class DocumentTotalViewModel
             return RateCalculator::calculatePercentage($subtotalInCents, $scaledDiscountRate);
         }
 
-        if (! CurrencyConverter::isValidAmount($discountRate)) {
+        if (! CurrencyConverter::isValidAmount($discountRate, $currencyCode)) {
             $discountRate = '0';
         }
 
