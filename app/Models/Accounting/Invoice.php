@@ -495,11 +495,7 @@ class Invoice extends Document
 
     public function updateApprovalTransaction(): void
     {
-        $transaction = $this->approvalTransaction;
-
-        if ($transaction) {
-            $transaction->delete();
-        }
+        $this->approvalTransaction?->delete();
 
         $this->createApprovalTransaction();
     }

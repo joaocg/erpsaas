@@ -17,7 +17,7 @@ class BillObserver
 
     public function saving(Bill $bill): void
     {
-        if ($bill->isDirty('due_date') && $bill->status === BillStatus::Overdue && ! $bill->shouldBeOverdue()) {
+        if ($bill->isDirty('due_date') && $bill->status === BillStatus::Overdue && ! $bill->shouldBeOverdue() && ! $bill->hasPayments()) {
             $bill->status = BillStatus::Open;
 
             return;

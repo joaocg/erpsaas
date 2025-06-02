@@ -16,7 +16,7 @@ class InvoiceObserver
             return;
         }
 
-        if ($invoice->isDirty('due_date') && $invoice->status === InvoiceStatus::Overdue && ! $invoice->shouldBeOverdue()) {
+        if ($invoice->isDirty('due_date') && $invoice->status === InvoiceStatus::Overdue && ! $invoice->shouldBeOverdue() && ! $invoice->hasPayments()) {
             $invoice->status = $invoice->hasBeenSent() ? InvoiceStatus::Sent : InvoiceStatus::Unsent;
 
             return;

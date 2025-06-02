@@ -384,11 +384,7 @@ class Bill extends Document
 
     public function updateInitialTransaction(): void
     {
-        $transaction = $this->initialTransaction;
-
-        if ($transaction) {
-            $transaction->delete();
-        }
+        $this->initialTransaction?->delete();
 
         $this->createInitialTransaction();
     }
