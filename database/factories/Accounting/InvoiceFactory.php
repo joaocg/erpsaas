@@ -34,7 +34,7 @@ class InvoiceFactory extends Factory
      */
     public function definition(): array
     {
-        $invoiceDate = $this->faker->dateTimeBetween('-2 months');
+        $invoiceDate = $this->faker->dateTimeBetween('-2 months', '-1 day');
 
         return [
             'company_id' => 1,
@@ -79,6 +79,8 @@ class InvoiceFactory extends Factory
     public function withLineItems(int $count = 3): static
     {
         return $this->afterCreating(function (Invoice $invoice) use ($count) {
+            $invoice->lineItems()->delete();
+
             DocumentLineItem::factory()
                 ->count($count)
                 ->forInvoice($invoice)
@@ -139,16 +141,16 @@ class InvoiceFactory extends Factory
 
     protected function performApproval(Invoice $invoice): void
     {
-        if (! $invoice->hasLineItems()) {
-            throw new \InvalidArgumentException('Cannot approve invoice without line items. Use withLineItems() first.');
-        }
-
         if (! $invoice->canBeApproved()) {
             throw new \InvalidArgumentException('Invoice cannot be approved. Current status: ' . $invoice->status->value);
         }
 
         $approvedAt = Carbon::parse($invoice->date)
             ->addHours($this->faker->numberBetween(1, 24));
+
+        if ($approvedAt->isAfter(now())) {
+            $approvedAt = Carbon::parse($this->faker->dateTimeBetween($invoice->date, now()));
+        }
 
         $invoice->approveDraft($approvedAt);
     }
@@ -161,6 +163,10 @@ class InvoiceFactory extends Factory
 
         $sentAt = Carbon::parse($invoice->approved_at)
             ->addHours($this->faker->numberBetween(1, 24));
+
+        if ($sentAt->isAfter(now())) {
+            $sentAt = Carbon::parse($this->faker->dateTimeBetween($invoice->approved_at, now()));
+        }
 
         $invoice->markAsSent($sentAt);
     }
@@ -188,7 +194,9 @@ class InvoiceFactory extends Factory
         $paymentAmount = (int) floor($totalAmountDue / $paymentCount);
         $remainingAmount = $totalAmountDue;
 
-        $paymentDate = Carbon::parse($invoice->approved_at);
+        $initialPaymentDate = Carbon::parse($invoice->approved_at);
+        $maxPaymentDate = now();
+
         $paymentDates = [];
 
         for ($i = 0; $i < $paymentCount; $i++) {
@@ -198,7 +206,16 @@ class InvoiceFactory extends Factory
                 break;
             }
 
-            $postedAt = $paymentDate->copy()->addDays($this->faker->numberBetween(1, 30));
+            if ($i === 0) {
+                $postedAt = $initialPaymentDate->copy()->addDays($this->faker->numberBetween(1, 15));
+            } else {
+                $postedAt = $paymentDates[$i - 1]->copy()->addDays($this->faker->numberBetween(1, 10));
+            }
+
+            if ($postedAt->isAfter($maxPaymentDate)) {
+                $postedAt = Carbon::parse($this->faker->dateTimeBetween($initialPaymentDate, $maxPaymentDate));
+            }
+
             $paymentDates[] = $postedAt;
 
             $data = [
@@ -225,6 +242,13 @@ class InvoiceFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (Invoice $invoice) {
+            DocumentLineItem::factory()
+                ->count(3)
+                ->forInvoice($invoice)
+                ->create();
+
+            $this->recalculateTotals($invoice);
+
             $number = DocumentDefault::getBaseNumber() + $invoice->id;
 
             $invoice->updateQuietly([
