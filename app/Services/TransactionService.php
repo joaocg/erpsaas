@@ -18,9 +18,10 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
-    public function createStartingBalanceIfNeeded(Company $company, Account $account, BankAccount $bankAccount, array $transactions, float $currentBalance, string $startDate): void
+    public function createStartingBalanceIfNeeded(Company $company, BankAccount $bankAccount, array $transactions, float $currentBalance, string $startDate): void
     {
-        if ($account->transactions()->doesntExist()) {
+        if ($bankAccount->transactions()->doesntExist()) {
+            $account = $bankAccount->account;
             $accountSign = $account->category === AccountCategory::Asset ? 1 : -1;
 
             $sumOfTransactions = collect($transactions)->reduce(static function ($carry, $transaction) {
@@ -31,7 +32,7 @@ class TransactionService
 
             $startingBalance = bcsub($adjustedBalance, $sumOfTransactions, 2);
 
-            $this->createStartingBalanceTransaction($company, $account, $bankAccount, (float) $startingBalance, $startDate);
+            $this->createStartingBalanceTransaction($company, $bankAccount, (float) $startingBalance, $startDate);
         }
     }
 
@@ -42,7 +43,7 @@ class TransactionService
         }
     }
 
-    public function createStartingBalanceTransaction(Company $company, Account $account, BankAccount $bankAccount, float $startingBalance, string $startDate): void
+    public function createStartingBalanceTransaction(Company $company, BankAccount $bankAccount, float $startingBalance, string $startDate): void
     {
         $transactionType = $startingBalance >= 0 ? TransactionType::Deposit : TransactionType::Withdrawal;
         $accountName = $startingBalance >= 0 ? "Owner's Investment" : "Owner's Drawings";
@@ -53,12 +54,15 @@ class TransactionService
 
         $postedAt = Carbon::parse($startDate)->subDay()->toDateTimeString();
 
+        $currencyCode = $bankAccount->account->currency_code ?? 'USD';
+        $amountInCents = CurrencyConverter::convertToCents(abs($startingBalance), $currencyCode);
+
         Transaction::create([
             'company_id' => $company->id,
             'account_id' => $chartAccount->id,
             'bank_account_id' => $bankAccount->id,
             'type' => $transactionType,
-            'amount' => abs($startingBalance),
+            'amount' => $amountInCents,
             'payment_channel' => 'other',
             'posted_at' => $postedAt,
             'description' => 'Starting Balance',
@@ -75,13 +79,16 @@ class TransactionService
         $postedAt = $transaction->datetime ?? Carbon::parse($transaction->date)->toDateTimeString();
         $description = $transaction->name;
 
+        $currencyCode = $transaction->iso_currency_code ?? $bankAccount->account->currency_code ?? 'USD';
+        $amountInCents = CurrencyConverter::convertToCents(abs($transaction->amount), $currencyCode);
+
         Transaction::create([
             'company_id' => $company->id,
             'account_id' => $chartAccount->id,
             'bank_account_id' => $bankAccount->id,
             'plaid_transaction_id' => $transaction->transaction_id,
             'type' => $transactionType,
-            'amount' => abs($transaction->amount),
+            'amount' => $amountInCents,
             'payment_channel' => $paymentChannel,
             'posted_at' => $postedAt,
             'description' => $description,
