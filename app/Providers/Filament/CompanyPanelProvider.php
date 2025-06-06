@@ -174,6 +174,7 @@ class CompanyPanelProvider extends PanelProvider
             })
             ->globalSearch(false)
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->viteTheme('resources/css/filament/company/theme.css')
             ->brandLogo(static fn () => view('components.icons.logo'))
             ->tenant(Company::class)
