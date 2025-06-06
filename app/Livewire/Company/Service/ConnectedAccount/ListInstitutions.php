@@ -89,7 +89,9 @@ class ListInstitutions extends Component implements HasActions, HasForms
                 DatePicker::make('start_date')
                     ->label('Start date')
                     ->required()
-                    ->placeholder('Select a start date for importing transactions.'),
+                    ->placeholder('Select a start date for importing transactions.')
+                    ->minDate(now()->subDays(PlaidService::TRANSACTION_DAYS_REQUESTED)->toDateString())
+                    ->maxDate(now()->toDateString()),
             ])
             ->action(function (array $data, ConnectedBankAccount $connectedBankAccount) {
                 $selectedBankAccountId = $data['bank_account_id'] ?? $connectedBankAccount->bank_account_id;
