@@ -20,6 +20,11 @@ class ListBills extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('payBills')
+                ->label('Pay Bills')
+                ->icon('heroicon-o-credit-card')
+                ->color('primary')
+                ->url(fn () => BillResource::getUrl('pay-bills')),
             Actions\CreateAction::make(),
         ];
     }
