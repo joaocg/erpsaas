@@ -178,7 +178,7 @@ class InvoiceFactory extends Factory
     {
         $invoice->refresh();
 
-        $amountDue = $invoice->amount_due;
+        $amountDue = $invoice->getRawOriginal('amount_due');
 
         $totalAmountDue = match ($invoiceStatus) {
             InvoiceStatus::Overpaid => $amountDue + random_int(1000, 10000),
