@@ -26,12 +26,8 @@ The demo environment provides a complete experience of the application with the 
 - **Multi-Company Setup**: 8 pre-configured companies with different currencies:
     - ERPSAAS (USD)
     - British Crown Analytics (GBP)
-    - Swiss Precision Group (CHF)
-    - Tokyo Future Technologies (JPY)
-    - Sydney Harbor Systems (AUD)
+    - Berlin Tech Solutions (EUR)
     - Mumbai Software Services (INR)
-    - Singapore Digital Hub (SGD)
-    - Dubai Business Consulting (AED)
 - **Feature Access**: Full accounting functionality with simplified user management
 - **Limitations**: Plaid, Live Currency, Profile customization, password reset, and registration are disabled
 
