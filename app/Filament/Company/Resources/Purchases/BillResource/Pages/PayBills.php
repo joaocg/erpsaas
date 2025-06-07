@@ -8,6 +8,7 @@ use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
+use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Actions;
 use Filament\Forms;
@@ -18,17 +19,18 @@ use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 
+/**
+ * @property Form $form
+ */
 class PayBills extends ListRecords
 {
     protected static string $resource = BillResource::class;
-
-    protected static ?string $title = 'Pay Bills';
-
-    protected static ?string $navigationLabel = 'Pay Bills';
 
     protected static string $view = 'filament.company.resources.purchases.bill-resource.pages.pay-bills';
 
@@ -36,12 +38,12 @@ class PayBills extends ListRecords
 
     public ?array $data = [];
 
-    public function getTitle(): string
+    public function getBreadcrumb(): ?string
     {
-        return 'Pay Bills';
+        return 'Pay';
     }
 
-    public function getBreadcrumb(): string
+    public function getTitle(): string | Htmlable
     {
         return 'Pay Bills';
     }
@@ -53,8 +55,10 @@ class PayBills extends ListRecords
         $this->form->fill([
             'bank_account_id' => BankAccount::where('enabled', true)->first()?->id,
             'payment_date' => now(),
-            'payment_method' => PaymentMethod::Check->value,
+            'payment_method' => PaymentMethod::Check,
         ]);
+
+        $this->reset('tableFilters');
     }
 
     protected function getHeaderActions(): array
@@ -157,21 +161,15 @@ class PayBills extends ListRecords
             ->query(
                 Bill::query()
                     ->with(['vendor'])
-                    ->whereIn('status', [
-                        BillStatus::Open,
-                        BillStatus::Partial,
-                        BillStatus::Overdue,
-                    ])
+                    ->unpaid()
             )
             ->selectable()
             ->columns([
                 TextColumn::make('vendor.name')
                     ->label('Vendor')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('bill_number')
                     ->label('Bill #')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('due_date')
                     ->label('Due Date')
@@ -179,7 +177,7 @@ class PayBills extends ListRecords
                     ->sortable(),
                 TextColumn::make('amount_due')
                     ->label('Amount Due')
-                    ->currencyWithConversion(fn (Bill $record) => $record->currency_code)
+                    ->currency(static fn (Bill $record) => $record->currency_code)
                     ->alignEnd()
                     ->sortable(),
                 TextInputColumn::make('payment_amount')
@@ -193,7 +191,7 @@ class PayBills extends ListRecords
                             return '0.00';
                         }
 
-                        $paymentCents = CurrencyConverter::convertToCents($state, $record->currency_code);
+                        $paymentCents = CurrencyConverter::convertToCents($state, 'USD');
 
                         // Validate payment doesn't exceed amount due
                         if ($paymentCents > $record->amount_due) {
@@ -203,7 +201,7 @@ class PayBills extends ListRecords
                                 ->warning()
                                 ->send();
 
-                            $maxAmount = CurrencyConverter::convertCentsToFormatSimple($record->amount_due, $record->currency_code);
+                            $maxAmount = CurrencyConverter::convertCentsToFormatSimple($record->amount_due, 'USD');
                             $this->paymentAmounts[$record->id] = $record->amount_due;
 
                             return $maxAmount;
@@ -216,7 +214,7 @@ class PayBills extends ListRecords
                     ->getStateUsing(function (Bill $record) {
                         $paymentAmount = $this->paymentAmounts[$record->id] ?? 0;
 
-                        return CurrencyConverter::convertCentsToFormatSimple($paymentAmount, $record->currency_code);
+                        return CurrencyConverter::convertCentsToFormatSimple($paymentAmount, 'USD');
                     }),
             ])
             ->actions([
@@ -258,19 +256,20 @@ class PayBills extends ListRecords
                     }),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('currency')
+                    ->selectablePlaceholder(false)
+                    ->default(CurrencyAccessor::getDefaultCurrency())
+                    ->relationship('currency', 'name')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('vendor')
                     ->relationship('vendor', 'name')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->multiple()
-                    ->options([
-                        BillStatus::Open->value => 'Open',
-                        BillStatus::Partial->value => 'Partial',
-                        BillStatus::Overdue->value => 'Overdue',
-                    ])
-                    ->default([BillStatus::Open->value, BillStatus::Overdue->value]),
-            ])
+                    ->options(BillStatus::getUnpaidOptions()),
+            ], layout: FiltersLayout::AboveContent)
             ->defaultSort('due_date')
             ->striped()
             ->paginated(false);
@@ -284,11 +283,10 @@ class PayBills extends ListRecords
     #[Computed]
     public function totalSelectedPaymentAmount(): string
     {
-        $selectedIds = array_keys($this->getSelectedTableRecords()->toArray());
-        $total = collect($selectedIds)
-            ->map(fn ($id) => $this->paymentAmounts[$id] ?? 0)
-            ->sum();
+        $total = array_sum($this->paymentAmounts);
 
-        return CurrencyConverter::formatCentsToMoney($total);
+        $currencyCode = $this->getTableFilterState('currency')['value'];
+
+        return CurrencyConverter::formatCentsToMoney($total, $currencyCode);
     }
 }
