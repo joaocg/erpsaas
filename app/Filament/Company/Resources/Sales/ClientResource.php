@@ -3,7 +3,6 @@
 namespace App\Filament\Company\Resources\Sales;
 
 use App\Filament\Company\Resources\Sales\ClientResource\Pages;
-use App\Filament\Exports\Common\ClientExporter;
 use App\Filament\Forms\Components\AddressFields;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\CustomSection;
@@ -248,11 +247,6 @@ class ClientResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->headerActions([
-                Tables\Actions\ExportAction::make()
-                    ->slideOver()
-                    ->exporter(ClientExporter::class),
-            ])
             ->columns([
                 Columns::id(),
                 Tables\Columns\TextColumn::make('name')
