@@ -183,12 +183,7 @@ class Invoice extends Document
 
     public function scopeUnpaid(Builder $query): Builder
     {
-        return $query->whereNotIn('status', [
-            InvoiceStatus::Paid,
-            InvoiceStatus::Void,
-            InvoiceStatus::Draft,
-            InvoiceStatus::Overpaid,
-        ]);
+        return $query->whereIn('status', InvoiceStatus::unpaidStatuses());
     }
 
     public function scopeOverdue(Builder $query): Builder
