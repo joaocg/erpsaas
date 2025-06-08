@@ -34,7 +34,6 @@ use Awcodes\TableRepeater\Header;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\MaxWidth;
@@ -42,7 +41,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -558,108 +556,6 @@ class BillResource extends Resource
                             'created_at',
                             'updated_at',
                         ]),
-                    Tables\Actions\BulkAction::make('recordPayments')
-                        ->label('Record payments')
-                        ->icon('heroicon-o-credit-card')
-                        ->stickyModalHeader()
-                        ->stickyModalFooter()
-                        ->modalFooterActionsAlignment(Alignment::End)
-                        ->modalWidth(MaxWidth::TwoExtraLarge)
-                        ->databaseTransaction()
-                        ->successNotificationTitle('Payments recorded')
-                        ->failureNotificationTitle('Failed to record payments')
-                        ->deselectRecordsAfterCompletion()
-                        ->beforeFormFilled(function (Collection $records, Tables\Actions\BulkAction $action) {
-                            $isInvalid = $records->contains(fn (Bill $bill) => ! $bill->canRecordPayment());
-
-                            if ($isInvalid) {
-                                Notification::make()
-                                    ->title('Payment recording failed')
-                                    ->body('Bills that are either paid, voided, or are in a foreign currency cannot be processed through bulk payments. Please adjust your selection and try again.')
-                                    ->persistent()
-                                    ->danger()
-                                    ->send();
-
-                                $action->cancel(true);
-                            }
-                        })
-                        ->mountUsing(function (Collection $records, Form $form) {
-                            $totalAmountDue = $records->sum('amount_due');
-
-                            $form->fill([
-                                'posted_at' => now(),
-                                'amount' => $totalAmountDue,
-                            ]);
-                        })
-                        ->form([
-                            Forms\Components\DatePicker::make('posted_at')
-                                ->label('Date'),
-                            Forms\Components\TextInput::make('amount')
-                                ->label('Amount')
-                                ->required()
-                                ->money()
-                                ->rules([
-                                    static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
-                                        if (! CurrencyConverter::isValidAmount($value)) {
-                                            $fail('Please enter a valid amount');
-                                        }
-                                    },
-                                ]),
-                            Forms\Components\Select::make('payment_method')
-                                ->label('Payment method')
-                                ->required()
-                                ->options(PaymentMethod::class),
-                            Forms\Components\Select::make('bank_account_id')
-                                ->label('Account')
-                                ->required()
-                                ->options(function () {
-                                    return BankAccount::query()
-                                        ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
-                                        ->select(['bank_accounts.id', 'accounts.name'])
-                                        ->pluck('accounts.name', 'bank_accounts.id')
-                                        ->toArray();
-                                })
-                                ->searchable(),
-                            Forms\Components\Textarea::make('notes')
-                                ->label('Notes'),
-                        ])
-                        ->before(function (Collection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = $data['amount'] ?? 0;
-                            $totalAmountDue = $records->sum('amount_due');
-
-                            if ($totalPaymentAmount > $totalAmountDue) {
-                                $formattedTotalAmountDue = CurrencyConverter::formatCentsToMoney($totalAmountDue);
-
-                                Notification::make()
-                                    ->title('Excess payment amount')
-                                    ->body("The payment amount exceeds the total amount due of {$formattedTotalAmountDue}. Please adjust the payment amount and try again.")
-                                    ->persistent()
-                                    ->warning()
-                                    ->send();
-
-                                $action->halt(true);
-                            }
-                        })
-                        ->action(function (Collection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = $data['amount'] ?? 0;
-                            $remainingAmount = $totalPaymentAmount;
-
-                            $records->each(function (Bill $record) use (&$remainingAmount, $data) {
-                                $amountDue = $record->amount_due;
-
-                                if ($amountDue <= 0 || $remainingAmount <= 0) {
-                                    return;
-                                }
-
-                                $paymentAmount = min($amountDue, $remainingAmount);
-                                $data['amount'] = $paymentAmount;
-
-                                $record->recordPayment($data);
-                                $remainingAmount -= $paymentAmount;
-                            });
-
-                            $action->success();
-                        }),
                 ]),
             ]);
     }
