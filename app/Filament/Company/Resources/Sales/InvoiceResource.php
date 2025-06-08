@@ -2,7 +2,6 @@
 
 namespace App\Filament\Company\Resources\Sales;
 
-use App\Collections\Accounting\DocumentCollection;
 use App\Enums\Accounting\AdjustmentCategory;
 use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
@@ -40,7 +39,6 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -493,18 +491,16 @@ class InvoiceResource extends Resource
                         Invoice::getMarkAsSentAction(Tables\Actions\Action::class),
                         Tables\Actions\Action::make('recordPayment')
                             ->label(fn (Invoice $record) => $record->status === InvoiceStatus::Overpaid ? 'Refund Overpayment' : 'Record Payment')
-                            ->stickyModalHeader()
-                            ->stickyModalFooter()
-                            ->modalFooterActionsAlignment(Alignment::End)
+                            ->slideOver()
                             ->modalWidth(MaxWidth::TwoExtraLarge)
-                            ->icon('heroicon-o-credit-card')
+                            ->icon('heroicon-m-credit-card')
                             ->visible(function (Invoice $record) {
                                 return $record->canRecordPayment();
                             })
                             ->mountUsing(function (Invoice $record, Form $form) {
                                 $form->fill([
                                     'posted_at' => now(),
-                                    'amount' => $record->status === InvoiceStatus::Overpaid ? ltrim($record->amount_due, '-') : $record->amount_due,
+                                    'amount' => abs($record->amount_due),
                                 ]);
                             })
                             ->databaseTransaction()
@@ -512,59 +508,126 @@ class InvoiceResource extends Resource
                             ->form([
                                 Forms\Components\DatePicker::make('posted_at')
                                     ->label('Date'),
-                                Forms\Components\TextInput::make('amount')
-                                    ->label('Amount')
-                                    ->required()
-                                    ->money(fn (Invoice $record) => $record->currency_code)
-                                    ->live(onBlur: true)
-                                    ->helperText(function (Invoice $record, $state) {
+                                Forms\Components\Grid::make()
+                                    ->schema([
+                                        Forms\Components\Select::make('bank_account_id')
+                                            ->label('Account')
+                                            ->required()
+                                            ->live()
+                                            ->options(function () {
+                                                return BankAccount::query()
+                                                    ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                                    ->select(['bank_accounts.id', 'accounts.name', 'accounts.currency_code'])
+                                                    ->get()
+                                                    ->mapWithKeys(function ($account) {
+                                                        $label = $account->name;
+                                                        if ($account->currency_code) {
+                                                            $label .= " ({$account->currency_code})";
+                                                        }
+
+                                                        return [$account->id => $label];
+                                                    })
+                                                    ->toArray();
+                                            })
+                                            ->searchable(),
+                                        Forms\Components\TextInput::make('amount')
+                                            ->label('Amount')
+                                            ->required()
+                                            ->money(fn (Invoice $record) => $record->currency_code)
+                                            ->live(onBlur: true)
+                                            ->helperText(function (Invoice $record, $state) {
+                                                $invoiceCurrency = $record->currency_code;
+
+                                                if (! CurrencyConverter::isValidAmount($state, 'USD')) {
+                                                    return null;
+                                                }
+
+                                                $amountDue = $record->amount_due;
+
+                                                $amount = CurrencyConverter::convertToCents($state, 'USD');
+
+                                                if ($amount <= 0) {
+                                                    return 'Please enter a valid positive amount';
+                                                }
+
+                                                if ($record->status === InvoiceStatus::Overpaid) {
+                                                    $newAmountDue = $amountDue + $amount;
+                                                } else {
+                                                    $newAmountDue = $amountDue - $amount;
+                                                }
+
+                                                return match (true) {
+                                                    $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $invoiceCurrency),
+                                                    $newAmountDue === 0 => 'Invoice will be fully paid',
+                                                    default => 'Invoice will be overpaid by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $invoiceCurrency),
+                                                };
+                                            })
+                                            ->rules([
+                                                static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
+                                                    if (! CurrencyConverter::isValidAmount($value, 'USD')) {
+                                                        $fail('Please enter a valid amount');
+                                                    }
+                                                },
+                                            ]),
+                                    ])->columns(2),
+                                Forms\Components\Placeholder::make('currency_conversion')
+                                    ->label('Currency Conversion')
+                                    ->content(function (Forms\Get $get, Invoice $record) {
+                                        $amount = $get('amount');
+                                        $bankAccountId = $get('bank_account_id');
+
                                         $invoiceCurrency = $record->currency_code;
-                                        if (! CurrencyConverter::isValidAmount($state, 'USD')) {
+
+                                        if (empty($amount) || empty($bankAccountId) || ! CurrencyConverter::isValidAmount($amount, 'USD')) {
                                             return null;
                                         }
 
-                                        $amountDue = $record->amount_due;
-
-                                        $amount = CurrencyConverter::convertToCents($state, 'USD');
-
-                                        if ($amount <= 0) {
-                                            return 'Please enter a valid positive amount';
+                                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                                        if (! $bankAccount) {
+                                            return null;
                                         }
 
-                                        if ($record->status === InvoiceStatus::Overpaid) {
-                                            $newAmountDue = $amountDue + $amount;
-                                        } else {
-                                            $newAmountDue = $amountDue - $amount;
+                                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
+
+                                        // If currencies are the same, no conversion needed
+                                        if ($invoiceCurrency === $bankCurrency) {
+                                            return null;
                                         }
 
-                                        return match (true) {
-                                            $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $invoiceCurrency),
-                                            $newAmountDue === 0 => 'Invoice will be fully paid',
-                                            default => 'Invoice will be overpaid by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $invoiceCurrency),
-                                        };
+                                        // Convert amount from invoice currency to bank currency
+                                        $amountInInvoiceCurrencyCents = CurrencyConverter::convertToCents($amount, 'USD');
+                                        $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
+                                            $amountInInvoiceCurrencyCents,
+                                            $invoiceCurrency,
+                                            $bankCurrency
+                                        );
+
+                                        $formattedBankAmount = CurrencyConverter::formatCentsToMoney($amountInBankCurrencyCents, $bankCurrency);
+
+                                        return "Payment will be recorded as {$formattedBankAmount} in the bank account's currency ({$bankCurrency}).";
                                     })
-                                    ->rules([
-                                        static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
-                                            if (! CurrencyConverter::isValidAmount($value, 'USD')) {
-                                                $fail('Please enter a valid amount');
-                                            }
-                                        },
-                                    ]),
+                                    ->hidden(function (Forms\Get $get, Invoice $record) {
+                                        $bankAccountId = $get('bank_account_id');
+                                        if (empty($bankAccountId)) {
+                                            return true;
+                                        }
+
+                                        $invoiceCurrency = $record->currency_code;
+
+                                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                                        if (! $bankAccount) {
+                                            return true;
+                                        }
+
+                                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
+
+                                        // Hide if currencies are the same
+                                        return $invoiceCurrency === $bankCurrency;
+                                    }),
                                 Forms\Components\Select::make('payment_method')
                                     ->label('Payment method')
                                     ->required()
                                     ->options(PaymentMethod::class),
-                                Forms\Components\Select::make('bank_account_id')
-                                    ->label('Account')
-                                    ->required()
-                                    ->options(function () {
-                                        return BankAccount::query()
-                                            ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
-                                            ->select(['bank_accounts.id', 'accounts.name'])
-                                            ->pluck('accounts.name', 'bank_accounts.id')
-                                            ->toArray();
-                                    })
-                                    ->searchable(),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notes'),
                             ])
@@ -668,111 +731,6 @@ class InvoiceResource extends Resource
                         ->action(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $records->each(function (Invoice $record) {
                                 $record->markAsSent();
-                            });
-
-                            $action->success();
-                        }),
-                    Tables\Actions\BulkAction::make('recordPayments')
-                        ->label('Record payments')
-                        ->icon('heroicon-o-credit-card')
-                        ->stickyModalHeader()
-                        ->stickyModalFooter()
-                        ->modalFooterActionsAlignment(Alignment::End)
-                        ->modalWidth(MaxWidth::TwoExtraLarge)
-                        ->databaseTransaction()
-                        ->successNotificationTitle('Payments recorded')
-                        ->failureNotificationTitle('Failed to Record Payments')
-                        ->deselectRecordsAfterCompletion()
-                        ->beforeFormFilled(function (Collection $records, Tables\Actions\BulkAction $action) {
-                            $isInvalid = $records->contains(fn (Invoice $record) => ! $record->canBulkRecordPayment());
-
-                            if ($isInvalid) {
-                                Notification::make()
-                                    ->title('Payment recording failed')
-                                    ->body('Invoices that are either draft, paid, overpaid, voided, or are in a foreign currency cannot be processed through bulk payments. Please adjust your selection and try again.')
-                                    ->persistent()
-                                    ->danger()
-                                    ->send();
-
-                                $action->cancel(true);
-                            }
-                        })
-                        ->mountUsing(function (DocumentCollection $records, Form $form) {
-                            $totalAmountDue = $records->sum('amount_due');
-
-                            $form->fill([
-                                'posted_at' => now(),
-                                'amount' => $totalAmountDue,
-                            ]);
-                        })
-                        ->form([
-                            Forms\Components\DatePicker::make('posted_at')
-                                ->label('Date'),
-                            Forms\Components\TextInput::make('amount')
-                                ->label('Amount')
-                                ->required()
-                                ->money()
-                                ->rules([
-                                    static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
-                                        if (! CurrencyConverter::isValidAmount($value)) {
-                                            $fail('Please enter a valid amount');
-                                        }
-                                    },
-                                ]),
-                            Forms\Components\Select::make('payment_method')
-                                ->label('Payment method')
-                                ->required()
-                                ->options(PaymentMethod::class),
-                            Forms\Components\Select::make('bank_account_id')
-                                ->label('Account')
-                                ->required()
-                                ->options(function () {
-                                    return BankAccount::query()
-                                        ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
-                                        ->select(['bank_accounts.id', 'accounts.name'])
-                                        ->pluck('accounts.name', 'bank_accounts.id')
-                                        ->toArray();
-                                })
-                                ->searchable(),
-                            Forms\Components\Textarea::make('notes')
-                                ->label('Notes'),
-                        ])
-                        ->before(function (DocumentCollection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = $data['amount'] ?? 0;
-                            $totalAmountDue = $records->sum('amount_due');
-
-                            if ($totalPaymentAmount > $totalAmountDue) {
-                                $formattedTotalAmountDue = CurrencyConverter::formatCentsToMoney($totalAmountDue);
-
-                                Notification::make()
-                                    ->title('Excess payment amount')
-                                    ->body("The payment amount exceeds the total amount due of {$formattedTotalAmountDue}. Please adjust the payment amount and try again.")
-                                    ->persistent()
-                                    ->warning()
-                                    ->send();
-
-                                $action->halt(true);
-                            }
-                        })
-                        ->action(function (DocumentCollection $records, Tables\Actions\BulkAction $action, array $data) {
-                            $totalPaymentAmount = $data['amount'] ?? 0;
-
-                            $remainingAmount = $totalPaymentAmount;
-
-                            $records->each(function (Invoice $record) use (&$remainingAmount, $data) {
-                                $amountDue = $record->amount_due;
-
-                                if ($amountDue <= 0 || $remainingAmount <= 0) {
-                                    return;
-                                }
-
-                                $paymentAmount = min($amountDue, $remainingAmount);
-
-                                $data['amount'] = $paymentAmount;
-
-                                $record->recordPayment($data);
-
-                                $remainingAmount -= $paymentAmount;
                             });
 
                             $action->success();

@@ -35,7 +35,6 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -438,11 +437,9 @@ class BillResource extends Resource
                         Bill::getReplicateAction(Tables\Actions\ReplicateAction::class),
                         Tables\Actions\Action::make('recordPayment')
                             ->label('Record payment')
-                            ->stickyModalHeader()
-                            ->stickyModalFooter()
-                            ->modalFooterActionsAlignment(Alignment::End)
+                            ->slideOver()
                             ->modalWidth(MaxWidth::TwoExtraLarge)
-                            ->icon('heroicon-o-credit-card')
+                            ->icon('heroicon-m-credit-card')
                             ->visible(function (Bill $record) {
                                 return $record->canRecordPayment();
                             })
@@ -457,54 +454,122 @@ class BillResource extends Resource
                             ->form([
                                 Forms\Components\DatePicker::make('posted_at')
                                     ->label('Date'),
-                                Forms\Components\TextInput::make('amount')
-                                    ->label('Amount')
-                                    ->required()
-                                    ->money(fn (Bill $record) => $record->currency_code)
-                                    ->live(onBlur: true)
-                                    ->helperText(function (Bill $record, $state) {
+                                Forms\Components\Grid::make()
+                                    ->schema([
+                                        Forms\Components\Select::make('bank_account_id')
+                                            ->label('Account')
+                                            ->required()
+                                            ->live()
+                                            ->options(function () {
+                                                return BankAccount::query()
+                                                    ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
+                                                    ->select(['bank_accounts.id', 'accounts.name', 'accounts.currency_code'])
+                                                    ->get()
+                                                    ->mapWithKeys(function ($account) {
+                                                        $label = $account->name;
+                                                        if ($account->currency_code) {
+                                                            $label .= " ({$account->currency_code})";
+                                                        }
+
+                                                        return [$account->id => $label];
+                                                    })
+                                                    ->toArray();
+                                            })
+                                            ->searchable(),
+                                        Forms\Components\TextInput::make('amount')
+                                            ->label('Amount')
+                                            ->required()
+                                            ->money(fn (Bill $record) => $record->currency_code)
+                                            ->live(onBlur: true)
+                                            ->helperText(function (Bill $record, $state) {
+                                                $billCurrency = $record->currency_code;
+
+                                                if (! CurrencyConverter::isValidAmount($state, 'USD')) {
+                                                    return null;
+                                                }
+
+                                                $amountDue = $record->amount_due;
+
+                                                $amount = CurrencyConverter::convertToCents($state, 'USD');
+
+                                                if ($amount <= 0) {
+                                                    return 'Please enter a valid positive amount';
+                                                }
+
+                                                $newAmountDue = $amountDue - $amount;
+
+                                                return match (true) {
+                                                    $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $billCurrency),
+                                                    $newAmountDue === 0 => 'Bill will be fully paid',
+                                                    default => 'Amount exceeds bill total by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $billCurrency),
+                                                };
+                                            })
+                                            ->rules([
+                                                static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
+                                                    if (! CurrencyConverter::isValidAmount($value, 'USD')) {
+                                                        $fail('Please enter a valid amount');
+                                                    }
+                                                },
+                                            ]),
+                                    ])->columns(2),
+                                Forms\Components\Placeholder::make('currency_conversion')
+                                    ->label('Currency Conversion')
+                                    ->content(function (Forms\Get $get, Bill $record) {
+                                        $amount = $get('amount');
+                                        $bankAccountId = $get('bank_account_id');
+
                                         $billCurrency = $record->currency_code;
-                                        if (! CurrencyConverter::isValidAmount($state, 'USD')) {
+
+                                        if (empty($amount) || empty($bankAccountId) || ! CurrencyConverter::isValidAmount($amount, 'USD')) {
                                             return null;
                                         }
 
-                                        $amountDue = $record->amount_due;
-                                        $amount = CurrencyConverter::convertToCents($state, 'USD');
-
-                                        if ($amount <= 0) {
-                                            return 'Please enter a valid positive amount';
+                                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                                        if (! $bankAccount) {
+                                            return null;
                                         }
 
-                                        $newAmountDue = $amountDue - $amount;
+                                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
 
-                                        return match (true) {
-                                            $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $billCurrency),
-                                            $newAmountDue === 0 => 'Bill will be fully paid',
-                                            default => 'Amount exceeds bill total by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $billCurrency),
-                                        };
+                                        // If currencies are the same, no conversion needed
+                                        if ($billCurrency === $bankCurrency) {
+                                            return null;
+                                        }
+
+                                        // Convert amount from bill currency to bank currency
+                                        $amountInBillCurrencyCents = CurrencyConverter::convertToCents($amount, 'USD');
+                                        $amountInBankCurrencyCents = CurrencyConverter::convertBalance(
+                                            $amountInBillCurrencyCents,
+                                            $billCurrency,
+                                            $bankCurrency
+                                        );
+
+                                        $formattedBankAmount = CurrencyConverter::formatCentsToMoney($amountInBankCurrencyCents, $bankCurrency);
+
+                                        return "Payment will be recorded as {$formattedBankAmount} in the bank account's currency ({$bankCurrency}).";
                                     })
-                                    ->rules([
-                                        static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
-                                            if (! CurrencyConverter::isValidAmount($value, 'USD')) {
-                                                $fail('Please enter a valid amount');
-                                            }
-                                        },
-                                    ]),
+                                    ->hidden(function (Forms\Get $get, Bill $record) {
+                                        $bankAccountId = $get('bank_account_id');
+                                        if (empty($bankAccountId)) {
+                                            return true;
+                                        }
+
+                                        $billCurrency = $record->currency_code;
+
+                                        $bankAccount = BankAccount::with('account')->find($bankAccountId);
+                                        if (! $bankAccount) {
+                                            return true;
+                                        }
+
+                                        $bankCurrency = $bankAccount->account->currency_code ?? CurrencyAccessor::getDefaultCurrency();
+
+                                        // Hide if currencies are the same
+                                        return $billCurrency === $bankCurrency;
+                                    }),
                                 Forms\Components\Select::make('payment_method')
                                     ->label('Payment method')
                                     ->required()
                                     ->options(PaymentMethod::class),
-                                Forms\Components\Select::make('bank_account_id')
-                                    ->label('Account')
-                                    ->required()
-                                    ->options(function () {
-                                        return BankAccount::query()
-                                            ->join('accounts', 'bank_accounts.account_id', '=', 'accounts.id')
-                                            ->select(['bank_accounts.id', 'accounts.name'])
-                                            ->pluck('accounts.name', 'bank_accounts.id')
-                                            ->toArray();
-                                    })
-                                    ->searchable(),
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Notes'),
                             ])

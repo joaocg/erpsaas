@@ -11,8 +11,12 @@
                     {{ $this->form }}
                 </div>
                 <div class="text-right">
-                    <div class="text-sm uppercase text-gray-500 dark:text-gray-400">Total Payment Amount</div>
-                    <div class="text-3xl font-semibold text-gray-900 dark:text-white">{{ $this->totalPaymentAmount }}</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Total Payment Amount
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+                        {{ $this->totalPaymentAmount }}
+                    </div>
                 </div>
             </div>
         </x-filament::section>
