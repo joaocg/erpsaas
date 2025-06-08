@@ -21,10 +21,8 @@ class ListBills extends ListRecords
     {
         return [
             Actions\Action::make('payBills')
-                ->label('Pay Bills')
-                ->icon('heroicon-o-credit-card')
-                ->color('primary')
-                ->url(fn () => BillResource::getUrl('pay-bills')),
+                ->outlined()
+                ->url(BillResource::getUrl('pay-bills')),
             Actions\CreateAction::make(),
         ];
     }

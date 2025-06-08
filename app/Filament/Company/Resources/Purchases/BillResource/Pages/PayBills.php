@@ -5,9 +5,12 @@ namespace App\Filament\Company\Resources\Purchases\BillResource\Pages;
 use App\Enums\Accounting\BillStatus;
 use App\Enums\Accounting\PaymentMethod;
 use App\Filament\Company\Resources\Purchases\BillResource;
+use App\Filament\Tables\Columns\CustomTextInputColumn;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
+use App\Models\Common\Vendor;
+use App\Models\Setting\Currency;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Actions;
@@ -17,12 +20,13 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\RawJs;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextInputColumn;
-use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 
 /**
@@ -52,11 +56,7 @@ class PayBills extends ListRecords
     {
         parent::mount();
 
-        $this->form->fill([
-            'bank_account_id' => BankAccount::where('enabled', true)->first()?->id,
-            'payment_date' => now(),
-            'payment_method' => PaymentMethod::Check,
-        ]);
+        $this->form->fill();
 
         $this->reset('tableFilters');
     }
@@ -64,17 +64,16 @@ class PayBills extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('paySelected')
-                ->label('Pay Selected Bills')
-                ->icon('heroicon-o-credit-card')
+            Actions\Action::make('processPayments')
                 ->color('primary')
                 ->action(function () {
                     $data = $this->data;
-                    $selectedRecords = $this->getTableRecords();
+                    $tableRecords = $this->getTableRecords();
                     $paidCount = 0;
                     $totalPaid = 0;
 
-                    foreach ($selectedRecords as $bill) {
+                    /** @var Bill $bill */
+                    foreach ($tableRecords as $bill) {
                         if (! $bill->canRecordPayment()) {
                             continue;
                         }
@@ -87,7 +86,7 @@ class PayBills extends ListRecords
                         }
 
                         $paymentData = [
-                            'posted_at' => $data['payment_date'],
+                            'posted_at' => $data['posted_at'],
                             'payment_method' => $data['payment_method'],
                             'bank_account_id' => $data['bank_account_id'],
                             'amount' => $paymentAmount,
@@ -98,18 +97,16 @@ class PayBills extends ListRecords
                         $totalPaid += $paymentAmount;
                     }
 
-                    $totalFormatted = CurrencyConverter::formatCentsToMoney($totalPaid);
+                    $currencyCode = $this->getTableFilterState('currency_code')['value'];
+                    $totalFormatted = CurrencyConverter::formatCentsToMoney($totalPaid, $currencyCode, true);
 
                     Notification::make()
                         ->title('Bills paid successfully')
-                        ->body("Paid {$paidCount} bill(s) for a total of {$totalFormatted}")
+                        ->body("Paid {$paidCount} " . Str::plural('bill', $paidCount) . " for a total of {$totalFormatted}")
                         ->success()
                         ->send();
 
-                    // Clear payment amounts after successful payment
-                    foreach ($selectedRecords as $bill) {
-                        $this->paymentAmounts[$bill->id] = 0;
-                    }
+                    $this->reset('paymentAmounts');
 
                     $this->resetTable();
                 }),
@@ -129,28 +126,29 @@ class PayBills extends ListRecords
     public function form(Form $form): Form
     {
         return $form
+            ->live()
             ->schema([
                 Forms\Components\Grid::make(3)
                     ->schema([
                         Forms\Components\Select::make('bank_account_id')
-                            ->label('Bank Account')
-                            ->options(function () {
+                            ->label('Account')
+                            ->options(static function () {
                                 return Transaction::getBankAccountOptionsFlat();
                             })
+                            ->default(fn () => BankAccount::where('enabled', true)->first()?->id)
                             ->selectablePlaceholder(false)
                             ->searchable()
                             ->softRequired(),
-                        Forms\Components\DatePicker::make('payment_date')
-                            ->label('Payment Date')
+                        Forms\Components\DatePicker::make('posted_at')
+                            ->label('Date')
                             ->default(now())
                             ->softRequired(),
                         Forms\Components\Select::make('payment_method')
-                            ->label('Payment Method')
+                            ->label('Payment method')
                             ->selectablePlaceholder(false)
                             ->options(PaymentMethod::class)
-                            ->default(PaymentMethod::Check)
-                            ->softRequired()
-                            ->live(),
+                            ->default(PaymentMethod::BankPayment)
+                            ->softRequired(),
                     ]),
             ])->statePath('data');
     }
@@ -163,29 +161,62 @@ class PayBills extends ListRecords
                     ->with(['vendor'])
                     ->unpaid()
             )
-            ->selectable()
+            ->recordClasses(['is-spreadsheet'])
+            ->defaultSort('due_date')
+            ->paginated(false)
             ->columns([
                 TextColumn::make('vendor.name')
                     ->label('Vendor')
                     ->sortable(),
                 TextColumn::make('bill_number')
-                    ->label('Bill #')
+                    ->label('Bill number')
                     ->sortable(),
                 TextColumn::make('due_date')
-                    ->label('Due Date')
-                    ->date('M j, Y')
+                    ->label('Due date')
+                    ->defaultDateFormat()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
                     ->sortable(),
                 TextColumn::make('amount_due')
-                    ->label('Amount Due')
+                    ->label('Amount due')
                     ->currency(static fn (Bill $record) => $record->currency_code)
                     ->alignEnd()
-                    ->sortable(),
-                TextInputColumn::make('payment_amount')
-                    ->label('Payment Amount')
+                    ->sortable()
+                    ->summarize([
+                        Summarizer::make()
+                            ->using(function (Builder $query) {
+                                $totalAmountDue = $query->sum('amount_due');
+                                $bankAccountCurrency = $this->getSelectedBankAccount()->account->currency_code;
+                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? $bankAccountCurrency;
+
+                                if ($activeCurrency !== $bankAccountCurrency) {
+                                    $totalAmountDue = CurrencyConverter::convertBalance($totalAmountDue, $activeCurrency, $bankAccountCurrency);
+                                }
+
+                                return CurrencyConverter::formatCentsToMoney($totalAmountDue, $bankAccountCurrency, true);
+                            }),
+                        Summarizer::make()
+                            ->using(function (Builder $query) {
+                                $totalAmountDue = $query->sum('amount_due');
+                                $currencyCode = $this->getTableFilterState('currency_code')['value'];
+
+                                return CurrencyConverter::formatCentsToMoney($totalAmountDue, $currencyCode, true);
+                            })
+                            ->visible(function () {
+                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? null;
+                                $bankAccountCurrency = $this->getSelectedBankAccount()->account->currency_code;
+
+                                return $activeCurrency && $activeCurrency !== $bankAccountCurrency;
+                            }),
+                    ]),
+                CustomTextInputColumn::make('payment_amount')
+                    ->label('Payment amount')
                     ->alignEnd()
+                    ->navigable()
                     ->mask(RawJs::make('$money($input)'))
                     ->updateStateUsing(function (Bill $record, $state) {
-                        if (empty($state) || $state === '0.00') {
+                        if (! CurrencyConverter::isValidAmount($state, 'USD')) {
                             $this->paymentAmounts[$record->id] = 0;
 
                             return '0.00';
@@ -193,18 +224,8 @@ class PayBills extends ListRecords
 
                         $paymentCents = CurrencyConverter::convertToCents($state, 'USD');
 
-                        // Validate payment doesn't exceed amount due
                         if ($paymentCents > $record->amount_due) {
-                            Notification::make()
-                                ->title('Invalid payment amount')
-                                ->body('Payment cannot exceed amount due')
-                                ->warning()
-                                ->send();
-
-                            $maxAmount = CurrencyConverter::convertCentsToFormatSimple($record->amount_due, 'USD');
-                            $this->paymentAmounts[$record->id] = $record->amount_due;
-
-                            return $maxAmount;
+                            $paymentCents = $record->amount_due;
                         }
 
                         $this->paymentAmounts[$record->id] = $paymentCents;
@@ -215,27 +236,33 @@ class PayBills extends ListRecords
                         $paymentAmount = $this->paymentAmounts[$record->id] ?? 0;
 
                         return CurrencyConverter::convertCentsToFormatSimple($paymentAmount, 'USD');
-                    }),
-            ])
-            ->actions([
-                Tables\Actions\Action::make('setFullAmount')
-                    ->label('Pay Full')
-                    ->icon('heroicon-o-banknotes')
-                    ->color('primary')
-                    ->action(function (Bill $record) {
-                        $this->paymentAmounts[$record->id] = $record->amount_due;
-                    }),
-                Tables\Actions\Action::make('clearAmount')
-                    ->label('Clear')
-                    ->icon('heroicon-o-x-mark')
-                    ->color('gray')
-                    ->action(function (Bill $record) {
-                        $this->paymentAmounts[$record->id] = 0;
-                    }),
+                    })
+                    ->summarize([
+                        Summarizer::make()
+                            ->using(function () {
+                                $total = array_sum($this->paymentAmounts);
+                                $defaultCurrency = CurrencyAccessor::getDefaultCurrency();
+                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? $defaultCurrency;
+
+                                if ($activeCurrency !== $defaultCurrency) {
+                                    $total = CurrencyConverter::convertBalance($total, $activeCurrency, $defaultCurrency);
+                                }
+
+                                return CurrencyConverter::formatCentsToMoney($total, $defaultCurrency, true);
+                            }),
+                        Summarizer::make()
+                            ->using(fn () => $this->totalPaymentAmount)
+                            ->visible(function () {
+                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? null;
+                                $defaultCurrency = CurrencyAccessor::getDefaultCurrency();
+
+                                return $activeCurrency && $activeCurrency !== $defaultCurrency;
+                            }),
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('setFullAmounts')
-                    ->label('Set Full Amounts')
+                    ->label('Set full amounts')
                     ->icon('heroicon-o-banknotes')
                     ->color('primary')
                     ->deselectRecordsAfterCompletion()
@@ -245,7 +272,7 @@ class PayBills extends ListRecords
                         });
                     }),
                 Tables\Actions\BulkAction::make('clearAmounts')
-                    ->label('Clear Amounts')
+                    ->label('Clear amounts')
                     ->icon('heroicon-o-x-mark')
                     ->color('gray')
                     ->deselectRecordsAfterCompletion()
@@ -256,23 +283,40 @@ class PayBills extends ListRecords
                     }),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('currency')
+                Tables\Filters\SelectFilter::make('currency_code')
+                    ->label('Currency')
                     ->selectablePlaceholder(false)
                     ->default(CurrencyAccessor::getDefaultCurrency())
-                    ->relationship('currency', 'name')
+                    ->options(Currency::query()->pluck('name', 'code')->toArray())
                     ->searchable()
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('vendor')
-                    ->relationship('vendor', 'name')
-                    ->searchable()
-                    ->preload(),
+                    ->resetState([
+                        'value' => CurrencyAccessor::getDefaultCurrency(),
+                    ])
+                    ->indicateUsing(function (Tables\Filters\SelectFilter $filter, array $state) {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $label = collect($filter->getOptions())
+                            ->mapWithKeys(fn (string | array $label, string $value): array => is_array($label) ? $label : [$value => $label])
+                            ->get($state['value']);
+
+                        if (blank($label)) {
+                            return [];
+                        }
+
+                        $indicator = $filter->getLabel();
+
+                        return Tables\Filters\Indicator::make("{$indicator}: {$label}")->removable(false);
+                    }),
+                Tables\Filters\SelectFilter::make('vendor_id')
+                    ->label('Vendor')
+                    ->options(fn () => Vendor::query()->pluck('name', 'id')->toArray())
+                    ->searchable(),
                 Tables\Filters\SelectFilter::make('status')
                     ->multiple()
                     ->options(BillStatus::getUnpaidOptions()),
-            ], layout: FiltersLayout::AboveContent)
-            ->defaultSort('due_date')
-            ->striped()
-            ->paginated(false);
+            ]);
     }
 
     protected function getPaymentAmount(Bill $record): int
@@ -281,12 +325,31 @@ class PayBills extends ListRecords
     }
 
     #[Computed]
-    public function totalSelectedPaymentAmount(): string
+    public function totalPaymentAmount(): string
     {
         $total = array_sum($this->paymentAmounts);
 
-        $currencyCode = $this->getTableFilterState('currency')['value'];
+        $currencyCode = $this->getTableFilterState('currency_code')['value'];
 
-        return CurrencyConverter::formatCentsToMoney($total, $currencyCode);
+        return CurrencyConverter::formatCentsToMoney($total, $currencyCode, true);
+    }
+
+    public function getSelectedBankAccount(): BankAccount
+    {
+        $bankAccountId = $this->data['bank_account_id'];
+
+        $bankAccount = BankAccount::find($bankAccountId);
+
+        return $bankAccount ?: BankAccount::where('enabled', true)->first();
+    }
+
+    protected function handleTableFilterUpdates(): void
+    {
+        parent::handleTableFilterUpdates();
+
+        $visibleBillIds = $this->getTableRecords()->pluck('id')->toArray();
+        $visibleBillKeys = array_flip($visibleBillIds);
+
+        $this->paymentAmounts = array_intersect_key($this->paymentAmounts, $visibleBillKeys);
     }
 }
