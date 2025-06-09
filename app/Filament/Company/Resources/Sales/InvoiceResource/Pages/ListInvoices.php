@@ -79,6 +79,9 @@ class ListInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('recordPayments')
+                ->outlined()
+                ->url(RecordPayments::getUrl()),
             Actions\CreateAction::make(),
         ];
     }

@@ -22,7 +22,7 @@ class ListBills extends ListRecords
         return [
             Actions\Action::make('payBills')
                 ->outlined()
-                ->url(BillResource::getUrl('pay-bills')),
+                ->url(PayBills::getUrl()),
             Actions\CreateAction::make(),
         ];
     }

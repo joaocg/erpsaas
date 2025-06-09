@@ -18,6 +18,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Summarizer;
@@ -44,6 +45,9 @@ class RecordPayments extends ListRecords
 
     public ?array $data = [];
 
+    // New property for allocation amount
+    public ?int $allocationAmount = null;
+
     #[Url(as: 'invoice_id')]
     public ?int $invoiceId = null;
 
@@ -57,17 +61,21 @@ class RecordPayments extends ListRecords
         return 'Record Payments';
     }
 
+    public function getMaxContentWidth(): MaxWidth | string | null
+    {
+        return 'max-w-8xl';
+    }
+
     public function mount(): void
     {
         parent::mount();
 
-        $this->form->fill();
-
         $preservedClientId = $this->tableFilters['client_id']['value'] ?? null;
+        $preservedCurrencyCode = $this->tableFilters['currency_code']['value'] ?? CurrencyAccessor::getDefaultCurrency();
 
         $this->tableFilters = [
             'client_id' => $preservedClientId ? ['value' => $preservedClientId] : [],
-            'currency_code' => ['value' => CurrencyAccessor::getDefaultCurrency()],
+            'currency_code' => ['value' => $preservedCurrencyCode],
         ];
 
         // Auto-fill payment amount if invoice_id is provided
@@ -77,6 +85,8 @@ class RecordPayments extends ListRecords
                 $this->paymentAmounts[$invoiceId] = $invoice->amount_due;
             }
         }
+
+        $this->form->fill();
     }
 
     protected function getHeaderActions(): array
@@ -124,11 +134,35 @@ class RecordPayments extends ListRecords
                         ->success()
                         ->send();
 
-                    $this->reset('paymentAmounts');
+                    $this->reset('paymentAmounts', 'allocationAmount');
 
                     $this->resetTable();
                 }),
         ];
+    }
+
+    protected function allocateOldestFirst(Collection $invoices, int $amountInCents): void
+    {
+        $remainingAmount = $amountInCents;
+
+        $sortedInvoices = $invoices->sortBy('due_date');
+
+        foreach ($sortedInvoices as $invoice) {
+            if ($remainingAmount <= 0) {
+                break;
+            }
+
+            $amountDue = $invoice->amount_due;
+            $allocation = min($remainingAmount, $amountDue);
+
+            $this->paymentAmounts[$invoice->id] = $allocation;
+            $remainingAmount -= $allocation;
+        }
+    }
+
+    protected function hasSelectedClient(): bool
+    {
+        return ! empty($this->getTableFilterState('client_id')['value']);
     }
 
     /**
@@ -146,7 +180,7 @@ class RecordPayments extends ListRecords
         return $form
             ->live()
             ->schema([
-                Forms\Components\Grid::make(3)
+                Forms\Components\Grid::make(2) // Changed from 3 to 4
                     ->schema([
                         Forms\Components\Select::make('bank_account_id')
                             ->label('Account')
@@ -167,6 +201,30 @@ class RecordPayments extends ListRecords
                             ->options(PaymentMethod::class)
                             ->default(PaymentMethod::BankPayment)
                             ->softRequired(),
+                        // Allocation amount field with suffix action
+                        Forms\Components\TextInput::make('allocation_amount')
+                            ->label('Allocate Payment Amount')
+                            ->live()
+                            ->default(array_sum($this->paymentAmounts))
+                            ->money($this->getTableFilterState('currency_code')['value'])
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('allocate')
+                                    ->icon('heroicon-m-calculator')
+                                    ->action(function ($state) {
+                                        $this->allocationAmount = CurrencyConverter::convertToCents($state, 'USD');
+                                        if ($this->allocationAmount && $this->hasSelectedClient()) {
+                                            $this->allocateOldestFirst($this->getTableRecords(), $this->allocationAmount);
+
+                                            $amountFormatted = CurrencyConverter::formatCentsToMoney($this->allocationAmount, 'USD', true);
+
+                                            Notification::make()
+                                                ->title('Payment allocated')
+                                                ->body("Allocated {$amountFormatted} across invoices")
+                                                ->success()
+                                                ->send();
+                                        }
+                                    })
+                            ),
                     ]),
             ])->statePath('data');
     }
@@ -259,24 +317,46 @@ class RecordPayments extends ListRecords
                         Summarizer::make()
                             ->using(function () {
                                 $total = array_sum($this->paymentAmounts);
-                                $defaultCurrency = CurrencyAccessor::getDefaultCurrency();
-                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? $defaultCurrency;
+                                $bankAccountCurrency = $this->getSelectedBankAccount()->account->currency_code;
+                                $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? $bankAccountCurrency;
 
-                                if ($activeCurrency !== $defaultCurrency) {
-                                    $total = CurrencyConverter::convertBalance($total, $activeCurrency, $defaultCurrency);
+                                if ($activeCurrency !== $bankAccountCurrency) {
+                                    $total = CurrencyConverter::convertBalance($total, $activeCurrency, $bankAccountCurrency);
                                 }
 
-                                return CurrencyConverter::formatCentsToMoney($total, $defaultCurrency, true);
+                                return CurrencyConverter::formatCentsToMoney($total, $bankAccountCurrency, true);
                             }),
                         Summarizer::make()
                             ->using(fn () => $this->totalPaymentAmount)
                             ->visible(function () {
                                 $activeCurrency = $this->getTableFilterState('currency_code')['value'] ?? null;
-                                $defaultCurrency = CurrencyAccessor::getDefaultCurrency();
+                                $bankAccountCurrency = $this->getSelectedBankAccount()->account->currency_code;
 
-                                return $activeCurrency && $activeCurrency !== $defaultCurrency;
+                                return $activeCurrency && $activeCurrency !== $bankAccountCurrency;
                             }),
                     ]),
+                // New allocation status column
+                TextColumn::make('allocation_status')
+                    ->label('Status')
+                    ->getStateUsing(function (Invoice $record) {
+                        $paymentAmount = $this->paymentAmounts[$record->id] ?? 0;
+
+                        if ($paymentAmount <= 0) {
+                            return 'No payment';
+                        }
+
+                        if ($paymentAmount >= $record->amount_due) {
+                            return 'Full payment';
+                        }
+
+                        return 'Partial payment';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Full payment' => 'success',
+                        'Partial payment' => 'warning',
+                        default => 'gray',
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('setFullAmounts')
@@ -360,6 +440,21 @@ class RecordPayments extends ListRecords
         return CurrencyConverter::formatCentsToMoney($total, $currencyCode, true);
     }
 
+    #[Computed]
+    public function allocationVariance(): string
+    {
+        if (! $this->allocationAmount) {
+            return '$0.00';
+        }
+
+        $totalAllocated = array_sum($this->paymentAmounts);
+        $variance = $this->allocationAmount - $totalAllocated;
+
+        $currencyCode = $this->getTableFilterState('currency_code')['value'];
+
+        return CurrencyConverter::formatCentsToMoney($variance, $currencyCode, true);
+    }
+
     public function getSelectedBankAccount(): BankAccount
     {
         $bankAccountId = $this->data['bank_account_id'];
@@ -377,5 +472,8 @@ class RecordPayments extends ListRecords
         $visibleInvoiceKeys = array_flip($visibleInvoiceIds);
 
         $this->paymentAmounts = array_intersect_key($this->paymentAmounts, $visibleInvoiceKeys);
+
+        // Reset allocation when client changes
+        $this->allocationAmount = null;
     }
 }

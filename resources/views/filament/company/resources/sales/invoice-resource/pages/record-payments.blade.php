@@ -6,7 +6,7 @@
 >
     <div class="flex flex-col gap-y-6">
         <x-filament::section>
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between">
                 <div>
                     {{ $this->form }}
                 </div>
