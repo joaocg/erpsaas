@@ -489,6 +489,14 @@ class InvoiceResource extends Resource
                         Invoice::getReplicateAction(Tables\Actions\ReplicateAction::class),
                         Invoice::getApproveDraftAction(Tables\Actions\Action::class),
                         Invoice::getMarkAsSentAction(Tables\Actions\Action::class),
+                        Tables\Actions\Action::make('recordPaymentBulk')
+                            ->label('Record Payment')
+                            ->icon('heroicon-m-credit-card')
+                            ->url(fn (Invoice $record) => Pages\RecordPayments::getUrl([
+                                'tableFilters' => ['client_id' => ['value' => $record->client_id]],
+                                'invoice_id' => $record->id,
+                            ]))
+                            ->openUrlInNewTab(false),
                         Tables\Actions\Action::make('recordPayment')
                             ->label(fn (Invoice $record) => $record->status === InvoiceStatus::Overpaid ? 'Refund Overpayment' : 'Record Payment')
                             ->slideOver()

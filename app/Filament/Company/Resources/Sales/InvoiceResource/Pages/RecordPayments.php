@@ -24,10 +24,12 @@ use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 
 /**
  * @property Form $form
@@ -41,6 +43,9 @@ class RecordPayments extends ListRecords
     public array $paymentAmounts = [];
 
     public ?array $data = [];
+
+    #[Url(as: 'invoice_id')]
+    public ?int $invoiceId = null;
 
     public function getBreadcrumb(): ?string
     {
@@ -58,7 +63,20 @@ class RecordPayments extends ListRecords
 
         $this->form->fill();
 
-        $this->reset('tableFilters');
+        $preservedClientId = $this->tableFilters['client_id']['value'] ?? null;
+
+        $this->tableFilters = [
+            'client_id' => $preservedClientId ? ['value' => $preservedClientId] : [],
+            'currency_code' => ['value' => CurrencyAccessor::getDefaultCurrency()],
+        ];
+
+        // Auto-fill payment amount if invoice_id is provided
+        if ($invoiceId = $this->invoiceId) {
+            $invoice = Invoice::find($invoiceId);
+            if ($invoice && $invoice->client_id == $preservedClientId) {
+                $this->paymentAmounts[$invoiceId] = $invoice->amount_due;
+            }
+        }
     }
 
     protected function getHeaderActions(): array
@@ -311,13 +329,15 @@ class RecordPayments extends ListRecords
                     }),
                 Tables\Filters\SelectFilter::make('client_id')
                     ->label('Client')
+                    ->selectablePlaceholder(false)
                     ->options(fn () => Client::query()->pluck('name', 'id')->toArray())
                     ->searchable()
-                    ->default(function () {
-                        // TODO: This needs to be applied through the url with a query parameter, it shouldn't be able to be removed though
-                        $clientCount = Client::count();
+                    ->query(function (EloquentBuilder $query, array $data) {
+                        if (blank($data['value'] ?? null)) {
+                            return $query->whereRaw('1 = 0'); // No results if no client is selected
+                        }
 
-                        return $clientCount === 1 ? Client::first()?->id : null;
+                        return $query->where('client_id', $data['value']);
                     }),
                 Tables\Filters\SelectFilter::make('status')
                     ->multiple()
