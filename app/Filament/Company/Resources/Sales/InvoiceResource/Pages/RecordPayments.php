@@ -47,8 +47,8 @@ class RecordPayments extends ListRecords
 
     public ?int $allocationAmount = null;
 
-    #[Url(as: 'invoice_id')]
-    public ?int $invoiceId = null;
+    #[Url(except: '')]
+    public string $invoiceId = '';
 
     public function getBreadcrumb(): ?string
     {
@@ -77,8 +77,7 @@ class RecordPayments extends ListRecords
             'currency_code' => ['value' => $preservedCurrencyCode],
         ];
 
-        // Auto-fill payment amount if invoice_id is provided
-        if ($invoiceId = $this->invoiceId) {
+        if ($invoiceId = (int) $this->invoiceId) {
             $invoice = Invoice::find($invoiceId);
             if ($invoice && $invoice->client_id == $preservedClientId) {
                 $this->paymentAmounts[$invoiceId] = $invoice->amount_due;
@@ -472,6 +471,24 @@ class RecordPayments extends ListRecords
         $bankAccount = BankAccount::find($bankAccountId);
 
         return $bankAccount ?: BankAccount::where('enabled', true)->first();
+    }
+
+    public function resetTableFiltersForm(): void
+    {
+        parent::resetTableFiltersForm();
+
+        $this->invoiceId = '';
+        $this->paymentAmounts = [];
+        $this->allocationAmount = null;
+    }
+
+    public function removeTableFilters(): void
+    {
+        parent::removeTableFilters();
+
+        $this->invoiceId = '';
+        $this->paymentAmounts = [];
+        $this->allocationAmount = null;
     }
 
     protected function handleTableFilterUpdates(): void

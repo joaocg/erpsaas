@@ -497,7 +497,7 @@ class InvoiceResource extends Resource
                                     'client_id' => ['value' => $record->client_id],
                                     'currency_code' => ['value' => $record->currency_code],
                                 ],
-                                'invoice_id' => $record->id,
+                                'invoiceId' => $record->id,
                             ]))
                             ->openUrlInNewTab(false),
                     ])->dropdown(false),
