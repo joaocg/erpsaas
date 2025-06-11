@@ -75,7 +75,7 @@ class DocumentDefault extends Model
 
     public function scopeType(Builder $query, string | DocumentType $type): Builder
     {
-        return $query->where($this->qualifyColumn('type'), $type);
+        return $query->where('type', $type);
     }
 
     public function scopeInvoice(Builder $query): Builder

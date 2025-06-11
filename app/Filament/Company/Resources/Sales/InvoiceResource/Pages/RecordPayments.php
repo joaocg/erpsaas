@@ -45,7 +45,6 @@ class RecordPayments extends ListRecords
 
     public ?array $data = [];
 
-    // New property for allocation amount
     public ?int $allocationAmount = null;
 
     #[Url(as: 'invoice_id')]
@@ -94,6 +93,16 @@ class RecordPayments extends ListRecords
         return [
             Actions\Action::make('processPayments')
                 ->color('primary')
+                ->requiresConfirmation()
+                ->modalHeading('Confirm payments')
+                ->modalDescription(function () {
+                    $invoiceCount = collect($this->paymentAmounts)->filter(fn ($amount) => $amount > 0)->count();
+                    $totalAmount = array_sum($this->paymentAmounts);
+                    $currencyCode = $this->getTableFilterState('currency_code')['value'];
+                    $totalFormatted = CurrencyConverter::formatCentsToMoney($totalAmount, $currencyCode, true);
+
+                    return "You are about to pay {$invoiceCount} " . Str::plural('invoice', $invoiceCount) . " for a total of {$totalFormatted}. This action cannot be undone.";
+                })
                 ->action(function () {
                     $data = $this->data;
                     $tableRecords = $this->getTableRecords();
@@ -201,29 +210,25 @@ class RecordPayments extends ListRecords
                             ->options(PaymentMethod::class)
                             ->default(PaymentMethod::BankPayment)
                             ->softRequired(),
-                        // Allocation amount field with suffix action
                         Forms\Components\TextInput::make('allocation_amount')
                             ->label('Allocate Payment Amount')
-                            ->live()
                             ->default(array_sum($this->paymentAmounts))
                             ->money($this->getTableFilterState('currency_code')['value'])
+                            ->extraAlpineAttributes([
+                                'x-on:keydown.enter.prevent' => '$refs.allocate.click()',
+                            ])
                             ->suffixAction(
                                 Forms\Components\Actions\Action::make('allocate')
                                     ->icon('heroicon-m-calculator')
+                                    ->extraAttributes([
+                                        'x-ref' => 'allocate',
+                                    ])
                                     ->action(function ($state) {
                                         $this->allocationAmount = CurrencyConverter::convertToCents($state, 'USD');
                                         if ($this->allocationAmount && $this->hasSelectedClient()) {
                                             $this->allocateOldestFirst($this->getTableRecords(), $this->allocationAmount);
-
-                                            $amountFormatted = CurrencyConverter::formatCentsToMoney($this->allocationAmount, 'USD', true);
-
-                                            Notification::make()
-                                                ->title('Payment allocated')
-                                                ->body("Allocated {$amountFormatted} across invoices")
-                                                ->success()
-                                                ->send();
                                         }
-                                    })
+                                    }),
                             ),
                     ]),
             ])->statePath('data');
@@ -240,6 +245,8 @@ class RecordPayments extends ListRecords
             ->recordClasses(['is-spreadsheet'])
             ->defaultSort('due_date')
             ->paginated(false)
+            ->emptyStateHeading('No client selected')
+            ->emptyStateDescription('Select a client from the filters above to view and process invoice payments.')
             ->columns([
                 TextColumn::make('client.name')
                     ->label('Client')
@@ -335,28 +342,6 @@ class RecordPayments extends ListRecords
                                 return $activeCurrency && $activeCurrency !== $bankAccountCurrency;
                             }),
                     ]),
-                // New allocation status column
-                TextColumn::make('allocation_status')
-                    ->label('Status')
-                    ->getStateUsing(function (Invoice $record) {
-                        $paymentAmount = $this->paymentAmounts[$record->id] ?? 0;
-
-                        if ($paymentAmount <= 0) {
-                            return 'No payment';
-                        }
-
-                        if ($paymentAmount >= $record->amount_due) {
-                            return 'Full payment';
-                        }
-
-                        return 'Partial payment';
-                    })
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Full payment' => 'success',
-                        'Partial payment' => 'warning',
-                        default => 'gray',
-                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('setFullAmounts')
@@ -419,6 +404,46 @@ class RecordPayments extends ListRecords
 
                         return $query->where('client_id', $data['value']);
                     }),
+                Tables\Filters\Filter::make('invoice_lookup')
+                    ->label('Find Invoice')
+                    ->form([
+                        Forms\Components\TextInput::make('invoice_number')
+                            ->label('Invoice Number')
+                            ->placeholder('Enter invoice number')
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('findInvoice')
+                                    ->icon('heroicon-m-magnifying-glass')
+                                    ->keyBindings(['enter'])
+                                    ->action(function ($state, Forms\Set $set) {
+                                        if (blank($state)) {
+                                            return;
+                                        }
+
+                                        $invoice = Invoice::byNumber($state)
+                                            ->unpaid()
+                                            ->first();
+
+                                        if ($invoice) {
+                                            $set('tableFilters.client_id.value', $invoice->client_id, true);
+                                            $this->paymentAmounts[$invoice->id] = $invoice->amount_due;
+
+                                            Notification::make()
+                                                ->title('Invoice found')
+                                                ->body("Found invoice {$invoice->invoice_number} for {$invoice->client->name}")
+                                                ->success()
+                                                ->send();
+                                        } else {
+                                            Notification::make()
+                                                ->title('Invoice not found')
+                                                ->body("No unpaid invoice found with number: {$state}")
+                                                ->warning()
+                                                ->send();
+                                        }
+                                    })
+                            ),
+                    ])
+                    ->query(null)
+                    ->indicateUsing(null),
                 Tables\Filters\SelectFilter::make('status')
                     ->multiple()
                     ->options(InvoiceStatus::getUnpaidOptions()),
@@ -440,21 +465,6 @@ class RecordPayments extends ListRecords
         return CurrencyConverter::formatCentsToMoney($total, $currencyCode, true);
     }
 
-    #[Computed]
-    public function allocationVariance(): string
-    {
-        if (! $this->allocationAmount) {
-            return '$0.00';
-        }
-
-        $totalAllocated = array_sum($this->paymentAmounts);
-        $variance = $this->allocationAmount - $totalAllocated;
-
-        $currencyCode = $this->getTableFilterState('currency_code')['value'];
-
-        return CurrencyConverter::formatCentsToMoney($variance, $currencyCode, true);
-    }
-
     public function getSelectedBankAccount(): BankAccount
     {
         $bankAccountId = $this->data['bank_account_id'];
@@ -472,8 +482,6 @@ class RecordPayments extends ListRecords
         $visibleInvoiceKeys = array_flip($visibleInvoiceIds);
 
         $this->paymentAmounts = array_intersect_key($this->paymentAmounts, $visibleInvoiceKeys);
-
-        // Reset allocation when client changes
         $this->allocationAmount = null;
     }
 }

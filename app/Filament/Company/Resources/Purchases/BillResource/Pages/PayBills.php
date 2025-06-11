@@ -66,6 +66,16 @@ class PayBills extends ListRecords
         return [
             Actions\Action::make('processPayments')
                 ->color('primary')
+                ->requiresConfirmation()
+                ->modalHeading('Confirm payments')
+                ->modalDescription(function () {
+                    $billCount = collect($this->paymentAmounts)->filter(fn ($amount) => $amount > 0)->count();
+                    $totalAmount = array_sum($this->paymentAmounts);
+                    $currencyCode = $this->getTableFilterState('currency_code')['value'];
+                    $totalFormatted = CurrencyConverter::formatCentsToMoney($totalAmount, $currencyCode, true);
+
+                    return "You are about to pay {$billCount} " . Str::plural('bill', $billCount) . " for a total of {$totalFormatted}. This action cannot be undone.";
+                })
                 ->action(function () {
                     $data = $this->data;
                     $tableRecords = $this->getTableRecords();

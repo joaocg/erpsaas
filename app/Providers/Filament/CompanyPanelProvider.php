@@ -284,7 +284,12 @@ class CompanyPanelProvider extends PanelProvider
             $table
                 ->paginationPageOptions([5, 10, 25, 50, 100])
                 ->filtersFormWidth(MaxWidth::Small)
-                ->filtersTriggerAction(fn (Tables\Actions\Action $action) => $action->slideOver());
+                ->filtersTriggerAction(
+                    fn (Tables\Actions\Action $action) => $action
+                        ->button()
+                        ->label('Filters')
+                        ->slideOver()
+                );
         });
 
         Tables\Columns\TextColumn::configureUsing(function (Tables\Columns\TextColumn $column): void {
