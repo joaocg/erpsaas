@@ -183,12 +183,18 @@ class Invoice extends Document
 
     public function scopeUnpaid(Builder $query): Builder
     {
-        return $query->whereNotIn('status', [
-            InvoiceStatus::Paid,
-            InvoiceStatus::Void,
-            InvoiceStatus::Draft,
-            InvoiceStatus::Overpaid,
-        ]);
+        return $query->whereIn('status', InvoiceStatus::unpaidStatuses());
+    }
+
+    // TODO: Consider storing the numeric part of the invoice number separately
+    public function scopeByNumber(Builder $query, string $number): Builder
+    {
+        $invoicePrefix = DocumentDefault::invoice()->first()->number_prefix ?? '';
+
+        return $query->where(function ($q) use ($number, $invoicePrefix) {
+            $q->where('invoice_number', $number)
+                ->orWhere('invoice_number', $invoicePrefix . $number);
+        });
     }
 
     public function scopeOverdue(Builder $query): Builder
