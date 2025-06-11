@@ -292,6 +292,20 @@ class RecordPayments extends ListRecords
                                 return $activeCurrency && $activeCurrency !== $bankAccountCurrency;
                             }),
                     ]),
+                Tables\Columns\IconColumn::make('applyFullAmountAction')
+                    ->icon('heroicon-m-chevron-double-right')
+                    ->color('primary')
+                    ->label('')
+                    ->default('')
+                    ->alignCenter()
+                    ->width('3rem')
+                    ->tooltip('Apply full amount')
+                    ->action(
+                        Tables\Actions\Action::make('applyFullPayment')
+                            ->action(function (Invoice $record) {
+                                $this->paymentAmounts[$record->id] = $record->amount_due;
+                            }),
+                    ),
                 CustomTextInputColumn::make('payment_amount')
                     ->label('Payment amount')
                     ->alignEnd()
@@ -343,8 +357,8 @@ class RecordPayments extends ListRecords
                     ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkAction::make('setFullAmounts')
-                    ->label('Set full amounts')
+                Tables\Actions\BulkAction::make('applyFullAmounts')
+                    ->label('Apply full amounts')
                     ->icon('heroicon-o-banknotes')
                     ->color('primary')
                     ->deselectRecordsAfterCompletion()
