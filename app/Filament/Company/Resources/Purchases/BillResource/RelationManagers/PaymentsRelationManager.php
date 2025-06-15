@@ -216,6 +216,7 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label('Record payment')
                     ->modalHeading(fn (Tables\Actions\CreateAction $action) => $action->getLabel())
+                    ->slideOver()
                     ->modalWidth(MaxWidth::TwoExtraLarge)
                     ->visible(function () {
                         return $this->getOwnerRecord()->canRecordPayment();

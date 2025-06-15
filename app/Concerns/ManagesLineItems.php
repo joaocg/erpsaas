@@ -73,9 +73,9 @@ trait ManagesLineItems
     protected function updateLineItemTotals(DocumentLineItem $lineItem, DocumentDiscountMethod $discountMethod): void
     {
         $lineItem->updateQuietly([
-            'tax_total' => $lineItem->calculateTaxTotal()->getAmount(),
+            'tax_total' => $lineItem->calculateTaxTotalAmount(),
             'discount_total' => $discountMethod->isPerLineItem()
-                ? $lineItem->calculateDiscountTotal()->getAmount()
+                ? $lineItem->calculateDiscountTotalAmount()
                 : 0,
         ]);
     }

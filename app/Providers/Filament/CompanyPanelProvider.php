@@ -174,7 +174,6 @@ class CompanyPanelProvider extends PanelProvider
             })
             ->globalSearch(false)
             ->sidebarCollapsibleOnDesktop()
-            ->databaseNotifications()
             ->viteTheme('resources/css/filament/company/theme.css')
             ->brandLogo(static fn () => view('components.icons.logo'))
             ->tenant(Company::class)
@@ -285,7 +284,12 @@ class CompanyPanelProvider extends PanelProvider
             $table
                 ->paginationPageOptions([5, 10, 25, 50, 100])
                 ->filtersFormWidth(MaxWidth::Small)
-                ->filtersTriggerAction(fn (Tables\Actions\Action $action) => $action->slideOver());
+                ->filtersTriggerAction(
+                    fn (Tables\Actions\Action $action) => $action
+                        ->button()
+                        ->label('Filters')
+                        ->slideOver()
+                );
         });
 
         Tables\Columns\TextColumn::configureUsing(function (Tables\Columns\TextColumn $column): void {
