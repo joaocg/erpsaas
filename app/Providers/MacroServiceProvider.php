@@ -15,6 +15,7 @@ use App\Utilities\Currency\CurrencyConverter;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use Closure;
+use Filament\Actions\Exports\ExportColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
@@ -474,6 +475,34 @@ class MacroServiceProvider extends ServiceProvider
             $timezone = CompanySettingsService::getDefaultTimezone($companyId);
 
             return $this->setTimezone($timezone)->format($dateFormat);
+        });
+
+        ExportColumn::macro('money', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state) || ! is_int($state)) {
+                    return 0.00;
+                }
+
+                return CurrencyConverter::convertCentsToFloat($state);
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('date', function () {
+            $this->formatStateUsing(static function (?Carbon $state) {
+                return $state?->toDateString();
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('dateTime', function () {
+            $this->formatStateUsing(static function (?Carbon $state) {
+                return $state?->toDateTimeString();
+            });
+
+            return $this;
         });
     }
 }

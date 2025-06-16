@@ -5,7 +5,6 @@ namespace App\Filament\Exports\Accounting;
 use App\Enums\Accounting\PaymentMethod;
 use App\Enums\Accounting\TransactionType;
 use App\Models\Accounting\Transaction;
-use Carbon\Carbon;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -18,11 +17,10 @@ class TransactionExporter extends Exporter
     {
         return [
             ExportColumn::make('posted_at')
-                ->formatStateUsing(function (?Carbon $state) {
-                    return $state?->toDateString();
-                }),
+                ->date(),
             ExportColumn::make('description'),
-            ExportColumn::make('amount'),
+            ExportColumn::make('amount')
+                ->money(),
             ExportColumn::make('account.name')
                 ->label('Category'),
             ExportColumn::make('bankAccount.account.name')
