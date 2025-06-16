@@ -12,6 +12,7 @@ use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Pages;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Widgets;
+use App\Filament\Exports\Accounting\InvoiceExporter;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -475,6 +476,10 @@ class InvoiceResource extends Resource
                     ->fromLabel('From due date')
                     ->untilLabel('To due date')
                     ->indicatorLabel('Due'),
+            ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(InvoiceExporter::class),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

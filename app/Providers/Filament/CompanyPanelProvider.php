@@ -300,6 +300,12 @@ class CompanyPanelProvider extends PanelProvider
         TextEntry::configureUsing(function (TextEntry $component): void {
             $component->placeholder('–');
         });
+
+        Tables\Actions\ExportAction::configureUsing(function (Tables\Actions\ExportAction $action) {
+            $action
+                ->color('primary')
+                ->slideOver();
+        });
     }
 
     /**

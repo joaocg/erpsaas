@@ -7,7 +7,6 @@ use App\Enums\Accounting\TransactionType;
 use App\Filament\Actions\CreateTransactionAction;
 use App\Filament\Company\Pages\Service\ConnectedAccount;
 use App\Filament\Company\Resources\Accounting\TransactionResource;
-use App\Filament\Exports\Accounting\TransactionExporter;
 use App\Services\PlaidService;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -48,9 +47,6 @@ class ListTransactions extends ListRecords
                 ->icon('heroicon-m-chevron-down')
                 ->iconPosition(IconPosition::After),
             Actions\ActionGroup::make([
-                Actions\ExportAction::make()
-                    ->slideOver()
-                    ->exporter(TransactionExporter::class),
                 Actions\Action::make('connectBank')
                     ->label('Connect your bank')
                     ->visible(app(PlaidService::class)->isEnabled())

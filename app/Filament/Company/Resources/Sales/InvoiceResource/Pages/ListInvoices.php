@@ -7,7 +7,6 @@ use App\Enums\Accounting\InvoiceStatus;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource\Widgets;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource\Pages\ViewRecurringInvoice;
-use App\Filament\Exports\Accounting\InvoiceExporter;
 use App\Filament\Infolists\Components\BannerEntry;
 use App\Models\Accounting\RecurringInvoice;
 use Filament\Actions;
@@ -80,9 +79,6 @@ class ListInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ExportAction::make()
-                ->slideOver()
-                ->exporter(InvoiceExporter::class),
             Actions\Action::make('recordPayments')
                 ->outlined()
                 ->url(RecordPayments::getUrl()),
