@@ -491,16 +491,32 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         ExportColumn::macro('date', function () {
-            $this->formatStateUsing(static function (?Carbon $state) {
-                return $state?->toDateString();
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                try {
+                    Carbon::parse($state)->toDateString();
+                } catch (\Exception) {
+                    return null;
+                }
             });
 
             return $this;
         });
 
         ExportColumn::macro('dateTime', function () {
-            $this->formatStateUsing(static function (?Carbon $state) {
-                return $state?->toDateTimeString();
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse($state)->toDateTimeString();
+                } catch (\Exception) {
+                    return null;
+                }
             });
 
             return $this;
