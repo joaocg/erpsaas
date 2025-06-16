@@ -2,6 +2,7 @@
 
 namespace App\Filament\Exports\Common;
 
+use App\Enums\Accounting\BillStatus;
 use App\Models\Common\Vendor;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -14,22 +15,60 @@ class VendorExporter extends Exporter
     public static function getColumns(): array
     {
         return [
-            ExportColumn::make('id')
-                ->label('ID'),
-            ExportColumn::make('company.name'),
             ExportColumn::make('name'),
-            ExportColumn::make('type'),
-            ExportColumn::make('contractor_type'),
-            ExportColumn::make('ssn'),
-            ExportColumn::make('ein'),
-            ExportColumn::make('currency_code'),
+            ExportColumn::make('type')
+                ->enum(),
+            ExportColumn::make('contractor_type')
+                ->enum(),
             ExportColumn::make('account_number'),
-            ExportColumn::make('website'),
-            ExportColumn::make('notes'),
-            ExportColumn::make('created_by'),
-            ExportColumn::make('updated_by'),
-            ExportColumn::make('created_at'),
-            ExportColumn::make('updated_at'),
+            ExportColumn::make('contact.full_name')
+                ->label('Primary contact'),
+            ExportColumn::make('contact.email')
+                ->label('Email'),
+            ExportColumn::make('contact.first_available_phone')
+                ->label('Phone'),
+            ExportColumn::make('currency_code'),
+            ExportColumn::make('balance')
+                ->state(function (Vendor $record) {
+                    return $record->bills()
+                        ->unpaid()
+                        ->get()
+                        ->sumMoneyInDefaultCurrency('amount_due');
+                })
+                ->money(),
+            ExportColumn::make('overdue_amount')
+                ->state(function (Vendor $record) {
+                    return $record->bills()
+                        ->where('status', BillStatus::Overdue)
+                        ->get()
+                        ->sumMoneyInDefaultCurrency('amount_due');
+                })
+                ->money(),
+            ExportColumn::make('address.address_string')
+                ->label('Address')
+                ->enabledByDefault(false),
+            ExportColumn::make('address.address_line_1')
+                ->label('Address line 1'),
+            ExportColumn::make('address.address_line_2')
+                ->label('Address line 2'),
+            ExportColumn::make('address.city')
+                ->label('City'),
+            ExportColumn::make('address.state.name')
+                ->label('State'),
+            ExportColumn::make('address.postal_code')
+                ->label('Postal code'),
+            ExportColumn::make('address.country.name')
+                ->label('Country'),
+            ExportColumn::make('ssn')
+                ->label('SSN')
+                ->enabledByDefault(false),
+            ExportColumn::make('ein')
+                ->label('EIN')
+                ->enabledByDefault(false),
+            ExportColumn::make('website')
+                ->enabledByDefault(false),
+            ExportColumn::make('notes')
+                ->enabledByDefault(false),
         ];
     }
 
