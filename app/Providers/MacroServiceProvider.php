@@ -20,6 +20,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\RawJs;
 use Filament\Tables\Columns\TextColumn;
@@ -500,6 +501,26 @@ class MacroServiceProvider extends ServiceProvider
         ExportColumn::macro('dateTime', function () {
             $this->formatStateUsing(static function (?Carbon $state) {
                 return $state?->toDateTimeString();
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('enum', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                if (! ($state instanceof BackedEnum)) {
+                    return $state;
+                }
+
+                if ($state instanceof HasLabel) {
+                    return $state->getLabel();
+                }
+
+                return $state->value;
             });
 
             return $this;

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Exports\Accounting;
 
-use App\Enums\Accounting\InvoiceStatus;
 use App\Models\Accounting\Invoice;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -22,9 +21,7 @@ class InvoiceExporter extends Exporter
                 ->date(),
             ExportColumn::make('client.name'),
             ExportColumn::make('status')
-                ->formatStateUsing(function (?InvoiceStatus $state) {
-                    return $state?->getLabel();
-                }),
+                ->enum(),
             ExportColumn::make('total')
                 ->money(),
             ExportColumn::make('amount_paid')
@@ -53,7 +50,11 @@ class InvoiceExporter extends Exporter
                 ->label('Recurring invoice number')
                 ->enabledByDefault(false),
             ExportColumn::make('discount_method')
-                ->enabledByDefault(false),
+                ->enabledByDefault(false)
+                ->enum(),
+            ExportColumn::make('discount_computation')
+                ->enabledByDefault(false)
+                ->enum(),
         ];
     }
 

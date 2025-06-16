@@ -2,8 +2,6 @@
 
 namespace App\Filament\Exports\Accounting;
 
-use App\Enums\Accounting\PaymentMethod;
-use App\Enums\Accounting\TransactionType;
 use App\Models\Accounting\Transaction;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -26,15 +24,11 @@ class TransactionExporter extends Exporter
             ExportColumn::make('bankAccount.account.name')
                 ->label('Account'),
             ExportColumn::make('type')
-                ->formatStateUsing(function (?TransactionType $state) {
-                    return $state?->getLabel();
-                }),
+                ->enum(),
             ExportColumn::make('payeeable.name')
                 ->label('Payee'),
             ExportColumn::make('payment_method')
-                ->formatStateUsing(function (?PaymentMethod $state) {
-                    return $state?->getLabel();
-                }),
+                ->enum(),
             ExportColumn::make('notes')
                 ->enabledByDefault(false),
             ExportColumn::make('transactionable_type')

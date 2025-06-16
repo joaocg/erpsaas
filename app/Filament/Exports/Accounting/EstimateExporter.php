@@ -2,7 +2,6 @@
 
 namespace App\Filament\Exports\Accounting;
 
-use App\Enums\Accounting\EstimateStatus;
 use App\Models\Accounting\Estimate;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -22,9 +21,7 @@ class EstimateExporter extends Exporter
                 ->date(),
             ExportColumn::make('client.name'),
             ExportColumn::make('status')
-                ->formatStateUsing(function (?EstimateStatus $state) {
-                    return $state?->getLabel();
-                }),
+                ->enum(),
             ExportColumn::make('total')
                 ->money(),
             ExportColumn::make('subtotal')
@@ -47,9 +44,11 @@ class EstimateExporter extends Exporter
             ExportColumn::make('last_sent_at')
                 ->dateTime(),
             ExportColumn::make('discount_method')
-                ->enabledByDefault(false),
+                ->enabledByDefault(false)
+                ->enum(),
             ExportColumn::make('discount_computation')
-                ->enabledByDefault(false),
+                ->enabledByDefault(false)
+                ->enum(),
         ];
     }
 

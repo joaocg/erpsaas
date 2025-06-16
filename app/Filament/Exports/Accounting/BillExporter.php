@@ -2,7 +2,6 @@
 
 namespace App\Filament\Exports\Accounting;
 
-use App\Enums\Accounting\BillStatus;
 use App\Models\Accounting\Bill;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
@@ -22,9 +21,7 @@ class BillExporter extends Exporter
                 ->date(),
             ExportColumn::make('vendor.name'),
             ExportColumn::make('status')
-                ->formatStateUsing(function (?BillStatus $state) {
-                    return $state?->getLabel();
-                }),
+                ->enum(),
             ExportColumn::make('total')
                 ->money(),
             ExportColumn::make('amount_paid')
@@ -45,9 +42,11 @@ class BillExporter extends Exporter
             ExportColumn::make('notes')
                 ->enabledByDefault(false),
             ExportColumn::make('discount_method')
-                ->enabledByDefault(false),
+                ->enabledByDefault(false)
+                ->enum(),
             ExportColumn::make('discount_computation')
-                ->enabledByDefault(false),
+                ->enabledByDefault(false)
+                ->enum(),
         ];
     }
 
