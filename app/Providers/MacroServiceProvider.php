@@ -497,7 +497,7 @@ class MacroServiceProvider extends ServiceProvider
                 }
 
                 try {
-                    Carbon::parse($state)->toDateString();
+                    return Carbon::parse($state)->toDateString();
                 } catch (\Exception) {
                     return null;
                 }
