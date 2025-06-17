@@ -12,6 +12,7 @@ use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\EstimatesRelationManager;
 use App\Filament\Company\Resources\Sales\EstimateResource\Pages;
 use App\Filament\Company\Resources\Sales\EstimateResource\Widgets;
+use App\Filament\Exports\Accounting\EstimateExporter;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateClientSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -417,6 +418,10 @@ class EstimateResource extends Resource
                     ->fromLabel('From expiration date')
                     ->untilLabel('To expiration date')
                     ->indicatorLabel('Due'),
+            ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(EstimateExporter::class),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

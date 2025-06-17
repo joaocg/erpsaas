@@ -12,6 +12,7 @@ use App\Enums\Accounting\PaymentMethod;
 use App\Enums\Setting\PaymentTerms;
 use App\Filament\Company\Resources\Purchases\BillResource\Pages;
 use App\Filament\Company\Resources\Purchases\VendorResource\RelationManagers\BillsRelationManager;
+use App\Filament\Exports\Accounting\BillExporter;
 use App\Filament\Forms\Components\CreateAdjustmentSelect;
 use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\CreateOfferingSelect;
@@ -426,6 +427,10 @@ class BillResource extends Resource
                     ->fromLabel('From due date')
                     ->untilLabel('To due date')
                     ->indicatorLabel('Due'),
+            ])
+            ->headerActions([
+                Tables\Actions\ExportAction::make()
+                    ->exporter(BillExporter::class),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

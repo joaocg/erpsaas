@@ -15,10 +15,12 @@ use App\Utilities\Currency\CurrencyConverter;
 use BackedEnum;
 use Carbon\CarbonInterface;
 use Closure;
+use Filament\Actions\Exports\ExportColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\RawJs;
 use Filament\Tables\Columns\TextColumn;
@@ -474,6 +476,70 @@ class MacroServiceProvider extends ServiceProvider
             $timezone = CompanySettingsService::getDefaultTimezone($companyId);
 
             return $this->setTimezone($timezone)->format($dateFormat);
+        });
+
+        ExportColumn::macro('money', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state) || ! is_int($state)) {
+                    return 0.00;
+                }
+
+                return CurrencyConverter::convertCentsToFloat($state);
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('date', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse($state)->toDateString();
+                } catch (\Exception) {
+                    return null;
+                }
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('dateTime', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                try {
+                    return Carbon::parse($state)->toDateTimeString();
+                } catch (\Exception) {
+                    return null;
+                }
+            });
+
+            return $this;
+        });
+
+        ExportColumn::macro('enum', function () {
+            $this->formatStateUsing(static function ($state) {
+                if (blank($state)) {
+                    return null;
+                }
+
+                if (! ($state instanceof BackedEnum)) {
+                    return $state;
+                }
+
+                if ($state instanceof HasLabel) {
+                    return $state->getLabel();
+                }
+
+                return $state->value;
+            });
+
+            return $this;
         });
     }
 }

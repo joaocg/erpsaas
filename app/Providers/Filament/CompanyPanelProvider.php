@@ -174,6 +174,7 @@ class CompanyPanelProvider extends PanelProvider
             })
             ->globalSearch(false)
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->viteTheme('resources/css/filament/company/theme.css')
             ->brandLogo(static fn () => view('components.icons.logo'))
             ->tenant(Company::class)
@@ -298,6 +299,12 @@ class CompanyPanelProvider extends PanelProvider
 
         TextEntry::configureUsing(function (TextEntry $component): void {
             $component->placeholder('–');
+        });
+
+        Tables\Actions\ExportAction::configureUsing(function (Tables\Actions\ExportAction $action) {
+            $action
+                ->color('primary')
+                ->slideOver();
         });
     }
 
