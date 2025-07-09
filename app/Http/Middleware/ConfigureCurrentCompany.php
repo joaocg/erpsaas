@@ -22,11 +22,7 @@ class ConfigureCurrentCompany
         $company = Filament::getTenant();
 
         if ($company) {
-            $currentCompanyId = session('current_company_id');
-
-            if ($currentCompanyId !== $company->id) {
-                CompanyConfigured::dispatch($company);
-            }
+            CompanyConfigured::dispatch($company);
         }
 
         return $next($request);
