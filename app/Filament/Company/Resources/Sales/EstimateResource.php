@@ -29,6 +29,7 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Estimate;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
+use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -92,6 +93,7 @@ class EstimateResource extends Resource
                                         ->label('Estimate date')
                                         ->live()
                                         ->default(now())
+                                        ->timezone(CompanySettingsService::getDefaultTimezone())
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
                                             $date = $state;
