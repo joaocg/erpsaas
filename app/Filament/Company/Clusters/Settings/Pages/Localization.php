@@ -215,12 +215,14 @@ class Localization extends Page
             'time_format',
         ];
 
-        if ($record->isDirty($keysToWatch)) {
+        $isDirty = $record->isDirty($keysToWatch);
+
+        $record->save();
+
+        if ($isDirty) {
             CompanySettingsService::invalidateSettings($record->company_id);
             $this->dispatch('localizationUpdated');
         }
-
-        $record->save();
 
         return $record;
     }
