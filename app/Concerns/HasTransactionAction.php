@@ -8,6 +8,7 @@ use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
+use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
@@ -39,7 +40,7 @@ trait HasTransactionAction
     protected function getFormDefaultsForType(TransactionType $type): array
     {
         $commonDefaults = [
-            'posted_at' => today(),
+            'posted_at' => now(),
         ];
 
         return match ($type) {
@@ -83,6 +84,7 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
+                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),
@@ -125,6 +127,7 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
+                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),
@@ -203,12 +206,12 @@ trait HasTransactionAction
 
     protected function getTransactionDetailsGrid(): Forms\Components\Grid
     {
-        return Forms\Components\Grid::make(8)
+        return Forms\Components\Grid::make(6)
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
-                    ->softRequired()
-                    ->displayFormat('Y-m-d'),
+                    ->timezone(CompanySettingsService::getDefaultTimezone())
+                    ->softRequired(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description')
                     ->columnSpan(2),

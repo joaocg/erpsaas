@@ -29,6 +29,7 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Invoice;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
+use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -96,6 +97,7 @@ class InvoiceResource extends Resource
                                         ->label('Invoice date')
                                         ->live()
                                         ->default(now())
+                                        ->timezone(CompanySettingsService::getDefaultTimezone())
                                         ->disabled(function (?Invoice $record) {
                                             return $record?->hasPayments();
                                         })
@@ -147,6 +149,7 @@ class InvoiceResource extends Resource
                                     ->default(function () use ($settings) {
                                         return now()->addDays($settings->payment_terms->getDays());
                                     })
+                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
                                         return $get('date') ?? now();
                                     })

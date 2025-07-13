@@ -28,6 +28,7 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Offering;
 use App\Models\Common\Vendor;
+use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -89,6 +90,7 @@ class BillResource extends Resource
                                         ->label('Bill date')
                                         ->live()
                                         ->default(now())
+                                        ->timezone(CompanySettingsService::getDefaultTimezone())
                                         ->disabled(function (?Bill $record) {
                                             return $record?->hasPayments();
                                         })
@@ -140,6 +142,7 @@ class BillResource extends Resource
                                     ->default(function () use ($company) {
                                         return now()->addDays($company->defaultBill->payment_terms->getDays());
                                     })
+                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {

@@ -141,6 +141,7 @@ class EstimateResource extends Resource
                                     ->default(function () use ($settings) {
                                         return now()->addDays($settings->payment_terms->getDays());
                                     })
+                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
                                         return $get('date') ?? now();
                                     })
