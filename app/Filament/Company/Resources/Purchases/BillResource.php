@@ -461,7 +461,8 @@ class BillResource extends Resource
                             ->successNotificationTitle('Payment recorded')
                             ->form([
                                 Forms\Components\DatePicker::make('posted_at')
-                                    ->label('Date'),
+                                    ->label('Date')
+                                    ->timezone(CompanySettingsService::getDefaultTimezone()),
                                 Forms\Components\Grid::make()
                                     ->schema([
                                         Forms\Components\Select::make('bank_account_id')

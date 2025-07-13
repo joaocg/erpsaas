@@ -8,6 +8,7 @@ use App\Enums\Accounting\TransactionType;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
+use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Closure;
@@ -49,7 +50,8 @@ class PaymentsRelationManager extends RelationManager
             ->columns(1)
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
-                    ->label('Date'),
+                    ->label('Date')
+                    ->timezone(CompanySettingsService::getDefaultTimezone()),
                 Forms\Components\Grid::make()
                     ->schema([
                         Forms\Components\Select::make('bank_account_id')

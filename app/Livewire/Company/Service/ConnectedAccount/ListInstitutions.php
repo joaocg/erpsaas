@@ -8,6 +8,7 @@ use App\Models\Banking\BankAccount;
 use App\Models\Banking\ConnectedBankAccount;
 use App\Models\Banking\Institution;
 use App\Models\User;
+use App\Services\CompanySettingsService;
 use App\Services\PlaidService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -89,6 +90,7 @@ class ListInstitutions extends Component implements HasActions, HasForms
                 DatePicker::make('start_date')
                     ->label('Start date')
                     ->required()
+                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->placeholder('Select a start date for importing transactions.')
                     ->minDate(now()->subDays(PlaidService::TRANSACTION_DAYS_REQUESTED)->toDateString())
                     ->maxDate(now()->toDateString()),

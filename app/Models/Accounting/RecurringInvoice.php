@@ -22,6 +22,7 @@ use App\Filament\Forms\Components\CustomSection;
 use App\Models\Common\Client;
 use App\Models\Setting\CompanyProfile;
 use App\Observers\RecurringInvoiceObserver;
+use App\Services\CompanySettingsService;
 use App\Support\ScheduleHandler;
 use App\Utilities\Localization\Timezone;
 use Filament\Actions\Action;
@@ -507,6 +508,7 @@ class RecurringInvoice extends Document
                             ->softRequired()
                             ->live()
                             ->minDate(today())
+                            ->timezone(CompanySettingsService::getDefaultTimezone())
                             ->closeOnDateSelection()
                             ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
                                 $handler = new ScheduleHandler($set, $get);
@@ -539,6 +541,7 @@ class RecurringInvoice extends Document
 
                             if ($endType?->isOn()) {
                                 $components[] = Forms\Components\DatePicker::make('end_date')
+                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->live();
                             }
 
