@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Models\User;
 use App\Scopes\CurrentCompanyScope;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,15 @@ trait CompanyOwned
                 if (! $companyId && Auth::check()) {
                     $companyId = Auth::user()->currentCompany->id;
                     session(['current_company_id' => $companyId]);
+                }
+
+                // Special handling for notifications in job context
+                if (! $companyId && $model->getTable() === 'notifications' && isset($model->notifiable_id)) {
+                    // Get company_id from the notifiable user's current_company_id
+                    $user = User::find($model->notifiable_id);
+                    if ($user?->current_company_id) {
+                        $companyId = $user->current_company_id;
+                    }
                 }
 
                 if ($companyId) {
