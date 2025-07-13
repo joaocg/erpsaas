@@ -96,8 +96,8 @@ class BillResource extends Resource
                                         })
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                            $date = $state;
-                                            $dueDate = $get('due_date');
+                                            $date = Carbon::parse($state)->toDateString();
+                                            $dueDate = Carbon::parse($get('due_date'))->toDateString();
 
                                             if ($date && $dueDate && $date > $dueDate) {
                                                 $set('due_date', $date);

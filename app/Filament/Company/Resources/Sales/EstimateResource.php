@@ -96,8 +96,8 @@ class EstimateResource extends Resource
                                         ->timezone(CompanySettingsService::getDefaultTimezone())
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                            $date = $state;
-                                            $expirationDate = $get('expiration_date');
+                                            $date = Carbon::parse($state)->toDateString();
+                                            $expirationDate = Carbon::parse($get('expiration_date'))->toDateString();
 
                                             if ($date && $expirationDate && $date > $expirationDate) {
                                                 $set('expiration_date', $date);
@@ -143,7 +143,7 @@ class EstimateResource extends Resource
                                     })
                                     ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
-                                        return $get('date') ?? now();
+                                        return Carbon::parse($get('date'))->toDateString() ?? now(CompanySettingsService::getDefaultTimezone())->toDateString();
                                     })
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {

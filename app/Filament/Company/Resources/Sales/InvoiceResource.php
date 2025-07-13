@@ -103,8 +103,8 @@ class InvoiceResource extends Resource
                                         })
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                            $date = $state;
-                                            $dueDate = $get('due_date');
+                                            $date = Carbon::parse($state)->toDateString();
+                                            $dueDate = Carbon::parse($get('due_date'))->toDateString();
 
                                             if ($date && $dueDate && $date > $dueDate) {
                                                 $set('due_date', $date);
@@ -151,7 +151,7 @@ class InvoiceResource extends Resource
                                     })
                                     ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
-                                        return $get('date') ?? now();
+                                        return Carbon::parse($get('date'))->toDateString() ?? now(CompanySettingsService::getDefaultTimezone())->toDateString();
                                     })
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
