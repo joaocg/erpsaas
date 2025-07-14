@@ -29,7 +29,6 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Estimate;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -92,8 +91,7 @@ class EstimateResource extends Resource
                                     Forms\Components\DatePicker::make('date')
                                         ->label('Estimate date')
                                         ->live()
-                                        ->default(now())
-                                        ->timezone(CompanySettingsService::getDefaultTimezone())
+                                        ->default(company_today()->toDateString())
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
                                             $date = Carbon::parse($state)->toDateString();
@@ -139,11 +137,10 @@ class EstimateResource extends Resource
                                 Forms\Components\DatePicker::make('expiration_date')
                                     ->label('Expiration date')
                                     ->default(function () use ($settings) {
-                                        return now()->addDays($settings->payment_terms->getDays());
+                                        return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
-                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
-                                        return Carbon::parse($get('date'))->toDateString() ?? now(CompanySettingsService::getDefaultTimezone())->toDateString();
+                                        return Carbon::parse($get('date'))->toDateString() ?? company_today()->toDateString();
                                     })
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {

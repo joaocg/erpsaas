@@ -29,7 +29,6 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Invoice;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -96,8 +95,7 @@ class InvoiceResource extends Resource
                                     Forms\Components\DatePicker::make('date')
                                         ->label('Invoice date')
                                         ->live()
-                                        ->default(now())
-                                        ->timezone(CompanySettingsService::getDefaultTimezone())
+                                        ->default(company_today()->toDateString())
                                         ->disabled(function (?Invoice $record) {
                                             return $record?->hasPayments();
                                         })
@@ -147,11 +145,10 @@ class InvoiceResource extends Resource
                                 Forms\Components\DatePicker::make('due_date')
                                     ->label('Payment due')
                                     ->default(function () use ($settings) {
-                                        return now()->addDays($settings->payment_terms->getDays());
+                                        return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
-                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->minDate(static function (Forms\Get $get) {
-                                        return Carbon::parse($get('date'))->toDateString() ?? now(CompanySettingsService::getDefaultTimezone())->toDateString();
+                                        return Carbon::parse($get('date'))->toDateString() ?? company_today()->toDateString();
                                     })
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {

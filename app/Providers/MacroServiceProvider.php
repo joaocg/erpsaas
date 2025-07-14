@@ -357,21 +357,32 @@ class MacroServiceProvider extends ServiceProvider
             return $this;
         });
 
+        // In your macro - simpler logic
         TextColumn::macro('asRelativeDay', function (?string $timezone = null): static {
             $this->formatStateUsing(function (TextColumn $column, mixed $state) use ($timezone) {
                 if (blank($state)) {
                     return null;
                 }
 
-                $date = Carbon::parse($state)
-                    ->setTimezone($timezone ?? $column->getTimezone());
+                $timezone ??= $column->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+
+                // Use shiftTimezone to shift UTC calendar date to the specified timezone
+                // Using setTimezone would convert which is wrong for calendar dates
+                $date = Carbon::parse($state)->shiftTimezone($timezone);
 
                 if ($date->isToday()) {
                     return 'Today';
+                } elseif ($date->isTomorrow()) {
+                    return 'Tomorrow';
+                } elseif ($date->isYesterday()) {
+                    return 'Yesterday';
                 }
 
                 return $date->diffForHumans([
                     'options' => CarbonInterface::ONE_DAY_WORDS,
+                    'skip' => ['month', 'week'], // Skip larger units, force days and years only
+                    'parts' => 2,
+                    'join' => ', ',
                 ]);
             });
 
@@ -384,15 +395,25 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $date = Carbon::parse($state)
-                    ->setTimezone($timezone ?? $entry->getTimezone());
+                $timezone ??= $entry->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+
+                // Use shiftTimezone to shift UTC calendar date to the specified timezone
+                // Using setTimezone would convert which is wrong for calendar dates
+                $date = Carbon::parse($state)->shiftTimezone($timezone);
 
                 if ($date->isToday()) {
                     return 'Today';
+                } elseif ($date->isTomorrow()) {
+                    return 'Tomorrow';
+                } elseif ($date->isYesterday()) {
+                    return 'Yesterday';
                 }
 
                 return $date->diffForHumans([
                     'options' => CarbonInterface::ONE_DAY_WORDS,
+                    'skip' => ['month', 'week'], // Skip larger units, force days and years only
+                    'parts' => 2,
+                    'join' => ', ',
                 ]);
             });
 
@@ -473,9 +494,8 @@ class MacroServiceProvider extends ServiceProvider
         Carbon::macro('toDefaultDateFormat', function () {
             $companyId = auth()->user()?->current_company_id;
             $dateFormat = CompanySettingsService::getDefaultDateFormat($companyId);
-            $timezone = CompanySettingsService::getDefaultTimezone($companyId);
 
-            return $this->setTimezone($timezone)->format($dateFormat);
+            return $this->format($dateFormat);
         });
 
         ExportColumn::macro('money', function () {

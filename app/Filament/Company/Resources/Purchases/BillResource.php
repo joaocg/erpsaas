@@ -28,7 +28,6 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Offering;
 use App\Models\Common\Vendor;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -89,8 +88,7 @@ class BillResource extends Resource
                                     Forms\Components\DatePicker::make('date')
                                         ->label('Bill date')
                                         ->live()
-                                        ->default(now())
-                                        ->timezone(CompanySettingsService::getDefaultTimezone())
+                                        ->default(company_today()->toDateString())
                                         ->disabled(function (?Bill $record) {
                                             return $record?->hasPayments();
                                         })
@@ -139,10 +137,9 @@ class BillResource extends Resource
                                     ->columns(3),
                                 Forms\Components\DatePicker::make('due_date')
                                     ->label('Due date')
-                                    ->default(function () use ($company) {
-                                        return now()->addDays($company->defaultBill->payment_terms->getDays());
+                                    ->default(function () use ($settings) {
+                                        return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
-                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
@@ -453,7 +450,7 @@ class BillResource extends Resource
                             })
                             ->mountUsing(function (Bill $record, Form $form) {
                                 $form->fill([
-                                    'posted_at' => now(),
+                                    'posted_at' => company_today()->toDateString(),
                                     'amount' => $record->amount_due,
                                 ]);
                             })
@@ -461,8 +458,7 @@ class BillResource extends Resource
                             ->successNotificationTitle('Payment recorded')
                             ->form([
                                 Forms\Components\DatePicker::make('posted_at')
-                                    ->label('Date')
-                                    ->timezone(CompanySettingsService::getDefaultTimezone()),
+                                    ->label('Date'),
                                 Forms\Components\Grid::make()
                                     ->schema([
                                         Forms\Components\Select::make('bank_account_id')
