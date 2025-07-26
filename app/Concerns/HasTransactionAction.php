@@ -39,7 +39,7 @@ trait HasTransactionAction
     protected function getFormDefaultsForType(TransactionType $type): array
     {
         $commonDefaults = [
-            'posted_at' => today(),
+            'posted_at' => company_today()->toDateString(),
         ];
 
         return match ($type) {
@@ -83,6 +83,7 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
+                    ->native()
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),
@@ -203,12 +204,11 @@ trait HasTransactionAction
 
     protected function getTransactionDetailsGrid(): Forms\Components\Grid
     {
-        return Forms\Components\Grid::make(8)
+        return Forms\Components\Grid::make(6)
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
-                    ->softRequired()
-                    ->displayFormat('Y-m-d'),
+                    ->softRequired(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description')
                     ->columnSpan(2),

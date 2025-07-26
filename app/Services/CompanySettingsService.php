@@ -14,6 +14,8 @@ class CompanySettingsService
 
     public static function getSettings(?int $companyId = null): array
     {
+        $companyId ??= session('current_company_id');
+
         if (! $companyId) {
             return self::getDefaultSettings();
         }

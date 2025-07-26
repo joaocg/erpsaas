@@ -88,14 +88,14 @@ class BillResource extends Resource
                                     Forms\Components\DatePicker::make('date')
                                         ->label('Bill date')
                                         ->live()
-                                        ->default(now())
+                                        ->default(company_today()->toDateString())
                                         ->disabled(function (?Bill $record) {
                                             return $record?->hasPayments();
                                         })
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                            $date = $state;
-                                            $dueDate = $get('due_date');
+                                            $date = Carbon::parse($state)->toDateString();
+                                            $dueDate = Carbon::parse($get('due_date'))->toDateString();
 
                                             if ($date && $dueDate && $date > $dueDate) {
                                                 $set('due_date', $date);
@@ -137,8 +137,8 @@ class BillResource extends Resource
                                     ->columns(3),
                                 Forms\Components\DatePicker::make('due_date')
                                     ->label('Due date')
-                                    ->default(function () use ($company) {
-                                        return now()->addDays($company->defaultBill->payment_terms->getDays());
+                                    ->default(function () use ($settings) {
+                                        return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
                                     ->required()
                                     ->live()
@@ -450,7 +450,7 @@ class BillResource extends Resource
                             })
                             ->mountUsing(function (Bill $record, Form $form) {
                                 $form->fill([
-                                    'posted_at' => now(),
+                                    'posted_at' => company_today()->toDateString(),
                                     'amount' => $record->amount_due,
                                 ]);
                             })
@@ -614,8 +614,8 @@ class BillResource extends Resource
                         ->beforeReplicaSaved(function (Bill $replica) {
                             $replica->status = BillStatus::Open;
                             $replica->bill_number = Bill::getNextDocumentNumber();
-                            $replica->date = now();
-                            $replica->due_date = now()->addDays($replica->company->defaultBill->payment_terms->getDays());
+                            $replica->date = company_today();
+                            $replica->due_date = company_today()->addDays($replica->company->defaultBill->payment_terms->getDays());
                         })
                         ->withReplicatedRelationships(['lineItems'])
                         ->withExcludedRelationshipAttributes('lineItems', [

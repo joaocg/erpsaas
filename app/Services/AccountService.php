@@ -372,12 +372,12 @@ class AccountService
     {
         $earliestDate = Transaction::min('posted_at');
 
-        return $earliestDate ?? today()->toDateTimeString();
+        return $earliestDate ?? company_today()->toDateTimeString();
     }
 
     public function getUnpaidClientInvoices(?string $asOfDate = null): Builder
     {
-        $asOfDate = $asOfDate ?? now()->toDateString();
+        $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
@@ -400,7 +400,7 @@ class AccountService
 
     public function getUnpaidVendorBills(?string $asOfDate = null): Builder
     {
-        $asOfDate = $asOfDate ?? now()->toDateString();
+        $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'

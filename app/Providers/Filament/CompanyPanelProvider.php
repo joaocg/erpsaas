@@ -268,6 +268,11 @@ class CompanyPanelProvider extends PanelProvider
     {
         $this->configureSelect();
 
+        Forms\Components\FileUpload::configureUsing(function (Forms\Components\FileUpload $component): void {
+            $component
+                ->hidden(is_demo_environment());
+        });
+
         Actions\CreateAction::configureUsing(static fn (Actions\CreateAction $action) => FilamentComponentConfigurator::configureActionModals($action));
         Actions\EditAction::configureUsing(static fn (Actions\EditAction $action) => FilamentComponentConfigurator::configureActionModals($action));
         Actions\DeleteAction::configureUsing(static fn (Actions\DeleteAction $action) => FilamentComponentConfigurator::configureDeleteAction($action));

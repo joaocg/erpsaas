@@ -5,9 +5,7 @@ namespace App\Providers;
 use Akaunting\Money\Currency;
 use Akaunting\Money\Money;
 use App\Enums\Accounting\AdjustmentComputation;
-use App\Enums\Setting\DateFormat;
 use App\Models\Accounting\AccountSubtype;
-use App\Models\Setting\Localization;
 use App\Services\CompanySettingsService;
 use App\Utilities\Accounting\AccountCode;
 use App\Utilities\Currency\CurrencyAccessor;
@@ -173,24 +171,17 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         TextColumn::macro('defaultDateFormat', function (): static {
-            $localization = Localization::firstOrFail();
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? Carbon::now()->timezoneName;
-
-            $this->date($dateFormat, $timezone);
+            $this->date($dateFormat);
 
             return $this;
         });
 
         DatePicker::macro('defaultDateFormat', function (): static {
-            $localization = Localization::firstOrFail();
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? Carbon::now()->timezoneName;
-
-            $this->displayFormat($dateFormat)
-                ->timezone($timezone);
+            $this->displayFormat($dateFormat);
 
             return $this;
         });
@@ -357,21 +348,32 @@ class MacroServiceProvider extends ServiceProvider
             return $this;
         });
 
+        // In your macro - simpler logic
         TextColumn::macro('asRelativeDay', function (?string $timezone = null): static {
             $this->formatStateUsing(function (TextColumn $column, mixed $state) use ($timezone) {
                 if (blank($state)) {
                     return null;
                 }
 
-                $date = Carbon::parse($state)
-                    ->setTimezone($timezone ?? $column->getTimezone());
+                $timezone ??= $column->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+
+                // Use shiftTimezone to shift UTC calendar date to the specified timezone
+                // Using setTimezone would convert which is wrong for calendar dates
+                $date = Carbon::parse($state)->shiftTimezone($timezone);
 
                 if ($date->isToday()) {
                     return 'Today';
+                } elseif ($date->isTomorrow()) {
+                    return 'Tomorrow';
+                } elseif ($date->isYesterday()) {
+                    return 'Yesterday';
                 }
 
                 return $date->diffForHumans([
                     'options' => CarbonInterface::ONE_DAY_WORDS,
+                    'skip' => ['month', 'week'], // Skip larger units, force days and years only
+                    'parts' => 2,
+                    'join' => ', ',
                 ]);
             });
 
@@ -384,15 +386,25 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $date = Carbon::parse($state)
-                    ->setTimezone($timezone ?? $entry->getTimezone());
+                $timezone ??= $entry->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+
+                // Use shiftTimezone to shift UTC calendar date to the specified timezone
+                // Using setTimezone would convert which is wrong for calendar dates
+                $date = Carbon::parse($state)->shiftTimezone($timezone);
 
                 if ($date->isToday()) {
                     return 'Today';
+                } elseif ($date->isTomorrow()) {
+                    return 'Tomorrow';
+                } elseif ($date->isYesterday()) {
+                    return 'Yesterday';
                 }
 
                 return $date->diffForHumans([
                     'options' => CarbonInterface::ONE_DAY_WORDS,
+                    'skip' => ['month', 'week'], // Skip larger units, force days and years only
+                    'parts' => 2,
+                    'join' => ', ',
                 ]);
             });
 
@@ -471,11 +483,11 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         Carbon::macro('toDefaultDateFormat', function () {
-            $companyId = auth()->user()?->current_company_id;
-            $dateFormat = CompanySettingsService::getDefaultDateFormat($companyId);
-            $timezone = CompanySettingsService::getDefaultTimezone($companyId);
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            return $this->setTimezone($timezone)->format($dateFormat);
+            $this->format($dateFormat);
+
+            return $this;
         });
 
         ExportColumn::macro('money', function () {

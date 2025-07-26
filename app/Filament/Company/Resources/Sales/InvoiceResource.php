@@ -95,14 +95,14 @@ class InvoiceResource extends Resource
                                     Forms\Components\DatePicker::make('date')
                                         ->label('Invoice date')
                                         ->live()
-                                        ->default(now())
+                                        ->default(company_today()->toDateString())
                                         ->disabled(function (?Invoice $record) {
                                             return $record?->hasPayments();
                                         })
                                         ->columnSpan(2)
                                         ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
-                                            $date = $state;
-                                            $dueDate = $get('due_date');
+                                            $date = Carbon::parse($state)->toDateString();
+                                            $dueDate = Carbon::parse($get('due_date'))->toDateString();
 
                                             if ($date && $dueDate && $date > $dueDate) {
                                                 $set('due_date', $date);
@@ -145,10 +145,10 @@ class InvoiceResource extends Resource
                                 Forms\Components\DatePicker::make('due_date')
                                     ->label('Payment due')
                                     ->default(function () use ($settings) {
-                                        return now()->addDays($settings->payment_terms->getDays());
+                                        return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
                                     ->minDate(static function (Forms\Get $get) {
-                                        return $get('date') ?? now();
+                                        return Carbon::parse($get('date'))->toDateString() ?? company_today()->toDateString();
                                     })
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
@@ -538,8 +538,8 @@ class InvoiceResource extends Resource
                         ->beforeReplicaSaved(function (Invoice $replica) {
                             $replica->status = InvoiceStatus::Draft;
                             $replica->invoice_number = Invoice::getNextDocumentNumber();
-                            $replica->date = now();
-                            $replica->due_date = now()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
+                            $replica->date = company_today();
+                            $replica->due_date = company_today()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
                         })
                         ->withReplicatedRelationships(['lineItems'])
                         ->withExcludedRelationshipAttributes('lineItems', [

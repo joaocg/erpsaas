@@ -151,7 +151,7 @@ class PayBills extends ListRecords
                             ->softRequired(),
                         Forms\Components\DatePicker::make('posted_at')
                             ->label('Date')
-                            ->default(now())
+                            ->default(company_today()->toDateString())
                             ->softRequired(),
                         Forms\Components\Select::make('payment_method')
                             ->label('Payment method')

@@ -22,6 +22,7 @@ use App\Filament\Forms\Components\CustomSection;
 use App\Models\Common\Client;
 use App\Models\Setting\CompanyProfile;
 use App\Observers\RecurringInvoiceObserver;
+use App\Services\CompanySettingsService;
 use App\Support\ScheduleHandler;
 use App\Utilities\Localization\Timezone;
 use Filament\Actions\Action;
@@ -208,7 +209,7 @@ class RecurringInvoice extends Document
         }
 
         // For unapproved/draft invoices, start date must be today or in the future
-        return $this->start_date?->gte(today()) ?? false;
+        return $this->start_date?->gte(company_today()) ?? false;
     }
 
     public function getScheduleDescription(): ?string
@@ -401,7 +402,7 @@ class RecurringInvoice extends Document
                 $data = $record->attributesToArray();
 
                 $data['day_of_month'] ??= DayOfMonth::First;
-                $data['start_date'] ??= now()->addMonth()->startOfMonth();
+                $data['start_date'] ??= company_today()->addMonth()->startOfMonth();
 
                 $form->fill($data);
             })
@@ -506,7 +507,8 @@ class RecurringInvoice extends Document
                             ->label('First invoice date')
                             ->softRequired()
                             ->live()
-                            ->minDate(today())
+                            ->minDate(company_today())
+                            ->timezone(CompanySettingsService::getDefaultTimezone())
                             ->closeOnDateSelection()
                             ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
                                 $handler = new ScheduleHandler($set, $get);
@@ -525,7 +527,7 @@ class RecurringInvoice extends Document
                                     $endType = EndType::parse($state);
 
                                     $set('max_occurrences', $endType?->isAfter() ? 1 : null);
-                                    $set('end_date', $endType?->isOn() ? now()->addMonth()->startOfMonth() : null);
+                                    $set('end_date', $endType?->isOn() ? company_today()->addMonth()->startOfMonth() : null);
                                 });
 
                             $endType = EndType::parse($get('end_type'));
@@ -539,6 +541,7 @@ class RecurringInvoice extends Document
 
                             if ($endType?->isOn()) {
                                 $components[] = Forms\Components\DatePicker::make('end_date')
+                                    ->timezone(CompanySettingsService::getDefaultTimezone())
                                     ->live();
                             }
 
@@ -603,7 +606,7 @@ class RecurringInvoice extends Document
             throw new \RuntimeException('Invoice is not in draft status.');
         }
 
-        $approvedAt ??= now();
+        $approvedAt ??= company_now();
 
         $this->update([
             'approved_at' => $approvedAt,
@@ -690,7 +693,7 @@ class RecurringInvoice extends Document
 
         $nextDate = $this->calculateNextDate();
 
-        if (! $nextDate || $nextDate->startOfDay()->isFuture()) {
+        if (! $nextDate || $nextDate->startOfDay()->isAfter(company_now())) {
             return false;
         }
 

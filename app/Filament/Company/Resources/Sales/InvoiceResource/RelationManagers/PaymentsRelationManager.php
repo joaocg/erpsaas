@@ -237,7 +237,7 @@ class PaymentsRelationManager extends RelationManager
                     ->mountUsing(function (Form $form) {
                         $record = $this->getOwnerRecord();
                         $form->fill([
-                            'posted_at' => now(),
+                            'posted_at' => company_today()->toDateString(),
                             'amount' => abs($record->amount_due),
                         ]);
                     })

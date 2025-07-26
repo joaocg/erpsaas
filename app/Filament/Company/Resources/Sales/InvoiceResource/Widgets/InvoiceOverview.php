@@ -54,7 +54,7 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
 
         $amountDueWithin30Days = $unpaidInvoices
             ->clone()
-            ->whereBetween('due_date', [today(), today()->addMonth()])
+            ->whereBetween('due_date', [company_today(), company_today()->addMonth()])
             ->get()
             ->sumMoneyInDefaultCurrency('amount_due');
 

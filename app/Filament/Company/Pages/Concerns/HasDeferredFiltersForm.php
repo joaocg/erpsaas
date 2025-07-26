@@ -4,6 +4,7 @@ namespace App\Filament\Company\Pages\Concerns;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Form;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -170,9 +171,25 @@ trait HasDeferredFiltersForm
         $flatFields = $this->getFiltersForm()->getFlatFields();
 
         foreach ($this->filters as $key => $value) {
-            if (isset($flatFields[$key]) && $flatFields[$key] instanceof DatePicker) {
-                // TODO: Submit a PR to Filament to address DatePicker being dehydrated as a datetime string in filters
-                $this->filters[$key] = Carbon::parse($value)->toDateString();
+            if (! isset($flatFields[$key]) || blank($value)) {
+                continue;
+            }
+
+            $field = $flatFields[$key];
+
+            // Reproduce underlying conversion to UTC for DateTimePicker and DatePicker
+            if ($field instanceof DateTimePicker && $field->getTimezone() !== config('app.timezone')) {
+                try {
+                    $carbonValue = Carbon::parse($value, $field->getTimezone());
+
+                    // Shift back to UTC and format according to field type
+                    $this->filters[$key] = $carbonValue
+                        ->setTimezone(config('app.timezone'))
+                        ->format($field->getFormat());
+
+                } catch (\Exception $e) {
+                    continue;
+                }
             }
         }
     }
