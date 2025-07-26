@@ -377,7 +377,7 @@ class AccountService
 
     public function getUnpaidClientInvoices(?string $asOfDate = null): Builder
     {
-        $asOfDate = $asOfDate ?? now()->toDateString();
+        $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
@@ -400,7 +400,7 @@ class AccountService
 
     public function getUnpaidVendorBills(?string $asOfDate = null): Builder
     {
-        $asOfDate = $asOfDate ?? now()->toDateString();
+        $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
         $datediff = $driver === 'pgsql'
