@@ -51,8 +51,8 @@ class BillOverview extends EnhancedStatsOverviewWidget
 
             $lastMonthPaid = $this->getPageTableQuery()
                 ->whereBetween('date', [
-                    today()->subMonth()->startOfMonth(),
-                    today()->subMonth()->endOfMonth(),
+                    company_today()->subMonth()->startOfMonth(),
+                    company_today()->subMonth()->endOfMonth(),
                 ])
                 ->get()
                 ->sumMoneyInDefaultCurrency('amount_paid');
@@ -85,7 +85,7 @@ class BillOverview extends EnhancedStatsOverviewWidget
 
         $amountDueWithin7Days = $unpaidBills
             ->clone()
-            ->whereBetween('due_date', [today(), today()->addWeek()])
+            ->whereBetween('due_date', [company_today(), company_today()->addWeek()])
             ->get()
             ->sumMoneyInDefaultCurrency('amount_due');
 
