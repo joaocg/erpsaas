@@ -86,6 +86,7 @@ class DocumentDefaultResource extends Resource
                 Forms\Components\Grid::make(1)
                     ->schema([
                         Forms\Components\FileUpload::make('logo')
+                            ->hidden(is_demo_environment())
                             ->maxSize(1024)
                             ->localizeLabel()
                             ->openable()
@@ -100,7 +101,8 @@ class DocumentDefaultResource extends Resource
                             ->loadingIndicatorPosition('left')
                             ->removeUploadedFileButtonPosition('right'),
                         Forms\Components\Checkbox::make('show_logo')
-                            ->localizeLabel(),
+                            ->localizeLabel()
+                            ->hidden(is_demo_environment()),
                         Forms\Components\ColorPicker::make('accent_color')
                             ->localizeLabel(),
                         Forms\Components\Select::make('font')
