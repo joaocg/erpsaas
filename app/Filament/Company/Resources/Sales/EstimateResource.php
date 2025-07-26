@@ -470,8 +470,8 @@ class EstimateResource extends Resource
                         ->beforeReplicaSaved(function (Estimate $replica) {
                             $replica->status = EstimateStatus::Draft;
                             $replica->estimate_number = Estimate::getNextDocumentNumber();
-                            $replica->date = now();
-                            $replica->expiration_date = now()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
+                            $replica->date = company_today();
+                            $replica->expiration_date = company_today()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
                         })
                         ->withReplicatedRelationships(['lineItems'])
                         ->withExcludedRelationshipAttributes('lineItems', [

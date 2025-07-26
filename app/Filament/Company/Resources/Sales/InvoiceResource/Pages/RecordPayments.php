@@ -11,7 +11,6 @@ use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Client;
 use App\Models\Setting\Currency;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Filament\Actions;
@@ -202,8 +201,7 @@ class RecordPayments extends ListRecords
                             ->softRequired(),
                         Forms\Components\DatePicker::make('posted_at')
                             ->label('Date')
-                            ->default(now())
-                            ->timezone(CompanySettingsService::getDefaultTimezone())
+                            ->default(company_today()->toDateString())
                             ->softRequired(),
                         Forms\Components\Select::make('payment_method')
                             ->label('Payment method')

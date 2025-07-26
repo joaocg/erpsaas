@@ -538,8 +538,8 @@ class InvoiceResource extends Resource
                         ->beforeReplicaSaved(function (Invoice $replica) {
                             $replica->status = InvoiceStatus::Draft;
                             $replica->invoice_number = Invoice::getNextDocumentNumber();
-                            $replica->date = now();
-                            $replica->due_date = now()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
+                            $replica->date = company_today();
+                            $replica->due_date = company_today()->addDays($replica->company->defaultInvoice->payment_terms->getDays());
                         })
                         ->withReplicatedRelationships(['lineItems'])
                         ->withExcludedRelationshipAttributes('lineItems', [

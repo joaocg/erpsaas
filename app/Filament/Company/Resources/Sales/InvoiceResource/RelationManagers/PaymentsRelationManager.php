@@ -8,7 +8,6 @@ use App\Enums\Accounting\TransactionType;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Closure;
@@ -50,8 +49,7 @@ class PaymentsRelationManager extends RelationManager
             ->columns(1)
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
-                    ->label('Date')
-                    ->timezone(CompanySettingsService::getDefaultTimezone()),
+                    ->label('Date'),
                 Forms\Components\Grid::make()
                     ->schema([
                         Forms\Components\Select::make('bank_account_id')
@@ -239,7 +237,7 @@ class PaymentsRelationManager extends RelationManager
                     ->mountUsing(function (Form $form) {
                         $record = $this->getOwnerRecord();
                         $form->fill([
-                            'posted_at' => now(),
+                            'posted_at' => company_today()->toDateString(),
                             'amount' => abs($record->amount_due),
                         ]);
                     })
