@@ -693,7 +693,7 @@ class RecurringInvoice extends Document
 
         $nextDate = $this->calculateNextDate();
 
-        if (! $nextDate || $nextDate->startOfDay()->isFuture()) {
+        if (! $nextDate || $nextDate->startOfDay()->isAfter(company_now())) {
             return false;
         }
 

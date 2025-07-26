@@ -154,14 +154,14 @@ class Budget extends Model
     public function scopeCurrentlyActive(Builder $query): Builder
     {
         return $query->active()
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now());
+            ->where('start_date', '<=', company_now())
+            ->where('end_date', '>=', company_now());
     }
 
     protected function isCurrentlyInPeriod(): Attribute
     {
         return Attribute::get(function () {
-            return now()->between($this->start_date, $this->end_date);
+            return company_now()->between($this->start_date, $this->end_date);
         });
     }
 
@@ -174,7 +174,7 @@ class Budget extends Model
             throw new \RuntimeException('Budget cannot be approved.');
         }
 
-        $approvedAt ??= now();
+        $approvedAt ??= company_now();
 
         $this->update([
             'status' => BudgetStatus::Active,
@@ -191,7 +191,7 @@ class Budget extends Model
             throw new \RuntimeException('Budget cannot be closed.');
         }
 
-        $closedAt ??= now();
+        $closedAt ??= company_now();
 
         $this->update([
             'status' => BudgetStatus::Closed,
