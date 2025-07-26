@@ -83,6 +83,7 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
+                    ->native()
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),

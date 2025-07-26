@@ -233,7 +233,7 @@ it('can add an income or expense transaction', function (TransactionType $transa
     livewire(ListTransactions::class)
         ->mountAction($actionName)
         ->assertActionDataSet([
-            'posted_at' => today(),
+            'posted_at' => company_today()->toDateString(),
             'type' => $transactionType,
             'bank_account_id' => $defaultBankAccount->id,
             'amount' => '0.00',
