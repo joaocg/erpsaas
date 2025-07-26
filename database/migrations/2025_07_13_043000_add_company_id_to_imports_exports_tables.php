@@ -13,11 +13,17 @@ return new class extends Migration
     public function up(): void
     {
         // Disable foreign key checks and clear existing data
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
+
         DB::table('failed_import_rows')->truncate();
         DB::table('exports')->truncate();
         DB::table('imports')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         Schema::table('imports', function (Blueprint $table) {
             $table->foreignId('company_id')
