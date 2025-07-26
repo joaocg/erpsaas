@@ -176,7 +176,7 @@ class MacroServiceProvider extends ServiceProvider
             $localization = Localization::firstOrFail();
 
             $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? Carbon::now()->timezoneName;
+            $timezone = $localization->timezone ?? company_now()->timezoneName;
 
             $this->date($dateFormat, $timezone);
 
@@ -187,7 +187,7 @@ class MacroServiceProvider extends ServiceProvider
             $localization = Localization::firstOrFail();
 
             $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? Carbon::now()->timezoneName;
+            $timezone = $localization->timezone ?? company_now()->timezoneName;
 
             $this->displayFormat($dateFormat)
                 ->timezone($timezone);

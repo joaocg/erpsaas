@@ -372,7 +372,7 @@ class AccountService
     {
         $earliestDate = Transaction::min('posted_at');
 
-        return $earliestDate ?? today()->toDateTimeString();
+        return $earliestDate ?? company_today()->toDateTimeString();
     }
 
     public function getUnpaidClientInvoices(?string $asOfDate = null): Builder
