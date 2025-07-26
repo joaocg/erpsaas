@@ -5,9 +5,7 @@ namespace App\Providers;
 use Akaunting\Money\Currency;
 use Akaunting\Money\Money;
 use App\Enums\Accounting\AdjustmentComputation;
-use App\Enums\Setting\DateFormat;
 use App\Models\Accounting\AccountSubtype;
-use App\Models\Setting\Localization;
 use App\Services\CompanySettingsService;
 use App\Utilities\Accounting\AccountCode;
 use App\Utilities\Currency\CurrencyAccessor;
@@ -173,24 +171,17 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         TextColumn::macro('defaultDateFormat', function (): static {
-            $localization = Localization::firstOrFail();
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? company_now()->timezoneName;
-
-            $this->date($dateFormat, $timezone);
+            $this->date($dateFormat);
 
             return $this;
         });
 
         DatePicker::macro('defaultDateFormat', function (): static {
-            $localization = Localization::firstOrFail();
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $dateFormat = $localization->date_format->value ?? DateFormat::DEFAULT;
-            $timezone = $localization->timezone ?? company_now()->timezoneName;
-
-            $this->displayFormat($dateFormat)
-                ->timezone($timezone);
+            $this->displayFormat($dateFormat);
 
             return $this;
         });
@@ -492,10 +483,11 @@ class MacroServiceProvider extends ServiceProvider
         });
 
         Carbon::macro('toDefaultDateFormat', function () {
-            $companyId = auth()->user()?->current_company_id;
-            $dateFormat = CompanySettingsService::getDefaultDateFormat($companyId);
+            $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            return $this->format($dateFormat);
+            $this->format($dateFormat);
+
+            return $this;
         });
 
         ExportColumn::macro('money', function () {
