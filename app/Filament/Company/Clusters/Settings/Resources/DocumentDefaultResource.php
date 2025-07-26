@@ -86,7 +86,6 @@ class DocumentDefaultResource extends Resource
                 Forms\Components\Grid::make(1)
                     ->schema([
                         Forms\Components\FileUpload::make('logo')
-                            ->hidden(is_demo_environment())
                             ->maxSize(1024)
                             ->localizeLabel()
                             ->openable()

@@ -164,7 +164,6 @@ class CompanyProfile extends Page
                     ->openable()
                     ->maxSize(2048)
                     ->localizeLabel()
-                    ->hidden(is_demo_environment())
                     ->visibility('public')
                     ->disk('public')
                     ->directory('logos/company')
