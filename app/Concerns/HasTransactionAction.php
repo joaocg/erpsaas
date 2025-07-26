@@ -8,7 +8,6 @@ use App\Filament\Forms\Components\CustomTableRepeater;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Transaction;
 use App\Models\Banking\BankAccount;
-use App\Services\CompanySettingsService;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use Awcodes\TableRepeater\Header;
@@ -40,7 +39,7 @@ trait HasTransactionAction
     protected function getFormDefaultsForType(TransactionType $type): array
     {
         $commonDefaults = [
-            'posted_at' => now(),
+            'posted_at' => company_today()->toDateString(),
         ];
 
         return match ($type) {
@@ -84,7 +83,6 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
-                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),
@@ -127,7 +125,6 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
-                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description'),
@@ -210,7 +207,6 @@ trait HasTransactionAction
             ->schema([
                 Forms\Components\DatePicker::make('posted_at')
                     ->label('Date')
-                    ->timezone(CompanySettingsService::getDefaultTimezone())
                     ->softRequired(),
                 Forms\Components\TextInput::make('description')
                     ->label('Description')
