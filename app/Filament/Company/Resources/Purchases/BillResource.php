@@ -614,8 +614,8 @@ class BillResource extends Resource
                         ->beforeReplicaSaved(function (Bill $replica) {
                             $replica->status = BillStatus::Open;
                             $replica->bill_number = Bill::getNextDocumentNumber();
-                            $replica->date = now();
-                            $replica->due_date = now()->addDays($replica->company->defaultBill->payment_terms->getDays());
+                            $replica->date = company_today();
+                            $replica->due_date = company_today()->addDays($replica->company->defaultBill->payment_terms->getDays());
                         })
                         ->withReplicatedRelationships(['lineItems'])
                         ->withExcludedRelationshipAttributes('lineItems', [
