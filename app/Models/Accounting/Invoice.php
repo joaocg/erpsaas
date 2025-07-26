@@ -206,7 +206,7 @@ class Invoice extends Document
 
     public function shouldBeOverdue(): bool
     {
-        return $this->due_date->isBefore(today()) && $this->canBeOverdue();
+        return $this->due_date->isBefore(company_today()) && $this->canBeOverdue();
     }
 
     public function isDraft(): bool
@@ -369,7 +369,7 @@ class Invoice extends Document
 
         $this->createApprovalTransaction();
 
-        $approvedAt ??= now();
+        $approvedAt ??= company_now();
 
         $this->update([
             'approved_at' => $approvedAt,
@@ -613,7 +613,7 @@ class Invoice extends Document
 
     public function markAsSent(?Carbon $sentAt = null): void
     {
-        $sentAt ??= now();
+        $sentAt ??= company_now();
 
         $this->update([
             'status' => InvoiceStatus::Sent,
@@ -623,7 +623,7 @@ class Invoice extends Document
 
     public function markAsViewed(?Carbon $viewedAt = null): void
     {
-        $viewedAt ??= now();
+        $viewedAt ??= company_now();
 
         $this->update([
             'status' => InvoiceStatus::Viewed,
@@ -654,8 +654,8 @@ class Invoice extends Document
             ->beforeReplicaSaved(function (self $original, self $replica) {
                 $replica->status = InvoiceStatus::Draft;
                 $replica->invoice_number = self::getNextDocumentNumber();
-                $replica->date = now();
-                $replica->due_date = now()->addDays($original->company->defaultInvoice->payment_terms->getDays());
+                $replica->date = company_today();
+                $replica->due_date = company_today()->addDays($original->company->defaultInvoice->payment_terms->getDays());
             })
             ->databaseTransaction()
             ->after(function (self $original, self $replica) {
