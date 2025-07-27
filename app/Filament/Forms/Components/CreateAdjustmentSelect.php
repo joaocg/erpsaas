@@ -8,7 +8,6 @@ use App\Enums\Accounting\AdjustmentScope;
 use App\Enums\Accounting\AdjustmentStatus;
 use App\Enums\Accounting\AdjustmentType;
 use App\Models\Accounting\Adjustment;
-use App\Services\CompanySettingsService;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
@@ -196,10 +195,8 @@ class CreateAdjustmentSelect extends Select
 
             Group::make()
                 ->schema([
-                    DateTimePicker::make('start_date')
-                        ->timezone(CompanySettingsService::getDefaultTimezone()),
+                    DateTimePicker::make('start_date'),
                     DateTimePicker::make('end_date')
-                        ->timezone(CompanySettingsService::getDefaultTimezone())
                         ->after('start_date'),
                 ])
                 ->visible(function (Get $get) {

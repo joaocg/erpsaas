@@ -10,7 +10,6 @@ use App\Enums\Accounting\AdjustmentType;
 use App\Filament\Company\Clusters\Settings;
 use App\Filament\Company\Clusters\Settings\Resources\AdjustmentResource\Pages;
 use App\Models\Accounting\Adjustment;
-use App\Services\CompanySettingsService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -193,7 +192,6 @@ class AdjustmentResource extends Resource
                         ->form([
                             Forms\Components\DateTimePicker::make('paused_until')
                                 ->label('Auto-resume date')
-                                ->timezone(CompanySettingsService::getDefaultTimezone())
                                 ->helperText('When should this adjustment automatically resume? Leave empty to keep paused indefinitely.')
                                 ->after('now'),
                             Forms\Components\Textarea::make('status_reason')
@@ -253,7 +251,6 @@ class AdjustmentResource extends Resource
                         ->form([
                             Forms\Components\DateTimePicker::make('paused_until')
                                 ->label('Auto-resume date')
-                                ->timezone(CompanySettingsService::getDefaultTimezone())
                                 ->helperText('When should these adjustments automatically resume? Leave empty to keep paused indefinitely.')
                                 ->after('now'),
                             Forms\Components\Textarea::make('status_reason')
