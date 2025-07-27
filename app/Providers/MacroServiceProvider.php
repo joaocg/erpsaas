@@ -355,7 +355,7 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $timezone ??= $column->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+                $timezone ??= CompanySettingsService::getDefaultTimezone();
 
                 // Use shiftTimezone to shift UTC calendar date to the specified timezone
                 // Using setTimezone would convert which is wrong for calendar dates
@@ -386,7 +386,7 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $timezone ??= $entry->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+                $timezone ??= CompanySettingsService::getDefaultTimezone();
 
                 // Use shiftTimezone to shift UTC calendar date to the specified timezone
                 // Using setTimezone would convert which is wrong for calendar dates
