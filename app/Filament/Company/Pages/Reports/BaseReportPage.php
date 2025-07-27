@@ -122,7 +122,7 @@ abstract class BaseReportPage extends Page
         if ($endDateField && ! $startDateField) {
             $this->setFilterState('dateRange', $this->getDefaultDateRange());
             $defaultEndDate = Carbon::parse($this->fiscalYearEndDate);
-            $this->setFilterState($endDateField, $defaultEndDate->isFuture() ? now()->endOfDay()->toDateTimeString() : $defaultEndDate->endOfDay()->toDateTimeString());
+            $this->setFilterState($endDateField, $defaultEndDate->isFuture() ? company_now()->endOfDay()->toDateTimeString() : $defaultEndDate->endOfDay()->toDateTimeString());
 
             return;
         }
@@ -177,7 +177,7 @@ abstract class BaseReportPage extends Page
     public function setDateRange(Carbon $start, Carbon $end): void
     {
         $this->setFilterState('startDate', $start->startOfDay()->toDateTimeString());
-        $this->setFilterState('endDate', $end->isFuture() ? now()->endOfDay()->toDateTimeString() : $end->endOfDay()->toDateTimeString());
+        $this->setFilterState('endDate', $end->isFuture() ? company_now()->endOfDay()->toDateTimeString() : $end->endOfDay()->toDateTimeString());
     }
 
     public function getFormattedStartDate(): string
