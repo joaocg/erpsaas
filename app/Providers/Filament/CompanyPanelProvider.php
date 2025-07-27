@@ -283,6 +283,7 @@ class CompanyPanelProvider extends PanelProvider
 
         Tables\Table::configureUsing(static function (Tables\Table $table): void {
             $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat();
+            $table::$defaultTimeDisplayFormat = CompanySettingsService::getDefaultTimeFormat();
             $table::$defaultDateTimeDisplayFormat = CompanySettingsService::getDefaultDateTimeFormat();
 
             $table
