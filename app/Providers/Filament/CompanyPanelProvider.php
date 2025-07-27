@@ -280,9 +280,6 @@ class CompanyPanelProvider extends PanelProvider
         Tables\Actions\CreateAction::configureUsing(static fn (Tables\Actions\CreateAction $action) => FilamentComponentConfigurator::configureActionModals($action));
         Tables\Actions\DeleteAction::configureUsing(static fn (Tables\Actions\DeleteAction $action) => FilamentComponentConfigurator::configureDeleteAction($action));
         Tables\Actions\DeleteBulkAction::configureUsing(static fn (Tables\Actions\DeleteBulkAction $action) => FilamentComponentConfigurator::configureDeleteAction($action));
-        Forms\Components\DateTimePicker::configureUsing(static function (Forms\Components\DateTimePicker $component) {
-            $component->native(false);
-        });
 
         Tables\Table::configureUsing(static function (Tables\Table $table): void {
             $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat(session('current_company_id') ?? auth()->user()->current_company_id);

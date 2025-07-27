@@ -9,7 +9,6 @@ use App\Filament\Company\Pages\Concerns\HasTableColumnToggleForm;
 use App\Filament\Company\Pages\Reports;
 use App\Filament\Forms\Components\DateRangeSelect;
 use App\Models\Company;
-use App\Services\CompanySettingsService;
 use App\Services\DateRangeService;
 use App\Support\Column;
 use Filament\Actions\Action;
@@ -92,6 +91,7 @@ abstract class BaseReportPage extends Page
     {
         $flatFields = $this->getFiltersForm()->getFlatFields();
 
+        /** @var DateRangeSelect|null $dateRangeField */
         $dateRangeField = Arr::first($flatFields, static fn ($field) => $field instanceof DateRangeSelect);
 
         if (! $dateRangeField) {
@@ -254,7 +254,6 @@ abstract class BaseReportPage extends Page
         return DatePicker::make('startDate')
             ->label('Start date')
             ->live()
-            ->timezone(CompanySettingsService::getDefaultTimezone())
             ->afterStateUpdated(static function ($state, Set $set) {
                 $set('dateRange', 'Custom');
             });
@@ -265,7 +264,6 @@ abstract class BaseReportPage extends Page
         return DatePicker::make('endDate')
             ->label('End date')
             ->live()
-            ->timezone(CompanySettingsService::getDefaultTimezone())
             ->afterStateUpdated(static function (Set $set) {
                 $set('dateRange', 'Custom');
             });
