@@ -282,7 +282,8 @@ class CompanyPanelProvider extends PanelProvider
         Tables\Actions\DeleteBulkAction::configureUsing(static fn (Tables\Actions\DeleteBulkAction $action) => FilamentComponentConfigurator::configureDeleteAction($action));
 
         Tables\Table::configureUsing(static function (Tables\Table $table): void {
-            $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat(session('current_company_id') ?? auth()->user()->current_company_id);
+            $table::$defaultDateDisplayFormat = CompanySettingsService::getDefaultDateFormat();
+            $table::$defaultDateTimeDisplayFormat = CompanySettingsService::getDefaultDateTimeFormat();
 
             $table
                 ->paginationPageOptions([5, 10, 25, 50, 100])

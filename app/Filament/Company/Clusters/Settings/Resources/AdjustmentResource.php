@@ -81,10 +81,8 @@ class AdjustmentResource extends Resource
                     ->columns(),
                 Forms\Components\Section::make('Dates')
                     ->schema([
-                        Forms\Components\DateTimePicker::make('start_date')
-                            ->timezone(CompanySettingsService::getDefaultTimezone()),
+                        Forms\Components\DateTimePicker::make('start_date'),
                         Forms\Components\DateTimePicker::make('end_date')
-                            ->timezone(CompanySettingsService::getDefaultTimezone())
                             ->after('start_date'),
                     ])
                     ->columns()
