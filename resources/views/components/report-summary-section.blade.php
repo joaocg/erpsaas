@@ -1,3 +1,8 @@
+@php
+    use App\Utilities\Currency\CurrencyAccessor;
+@endphp
+
+
 @props([
     'reportLoaded' => false,
     'summaryData' => [],
@@ -9,17 +14,18 @@
         @if($reportLoaded)
             <div class="flex flex-col md:flex-row items-center md:items-end text-center justify-center gap-4 md:gap-8">
                 @foreach($summaryData as $summary)
-                    <div class="text-sm">
-                        <div class="text-gray-600 dark:text-gray-200 font-medium mb-2">{{ $summary['label'] }}</div>
+                    <div class="text-sm w-36 flex-shrink-0">
+                        <div
+                            class="text-gray-600 dark:text-gray-200 font-medium mb-2 text-center">{{ $summary['label'] }}</div>
 
                         @php
                             $isTargetLabel = $summary['label'] === $targetLabel;
-                            $isPositive = money($summary['value'], \App\Utilities\Currency\CurrencyAccessor::getDefaultCurrency())->isPositive();
+                            $isPositive = money($summary['value'], CurrencyAccessor::getDefaultCurrency())->isPositive();
                         @endphp
 
                         <strong
                             @class([
-                                'text-lg',
+                                'text-lg text-center block',
                                 'text-success-700 dark:text-success-400' => $isTargetLabel && $isPositive,
                                 'text-danger-700 dark:text-danger-400' => $isTargetLabel && ! $isPositive,
                             ])
