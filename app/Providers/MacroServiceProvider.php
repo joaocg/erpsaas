@@ -488,10 +488,18 @@ class MacroServiceProvider extends ServiceProvider
             return $this->format($dateFormat);
         });
 
-        Carbon::macro('inCompanyTimezone', function () {
+        Carbon::macro('toCompanyTimezone', function () {
             $timezone = CompanySettingsService::getDefaultTimezone();
 
+            // This will convert the date to the company's timezone, possibly changing the date and time
             return $this->setTimezone($timezone);
+        });
+
+        Carbon::macro('asCompanyTimezone', function () {
+            $timezone = CompanySettingsService::getDefaultTimezone();
+
+            // This will only change the timezone without converting the date and time
+            return $this->shiftTimezone($timezone);
         });
 
         ExportColumn::macro('money', function () {
