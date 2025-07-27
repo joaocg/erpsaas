@@ -89,7 +89,7 @@ class DateRangeService
 
                 $expectedEnd = $expectedEnd->isFuture() ? company_today() : $expectedEnd;
 
-                if ($startDate->eq($expectedStart) && $endDate->eq($expectedEnd)) {
+                if ($startDate->isSameDay($expectedStart) && $endDate->isSameDay($expectedEnd)) {
                     return $key; // Return the matching range key (e.g., "FY-2024")
                 }
             }

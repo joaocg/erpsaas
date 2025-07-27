@@ -485,9 +485,13 @@ class MacroServiceProvider extends ServiceProvider
         Carbon::macro('toDefaultDateFormat', function () {
             $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $this->format($dateFormat);
+            return $this->format($dateFormat);
+        });
 
-            return $this;
+        Carbon::macro('inCompanyTimezone', function () {
+            $timezone = CompanySettingsService::getDefaultTimezone();
+
+            return $this->setTimezone($timezone);
         });
 
         ExportColumn::macro('money', function () {
