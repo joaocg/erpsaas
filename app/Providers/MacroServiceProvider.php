@@ -355,7 +355,7 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $timezone ??= $column->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+                $timezone ??= CompanySettingsService::getDefaultTimezone();
 
                 // Use shiftTimezone to shift UTC calendar date to the specified timezone
                 // Using setTimezone would convert which is wrong for calendar dates
@@ -386,7 +386,7 @@ class MacroServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $timezone ??= $entry->getTimezone() ?? CompanySettingsService::getDefaultTimezone();
+                $timezone ??= CompanySettingsService::getDefaultTimezone();
 
                 // Use shiftTimezone to shift UTC calendar date to the specified timezone
                 // Using setTimezone would convert which is wrong for calendar dates
@@ -485,9 +485,21 @@ class MacroServiceProvider extends ServiceProvider
         Carbon::macro('toDefaultDateFormat', function () {
             $dateFormat = CompanySettingsService::getDefaultDateFormat();
 
-            $this->format($dateFormat);
+            return $this->format($dateFormat);
+        });
 
-            return $this;
+        Carbon::macro('toCompanyTimezone', function () {
+            $timezone = CompanySettingsService::getDefaultTimezone();
+
+            // This will convert the date to the company's timezone, possibly changing the date and time
+            return $this->setTimezone($timezone);
+        });
+
+        Carbon::macro('asCompanyTimezone', function () {
+            $timezone = CompanySettingsService::getDefaultTimezone();
+
+            // This will only change the timezone without converting the date and time
+            return $this->shiftTimezone($timezone);
         });
 
         ExportColumn::macro('money', function () {

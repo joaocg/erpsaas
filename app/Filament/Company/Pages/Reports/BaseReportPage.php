@@ -9,7 +9,6 @@ use App\Filament\Company\Pages\Concerns\HasTableColumnToggleForm;
 use App\Filament\Company\Pages\Reports;
 use App\Filament\Forms\Components\DateRangeSelect;
 use App\Models\Company;
-use App\Services\CompanySettingsService;
 use App\Services\DateRangeService;
 use App\Support\Column;
 use Filament\Actions\Action;
@@ -92,6 +91,7 @@ abstract class BaseReportPage extends Page
     {
         $flatFields = $this->getFiltersForm()->getFlatFields();
 
+        /** @var DateRangeSelect|null $dateRangeField */
         $dateRangeField = Arr::first($flatFields, static fn ($field) => $field instanceof DateRangeSelect);
 
         if (! $dateRangeField) {
@@ -122,7 +122,7 @@ abstract class BaseReportPage extends Page
         if ($endDateField && ! $startDateField) {
             $this->setFilterState('dateRange', $this->getDefaultDateRange());
             $defaultEndDate = Carbon::parse($this->fiscalYearEndDate);
-            $this->setFilterState($endDateField, $defaultEndDate->isFuture() ? now()->endOfDay()->toDateTimeString() : $defaultEndDate->endOfDay()->toDateTimeString());
+            $this->setFilterState($endDateField, $defaultEndDate->isFuture() ? company_today()->toDateString() : $defaultEndDate->toDateString());
 
             return;
         }
@@ -176,8 +176,8 @@ abstract class BaseReportPage extends Page
 
     public function setDateRange(Carbon $start, Carbon $end): void
     {
-        $this->setFilterState('startDate', $start->startOfDay()->toDateTimeString());
-        $this->setFilterState('endDate', $end->isFuture() ? now()->endOfDay()->toDateTimeString() : $end->endOfDay()->toDateTimeString());
+        $this->setFilterState('startDate', $start->toDateString());
+        $this->setFilterState('endDate', $end->isFuture() ? company_today()->toDateString() : $end->toDateString());
     }
 
     public function getFormattedStartDate(): string
@@ -254,7 +254,6 @@ abstract class BaseReportPage extends Page
         return DatePicker::make('startDate')
             ->label('Start date')
             ->live()
-            ->timezone(CompanySettingsService::getDefaultTimezone())
             ->afterStateUpdated(static function ($state, Set $set) {
                 $set('dateRange', 'Custom');
             });
@@ -265,7 +264,6 @@ abstract class BaseReportPage extends Page
         return DatePicker::make('endDate')
             ->label('End date')
             ->live()
-            ->timezone(CompanySettingsService::getDefaultTimezone())
             ->afterStateUpdated(static function (Set $set) {
                 $set('dateRange', 'Custom');
             });

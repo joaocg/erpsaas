@@ -104,7 +104,7 @@ class Localization extends Model
 
     public function getDateTimeFormatAttribute(): string
     {
-        return $this->date_format . ' ' . $this->time_format;
+        return $this->date_format->value . ' ' . $this->time_format->value;
     }
 
     public static function getAllLanguages(): array
