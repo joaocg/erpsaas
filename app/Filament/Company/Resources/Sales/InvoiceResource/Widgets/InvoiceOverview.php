@@ -83,6 +83,8 @@ class InvoiceOverview extends EnhancedStatsOverviewWidget
 
             if ($driver === 'pgsql') {
                 $query->selectRaw('AVG(EXTRACT(EPOCH FROM (paid_at - approved_at)) / 86400) as avg_days');
+            } elseif ($driver === 'sqlite') {
+                $query->selectRaw('AVG(julianday(paid_at) - julianday(approved_at)) as avg_days');
             } else {
                 $query->selectRaw('AVG(TIMESTAMPDIFF(DAY, approved_at, paid_at)) as avg_days');
             }
