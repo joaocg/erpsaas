@@ -21,6 +21,7 @@ use Filament\Actions\ReplicateAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -212,7 +213,8 @@ class Estimate extends Document
             && ! $this->wasConverted();
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->whereIn('status', [
             EstimateStatus::Unsent,
