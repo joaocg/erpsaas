@@ -26,6 +26,7 @@ use Filament\Notifications\Notification;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -181,13 +182,15 @@ class Invoice extends Document
         return $this->amount_due;
     }
 
-    public function scopeUnpaid(Builder $query): Builder
+    #[Scope]
+    protected function unpaid(Builder $query): Builder
     {
         return $query->whereIn('status', InvoiceStatus::unpaidStatuses());
     }
 
     // TODO: Consider storing the numeric part of the invoice number separately
-    public function scopeByNumber(Builder $query, string $number): Builder
+    #[Scope]
+    protected function byNumber(Builder $query, string $number): Builder
     {
         $invoicePrefix = DocumentDefault::invoice()->first()->number_prefix ?? '';
 
@@ -197,7 +200,8 @@ class Invoice extends Document
         });
     }
 
-    public function scopeOverdue(Builder $query): Builder
+    #[Scope]
+    protected function overdue(Builder $query): Builder
     {
         return $query
             ->unpaid()

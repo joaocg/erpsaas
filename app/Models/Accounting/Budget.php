@@ -12,6 +12,7 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -136,22 +137,26 @@ class Budget extends Model
         return $this->allocations()->exists();
     }
 
-    public function scopeDraft(Builder $query): Builder
+    #[Scope]
+    protected function draft(Builder $query): Builder
     {
         return $query->where('status', BudgetStatus::Draft);
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): Builder
     {
         return $query->where('status', BudgetStatus::Active);
     }
 
-    public function scopeClosed(Builder $query): Builder
+    #[Scope]
+    protected function closed(Builder $query): Builder
     {
         return $query->where('status', BudgetStatus::Closed);
     }
 
-    public function scopeCurrentlyActive(Builder $query): Builder
+    #[Scope]
+    protected function currentlyActive(Builder $query): Builder
     {
         return $query->active()
             ->where('start_date', '<=', company_now())

@@ -22,6 +22,7 @@ use Filament\Actions\MountableAction;
 use Filament\Actions\ReplicateAction;
 use Illuminate\Database\Eloquent\Attributes\CollectedBy;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -196,7 +197,8 @@ class Bill extends Document
         return $this->initialTransaction()->exists();
     }
 
-    public function scopeUnpaid(Builder $query): Builder
+    #[Scope]
+    protected function unpaid(Builder $query): Builder
     {
         return $query->whereIn('status', [
             BillStatus::Open,
