@@ -380,9 +380,17 @@ class AccountService
         $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
-        $datediff = $driver === 'pgsql'
-            ? '(?::date - invoices.due_date::date)'
-            : 'DATEDIFF(?, invoices.due_date)';
+        switch ($driver) {
+            case 'pgsql':
+                $datediff = '(?::date - invoices.due_date::date)';
+                break;
+            case 'sqlite':
+                $datediff = 'JULIANDAY(?) - JULIANDAY(invoices.due_date)';
+                break;
+            default:
+                $datediff = 'DATEDIFF(?, invoices.due_date)';
+                break;
+        }
 
         return Invoice::query()
             ->select([
@@ -403,9 +411,17 @@ class AccountService
         $asOfDate = $asOfDate ?? company_today()->toDateString();
         $driver = DB::getDriverName();
 
-        $datediff = $driver === 'pgsql'
-            ? '(?::date - bills.due_date::date)'
-            : 'DATEDIFF(?, bills.due_date)';
+        switch ($driver) {
+            case 'pgsql':
+                $datediff = '(?::date - bills.due_date::date)';
+                break;
+            case 'sqlite':
+                $datediff = 'JULIANDAY(?) - JULIANDAY(bills.due_date)';
+                break;
+            default:
+                $datediff = 'DATEDIFF(?, bills.due_date)';
+                break;
+        }
 
         return Bill::query()
             ->select([
