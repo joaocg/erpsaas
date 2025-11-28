@@ -24,8 +24,11 @@ class WahaClient
         try {
             $response = Http::withHeaders([
                 'X-Api-Key' => $token,
-            ])->post("{$endpoint}/api/{$session}/webhook", [
-                'url' => $callbackUrl,
+            ])->post("{$endpoint}/api/sessions/{$session}/", [
+                'webhook' => [
+                    'url' => $callbackUrl,
+                    'enabled' => true,
+                ],
             ]);
 
             if ($response->failed()) {
