@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\CompanyOwned;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,10 +11,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attachment extends Model
 {
+    use CompanyOwned;
     use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'path',
         'original_name',
