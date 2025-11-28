@@ -38,7 +38,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
      * @var array<int, string>
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name',
+        'email',
+        'password',
+        'phone_e164',
+        'whatsapp_opt_in_at',
     ];
 
     /**
@@ -58,6 +62,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasDefaul
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'whatsapp_opt_in_at' => 'datetime',
     ];
 
     /**
