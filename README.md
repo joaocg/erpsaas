@@ -257,6 +257,20 @@ The testing process automatically handles refreshing and seeding the test databa
 migration is required. For more information on how to write and run tests using
 Pest, refer to the official documentation: [Pest Documentation](https://pestphp.com/docs).
 
+## WhatsApp / WAHA
+
+### Webhook
+
+O WAHA entrega eventos de mensagens na rota pública `POST /api/webhooks/waha`, já registrada em `routes/api.php` e sem
+middleware de autenticação.
+
+Para registrar automaticamente essa URL na instância do WAHA, você pode usar o comando abaixo (ele utiliza a variável
+`WAHA_WEBHOOK_URL` ou, se não definida, `APP_URL/api/webhooks/waha`).
+
+```bash
+php artisan waha:webhook:sync
+```
+
 ## Dependencies
 
 - [filamentphp/filament](https://github.com/filamentphp/filament) - A collection of beautiful full-stack components

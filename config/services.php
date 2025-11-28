@@ -55,6 +55,8 @@ return [
     'waha' => [
         'url' => env('WAHA_API_URL'),
         'token' => env('WAHA_API_TOKEN'),
+        'session' => env('WAHA_SESSION', 'default'),
+        'webhook_url' => env('WAHA_WEBHOOK_URL'),
     ],
 
     'gemini' => [
