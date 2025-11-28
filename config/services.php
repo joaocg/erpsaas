@@ -51,4 +51,14 @@ return [
         'client_secret' => env('PLAID_CLIENT_SECRET'),
         'environment' => env('PLAID_ENVIRONMENT', 'sandbox'),
     ],
+
+    'waha' => [
+        'url' => env('WAHA_API_URL'),
+        'token' => env('WAHA_API_TOKEN'),
+    ],
+
+    'gemini' => [
+        'url' => env('GEMINI_API_URL'),
+        'key' => env('GEMINI_API_KEY'),
+    ],
 ];
