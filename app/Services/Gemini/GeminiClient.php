@@ -5,7 +5,7 @@ namespace App\Services\Gemini;
 use Gemini\Client;
 use Gemini\Data\Blob;
 use Gemini\Enums\MimeType;
-use Gemini;
+use \Gemini;
 use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Support\Facades\Log;
 
