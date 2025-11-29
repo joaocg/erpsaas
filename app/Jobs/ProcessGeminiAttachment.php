@@ -58,7 +58,7 @@ class ProcessGeminiAttachment implements ShouldQueue
         $storagePath = $attachment->path;
 
         // Se o arquivo não estiver no storage (pode ser um caminho externo), envia o caminho original
-        if (! Storage::exists($storagePath)) {
+        if (! Storage::disk('local')->exists($storagePath)) {
             Log::warning('Attachment not found in storage for Gemini processing.', [
                 'attachment_id' => $attachment->id,
                 'path'          => $storagePath,
@@ -67,7 +67,7 @@ class ProcessGeminiAttachment implements ShouldQueue
             $result = $geminiClient->analyze($storagePath, $context);
         } else {
             // Obtém o caminho absoluto e envia para a Gemini
-            $localPath = Storage::path($storagePath);
+            $localPath = Storage::disk('local')->path($storagePath);
             $result    = $geminiClient->analyze($localPath, $context);
         }
 

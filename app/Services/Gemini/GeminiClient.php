@@ -6,8 +6,14 @@ use Gemini\Client;
 use Gemini\Data\Blob;
 use Gemini\Enums\MimeType;
 use \Gemini;
-use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Support\Facades\Log;
+
+use GeminiAPI\Client AS GeminiAPIClient;
+use GeminiAPI\Enums\MimeType AS GeminiAPIMimeType;
+use GeminiAPI\Resources\ModelName;
+use GeminiAPI\Resources\Parts\ImagePart;
+use GeminiAPI\Resources\Parts\TextPart;
+
 
 class GeminiClient
 {
@@ -30,7 +36,7 @@ class GeminiClient
         // Lê o arquivo e codifica em base64
         $fileContents = file_get_contents($path);
         $base64File   = base64_encode($fileContents);
-        $mimeType     = mime_content_type($path) ?: 'image/jpeg';
+        $mimeType     = mime_content_type($path) ?? GeminiAPIMimeType::IMAGE_JPEG;
 
 
         // Prompt em português instruindo a Gemini a retornar apenas JSON
@@ -42,17 +48,28 @@ class GeminiClient
         // Acrescenta contexto quando necessário
         $prompt .= $this->formatContextPrompt($context);
 
+
         try {
+
+            $client = new GeminiAPIClient($apiKey);
+            $response = $client->generativeModel(ModelName::GEMINI_PRO)->generateContent(
+                new TextPart($prompt),
+                new ImagePart(
+                    $mimeType,
+                    $base64File,
+                ),
+            );
+
             // Constrói o cliente SDK e chama o modelo
-            $response = $this->buildClient($apiKey)
-                ->generativeModel($this->model())
-                ->generateContent(
-                    $prompt,
-                    new Blob(
-                        mimeType: $this->resolveMimeType($mimeType),
-                        data: $base64File,
-                    )
-                );
+//            $response = $this->buildClient($apiKey)
+//                ->generativeModel($this->model())
+//                ->generateContent(
+//                    $prompt,
+//                    new Blob(
+//                        mimeType: $this->resolveMimeType($mimeType),
+//                        data: $base64File,
+//                    )
+//                );
 
 
             // Decodifica a resposta em um array
@@ -67,7 +84,7 @@ class GeminiClient
 
             // Caso o retorno não seja o JSON esperado
             Log::warning('Gemini response did not contain expected JSON text content.', [
-                'response' => $response->toArray(),
+                'response' => $response,
             ]);
         } catch (\Throwable $exception) {
             Log::error('Gemini request failed', [
@@ -80,7 +97,7 @@ class GeminiClient
         return $this->fallbackResponse($context);
     }
 
-    protected function decodeResponse(GenerateContentResponse $response): ?array
+    protected function decodeResponse($response): ?array
     {
         try {
             $text = $response->text();
