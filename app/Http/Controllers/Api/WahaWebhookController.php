@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Models\WebhookLog;
 use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class WahaWebhookController extends Controller
@@ -19,26 +18,40 @@ class WahaWebhookController extends Controller
     {
         $payload = $request->all();
 
+        // Log bruto do webhook pra análise futura
         WebhookLog::create([
             'provider' => 'waha',
             'payload' => $payload,
             'processed_at' => now(),
         ]);
 
-        $message = $this->extractIncomingMessage($payload);
-        $phone = $this->extractPhone($message ?? $payload);
+        // Normaliza o webhook da WAHA em algo que a gente consiga usar
+        $normalized = $this->extractIncomingMessage($payload);
+
+        // Se não for uma mensagem válida (ou é mensagem nossa / status / outro evento), só responde OK
+        if (! $normalized) {
+            return response()->json(['status' => 'ignored']);
+        }
+
+        $phone = $normalized['phone'];      // ex: 558897412992@c.us ou 558897412992@s.whatsapp.net
+        $text = $normalized['text'];       // texto da mensagem (se tiver)
+        $mediaUrl = $normalized['media_url'];  // URL da imagem/doc (se tiver)
 
         if (! $phone) {
-            Log::warning('WAHA webhook without phone', ['payload' => Arr::only($payload, ['event', 'payload.event'])]);
-
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
+        /**
+         * Sessão por telefone (usando o chatId da WAHA mesmo, como antes)
+         */
         $session = WhatsappSession::firstOrCreate(
             ['phone_e164' => $phone],
             ['last_message_at' => now()]
         );
 
+        /**
+         * Vincula usuário, se ainda não tiver
+         */
         if (! $session->user_id) {
             $user = User::where('phone_e164', $phone)->first();
 
@@ -48,8 +61,9 @@ class WahaWebhookController extends Controller
             }
         }
 
-        $mediaUrl = $this->extractMediaUrl($message ?? $payload);
-
+        /**
+         * Se for mídia (imagem/doc), cria Attachment e joga pro Gemini
+         */
         if ($mediaUrl) {
             $attachment = Attachment::create([
                 'user_id' => $session->user_id,
@@ -61,8 +75,9 @@ class WahaWebhookController extends Controller
             ProcessGeminiAttachment::dispatch($attachment);
         }
 
-        $text = $this->extractText($message ?? $payload);
-
+        /**
+         * Se tiver texto, dispara o fluxo de intenção
+         */
         if ($text) {
             HandleWhatsappMessage::dispatch($session->id, $text);
         }
@@ -70,48 +85,137 @@ class WahaWebhookController extends Controller
         return response()->json(['status' => 'accepted']);
     }
 
+    /**
+     * Normaliza os diferentes formatos de webhook da WAHA
+     * e retorna apenas mensagens ENTRANTES do cliente.
+     *
+     * Retorna:
+     * [
+     *   'phone'     => string|null,
+     *   'text'      => string|null,
+     *   'media_url' => string|null,
+     * ]
+     *
+     * ou null se não for algo que devamos processar.
+     */
     protected function extractIncomingMessage(array $payload): ?array
     {
-        $messages = data_get($payload, 'payload.data.messages');
+        $topEvent = data_get($payload, 'event');           // "message" ou "engine.event"
+        $innerEvent = data_get($payload, 'payload.event');   // ex: "messages.upsert"
+        $mediaUrl = null;
+        $text = null;
+        $phone = null;
+        $fromMe = null;
 
-        if (is_array($messages)) {
-            $incoming = collect($messages)->first(function ($message) {
-                return data_get($message, 'key.fromMe') === false;
-            });
+        /**
+         * FORMATO 1: event = "message"
+         */
+        if ($topEvent === 'message') {
+            $fromMe = data_get($payload, 'payload.fromMe');
 
-            if ($incoming) {
-                return $incoming;
+            /**
+             * Só processa mensagens do cliente (fromMe == false)
+             */
+            if ($fromMe !== false) {
+                return null;
             }
+
+            /**
+             * Ignora status (status@broadcast)
+             */
+            $from = data_get($payload, 'payload.from');
+            if ($from === 'status@broadcast') {
+                return null;
+            }
+
+            /**
+             * Telefone do cliente (chatId)
+             */
+            $phone = $from
+                ?? data_get($payload, 'payload._data.key.remoteJid')
+                ?? data_get($payload, 'payload.participant');
+
+            /**
+             * URL da mídia (imagem/doc)
+             */
+            $mediaUrl =
+                data_get($payload, 'payload.media.url')
+                ?? data_get($payload, 'payload._data.message.imageMessage.url')
+                ?? data_get($payload, 'payload._data.message.documentMessage.url');
+
+            /**
+             * Texto
+             */
+            $text =
+                data_get($payload, 'payload.body')
+                ?? data_get($payload, 'payload._data.message.conversation')
+                ?? data_get($payload, 'payload._data.message.extendedTextMessage.text');
         }
 
-        return data_get($payload, 'messages.0');
-    }
+        /**
+         * FORMATO 2: event = "engine.event" + payload.event = "messages.upsert"
+         */
+        if ($topEvent === 'engine.event' && $innerEvent === 'messages.upsert') {
+            $message = data_get($payload, 'payload.data.messages.0');
 
-    protected function extractPhone(array $message): ?string
-    {
-        $phone = data_get($message, 'key.remoteJid') ?? data_get($message, 'from');
+            if (! $message) {
+                return null;
+            }
 
-        if (! $phone) {
+            $fromMe = data_get($message, 'key.fromMe');
+
+            /**
+             * Só mensagens do cliente
+             */
+            if ($fromMe !== false) {
+                return null;
+            }
+
+            $phone =
+                data_get($message, 'key.remoteJid')
+                ?? data_get($message, 'key.remoteJidAlt')
+                ?? data_get($message, 'key.participant');
+
+            /**
+             * Ignora status
+             */
+            if ($phone === 'status@broadcast') {
+                return null;
+            }
+
+            $mediaUrl =
+                data_get($message, 'message.imageMessage.url')
+                ?? data_get($message, 'message.documentMessage.url');
+
+            $text =
+                data_get($message, 'message.conversation')
+                ?? data_get($message, 'message.extendedTextMessage.text');
+        }
+
+        if (! $phone && ! $text && ! $mediaUrl) {
             return null;
         }
 
-        return preg_replace('/@.*$/', '', $phone);
+        return [
+            'phone' => $this->cleanPhone($phone),
+            'text' => $text,
+            'media_url' => $mediaUrl,
+        ];
     }
 
-    protected function extractMediaUrl(array $message): ?string
+    protected function cleanPhone(?string $number): ?string
     {
-        return data_get($message, 'message.imageMessage.url')
-            ?? data_get($message, 'message.documentMessage.url')
-            ?? data_get($message, 'messages.0.image.url')
-            ?? data_get($message, 'messages.0.document.url')
-            ?? data_get($message, 'media.url');
-    }
+        if (! $number) {
+            return null;
+        }
 
-    protected function extractText(array $message): ?string
-    {
-        return data_get($message, 'message.conversation')
-            ?? data_get($message, 'message.extendedTextMessage.text')
-            ?? data_get($message, 'messages.0.text.body')
-            ?? data_get($message, 'message');
+        // Remove tudo após @
+        $number = explode('@', $number)[0];
+
+        // Remove qualquer sufixo após :
+        $number = explode(':', $number)[0];
+
+        // Mantém só números
+        return preg_replace('/\D/', '', $number);
     }
 }
