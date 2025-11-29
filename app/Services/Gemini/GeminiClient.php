@@ -2,7 +2,9 @@
 
 namespace App\Services\Gemini;
 
-use Illuminate\Support\Facades\Http;
+use Gemini;
+use Gemini\Data\Blob;
+use Gemini\Enums\MimeType;
 use Illuminate\Support\Facades\Log;
 
 class GeminiClient
@@ -10,12 +12,10 @@ class GeminiClient
     public function analyze(string $path, array $context = []): array
     {
         $apiKey = config('services.gemini.key');
-        $endpoint = $this->resolveEndpoint();
+        $baseUrl = $this->resolveBaseUrl();
 
-        if (empty($endpoint) || empty($apiKey)) {
-            Log::warning('Gemini credentials missing or endpoint invalid, returning fallback payload.', [
-                'endpoint' => $endpoint,
-            ]);
+        if (empty($apiKey)) {
+            Log::warning('Gemini credentials missing, returning fallback payload.');
 
             return $this->fallbackResponse($context);
         }
@@ -29,82 +29,77 @@ class GeminiClient
         }
 
         try {
-            $response = Http::acceptJson()->post($endpoint . '?key=' . $apiKey, $this->buildPayload($path, $context));
+            $clientFactory = Gemini::factory()
+                ->withApiKey($apiKey);
 
-            if ($response->successful()) {
-                return $response->json();
+            if ($baseUrl) {
+                $clientFactory->withBaseUrl($baseUrl);
             }
 
-            Log::error('Gemini request failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+            $result = $clientFactory
+                ->make()
+                ->generativeModel(model: config('services.gemini.model', 'gemini-1.5-flash'))
+                ->generateContent($this->buildParts($path, $context));
+
+            return $result->toArray();
         } catch (\Throwable $exception) {
             Log::error('Gemini request failed', [
                 'error' => $exception->getMessage(),
+                'base_url' => $baseUrl,
+                'model' => config('services.gemini.model'),
+                'version' => config('services.gemini.version'),
             ]);
-        }
 
-        return $this->fallbackResponse($context);
+            return $this->fallbackResponse($context);
+        }
     }
 
-    protected function resolveEndpoint(): ?string
+    protected function resolveBaseUrl(): ?string
     {
         $configuredUrl = trim((string) config('services.gemini.url', ''));
 
         if ($configuredUrl !== '' && filter_var($configuredUrl, FILTER_VALIDATE_URL)) {
-            $path = trim(parse_url($configuredUrl, PHP_URL_PATH) ?? '', '/');
-
-            if (str_contains($path, 'models/')) {
-                return rtrim($configuredUrl, '/');
-            }
-
-            // If only the host/base was provided, fall back to composed endpoint.
-            if ($path === '') {
-                return $this->buildEndpointFromBase(rtrim($configuredUrl, '/'));
-            }
+            return rtrim($configuredUrl, '/');
         }
 
-        return $this->buildEndpointFromBase();
+        return $this->buildBaseUrl();
     }
 
-    protected function buildEndpointFromBase(?string $baseUrl = null): ?string
+    protected function buildBaseUrl(?string $baseUrl = null): ?string
     {
         $base = $baseUrl ?? (string) config('services.gemini.base_url');
         $version = trim((string) config('services.gemini.version', 'v1beta'), '/');
-        $model = trim((string) config('services.gemini.model', 'gemini-1.5-flash'));
 
-        if (! filter_var($base, FILTER_VALIDATE_URL) || $version === '' || $model === '') {
+        if (! filter_var($base, FILTER_VALIDATE_URL) || $version === '') {
             return null;
         }
 
-        return rtrim($base, '/') . '/' . $version . '/models/' . $model . ':generateContent';
+        return rtrim($base, '/') . '/' . $version;
     }
 
-    protected function buildPayload(string $path, array $context): array
+    protected function buildParts(string $path, array $context): array
     {
         $fileContents = file_get_contents($path);
         $base64File = base64_encode($fileContents);
-        $mimeType = mime_content_type($path) ?: 'application/octet-stream';
+        $mimeType = $this->resolveMimeType($path);
 
         $prompt = 'Analise o anexo e devolva um JSON com os campos: summary (string), topics (array de strings), amount (número ou null), currency (string) e detected_type (string).';
         $prompt .= $this->formatContextPrompt($context);
 
         return [
-            'contents' => [
-                [
-                    'parts' => array_values(array_filter([
-                        ['text' => $prompt],
-                        [
-                            'inlineData' => [
-                                'mimeType' => $mimeType,
-                                'data' => $base64File,
-                            ],
-                        ],
-                    ])),
-                ],
-            ],
+            $prompt,
+            new Blob(
+                mimeType: $mimeType,
+                data: $base64File,
+            ),
         ];
+    }
+
+    protected function resolveMimeType(string $path): MimeType
+    {
+        $detected = mime_content_type($path) ?: '';
+
+        return MimeType::tryFrom($detected) ?? MimeType::IMAGE_JPEG;
     }
 
     protected function formatContextPrompt(array $context): string
