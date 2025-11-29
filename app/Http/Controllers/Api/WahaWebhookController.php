@@ -32,6 +32,15 @@ class WahaWebhookController extends Controller
          */
         $normalized = $this->extractIncomingMessage($payload);
 
+        if (! $normalized) {
+            Log::info('WAHA normalized message: ignorada (sem conteúdo ou mensagem nossa)', [
+                'event'   => data_get($payload, 'event'),
+                'payload_event' => data_get($payload, 'payload.event'),
+            ]);
+
+            return response()->json(['status' => 'ignored']);
+        }
+
         Log::info('WAHA normalized message', $normalized);
 
         /**
@@ -47,7 +56,6 @@ class WahaWebhookController extends Controller
 
         if (! $phone) {
             Log::warning('WAHA Número ausente.', ['payload' => $normalized]);
-
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
