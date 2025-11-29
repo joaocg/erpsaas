@@ -10,13 +10,12 @@ use App\Models\User;
 use App\Models\WebhookLog;
 use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
 
 class WahaWebhookController extends Controller
 {
@@ -40,7 +39,7 @@ class WahaWebhookController extends Controller
 
         if (! $normalized) {
             Log::info('WAHA normalized message: ignorada (sem conteúdo ou mensagem nossa)', [
-                'event'   => data_get($payload, 'event'),
+                'event' => data_get($payload, 'event'),
                 'payload_event' => data_get($payload, 'payload.event'),
             ]);
 
@@ -62,6 +61,7 @@ class WahaWebhookController extends Controller
 
         if (! $phone) {
             Log::warning('WAHA Número ausente.', ['payload' => $normalized]);
+
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
@@ -306,11 +306,7 @@ class WahaWebhookController extends Controller
         }
     }
 
-    /**
-     * @param string|null $url
-     * @return string
-     */
-    protected function normalizeFileUrl(string $url = null): string
+    protected function normalizeFileUrl(?string $url = null): ?string
     {
         /**
          * Se não for URL, retorna como está
