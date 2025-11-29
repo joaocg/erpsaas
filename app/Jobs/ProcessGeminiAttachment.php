@@ -14,6 +14,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProcessGeminiAttachment implements ShouldQueue
 {
@@ -53,13 +54,19 @@ class ProcessGeminiAttachment implements ShouldQueue
             'currency' => $attachment->gemini_currency,
         ];
 
-        $path = $attachment->path;
+        $storagePath = $attachment->path;
 
-        if (Storage::exists($attachment->path)) {
-            $path = Storage::path($attachment->path);
+        if (! Storage::exists($storagePath)) {
+            Log::warning('Attachment not found in storage for Gemini processing.', [
+                'attachment_id' => $attachment->id,
+                'path' => $storagePath,
+            ]);
+
+            $result = $geminiClient->analyze($storagePath, $context);
+        } else {
+            $localPath = Storage::path($storagePath);
+            $result = $geminiClient->analyze($localPath, $context);
         }
-
-        $result = $geminiClient->analyze($path, $context);
 
         $attachment->update([
             'gemini_status' => 'processed',
