@@ -46,7 +46,8 @@ class WahaWebhookController extends Controller
         $mediaUrl = $normalized['media_url'];  // URL da imagem/doc (se tiver)
 
         if (! $phone) {
-            Log::info('WAHA Número ausente.', $normalized);
+            Log::warning('WAHA Número ausente.', ['payload' => $normalized]);
+
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
