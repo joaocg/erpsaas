@@ -61,10 +61,10 @@ return [
     ],
 
     'gemini' => [
-        'url' => env('GEMINI_API_URL'),
+        'url'      => env('GEMINI_API_URL'),
         'base_url' => env('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com'),
-        'version' => env('GEMINI_API_VERSION', 'v1beta'),
-        'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
-        'key' => env('GEMINI_API_KEY'),
+        'version'  => env('GEMINI_API_VERSION', 'v1beta'),
+        'model'    => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+        'key'      => env('GEMINI_API_KEY'),
     ],
 ];
