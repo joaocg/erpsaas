@@ -29,7 +29,11 @@ class GeminiClient
         }
 
         try {
-            $response = Http::acceptJson()->post($endpoint . '?key=' . $apiKey, $this->buildPayload($path, $context));
+            $response = Http::acceptJson()
+                ->withHeaders([
+                    'X-Goog-Api-Key' => $apiKey,
+                ])
+                ->post($endpoint, $this->buildPayload($path, $context));
 
             if ($response->successful()) {
                 return $response->json();
@@ -38,10 +42,14 @@ class GeminiClient
             Log::error('Gemini request failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
+                'endpoint' => $endpoint,
+                'model' => config('services.gemini.model'),
+                'version' => config('services.gemini.version'),
             ]);
         } catch (\Throwable $exception) {
             Log::error('Gemini request failed', [
                 'error' => $exception->getMessage(),
+                'endpoint' => $endpoint,
             ]);
         }
 
@@ -72,13 +80,19 @@ class GeminiClient
     {
         $base = $baseUrl ?? (string) config('services.gemini.base_url');
         $version = trim((string) config('services.gemini.version', 'v1beta'), '/');
-        $model = trim((string) config('services.gemini.model', 'gemini-1.5-flash'));
+        $model = trim((string) config('services.gemini.model', 'gemini-1.5-flash-latest')); // inlineData é suportado nas variantes 1.5
 
         if (! filter_var($base, FILTER_VALIDATE_URL) || $version === '' || $model === '') {
             return null;
         }
 
-        return rtrim($base, '/') . '/' . $version . '/models/' . $model . ':generateContent';
+        $baseEndpoint = rtrim($base, '/') . '/' . $version . '/models/' . $model;
+
+        if (! str_contains($baseEndpoint, ':generateContent')) {
+            $baseEndpoint .= ':generateContent';
+        }
+
+        return $baseEndpoint;
     }
 
     protected function buildPayload(string $path, array $context): array
