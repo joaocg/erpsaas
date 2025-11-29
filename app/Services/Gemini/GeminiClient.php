@@ -59,7 +59,7 @@ class GeminiClient
         $configuredUrl = trim((string) config('services.gemini.url', ''));
 
         if ($configuredUrl !== '' && filter_var($configuredUrl, FILTER_VALIDATE_URL)) {
-            return rtrim($configuredUrl, '/');
+            return rtrim($configuredUrl, '/') . '/';
         }
 
         return $this->buildBaseUrl();
@@ -74,7 +74,7 @@ class GeminiClient
             return null;
         }
 
-        return rtrim($base, '/') . '/' . $version;
+        return rtrim($base, '/') . '/' . $version . '/';
     }
 
     protected function buildParts(string $path, array $context): array
