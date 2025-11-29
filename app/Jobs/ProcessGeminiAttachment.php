@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProcessGeminiAttachment implements ShouldQueue
 {
@@ -30,10 +31,14 @@ class ProcessGeminiAttachment implements ShouldQueue
 
     public function handle(GeminiClient $geminiClient, FinancialRecordService $financialRecordService): void
     {
-        $attachment = Attachment::find($this->attachment->id);
+        $attachment = Attachment::withoutGlobalScopes()->find($this->attachment->id);
 
         if (! $attachment) {
             return;
+        }
+
+        if ($attachment->user) {
+            Auth::setUser($attachment->user);
         }
 
         $context = [

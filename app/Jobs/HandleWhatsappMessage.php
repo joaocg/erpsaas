@@ -15,6 +15,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
+
 
 class HandleWhatsappMessage implements ShouldQueue
 {
@@ -32,7 +34,7 @@ class HandleWhatsappMessage implements ShouldQueue
         FinancialRecordService $financialRecordService,
         WahaClient $wahaClient
     ): void {
-        $session = WhatsappSession::find($this->sessionId);
+        $session = WhatsappSession::withoutGlobalScopes()->find($this->sessionId);
 
         if (! $session) {
             return;
@@ -45,6 +47,13 @@ class HandleWhatsappMessage implements ShouldQueue
         if ($user && ! $session->user_id) {
             $session->user()->associate($user);
             $session->save();
+        }
+
+        /**
+         * Se tiver usuário, "loga" ele no contexto do job
+         */
+        if ($user) {
+            Auth::setUser($user);
         }
 
         $intent = $intentDetectionService->detect($this->message);
