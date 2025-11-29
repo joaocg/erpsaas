@@ -54,8 +54,6 @@ class GeminiClient
                     )
                 );
 
-            Log::debug('Gemini base64 length', ['bytes' => strlen($fileContents), 'mime' => $mimeType]);
-
 
             // Decodifica a resposta em um array
             $decoded = $this->decodeResponse($response);
@@ -75,6 +73,8 @@ class GeminiClient
             Log::error('Gemini request failed', [
                 'error' => $exception->getMessage(),
             ]);
+
+            Log::debug('Gemini base64 length', ['bytes' => strlen($fileContents), 'mime' => $mimeType]);
         }
 
         return $this->fallbackResponse($context);
