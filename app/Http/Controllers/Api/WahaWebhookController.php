@@ -18,26 +18,35 @@ class WahaWebhookController extends Controller
     {
         $payload = $request->all();
 
-        // Log bruto do webhook pra análise futura
+        /**
+         * Log bruto do webhook pra análise futura
+         */
         WebhookLog::create([
             'provider' => 'waha',
             'payload' => $payload,
             'processed_at' => now(),
         ]);
 
-        // Normaliza o webhook da WAHA em algo que a gente consiga usar
+        /**
+         * Normaliza o webhook da WAHA em algo que a gente consiga usar
+         */
         $normalized = $this->extractIncomingMessage($payload);
 
-        // Se não for uma mensagem válida (ou é mensagem nossa / status / outro evento), só responde OK
+        Log::info('WAHA normalized message', $normalized);
+
+        /**
+         * Se não for uma mensagem válida (ou é mensagem nossa / status / outro evento), só responde OK
+         */
         if (! $normalized) {
             return response()->json(['status' => 'ignored']);
         }
 
-        $phone = $normalized['phone'];      // ex: 558897412992@c.us ou 558897412992@s.whatsapp.net
+        $phone = $normalized['phone'];      // ex: 558897412992 ou 558897412992
         $text = $normalized['text'];       // texto da mensagem (se tiver)
         $mediaUrl = $normalized['media_url'];  // URL da imagem/doc (se tiver)
 
         if (! $phone) {
+            Log::info('WAHA Número ausente.', $normalized);
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
