@@ -57,6 +57,7 @@ return [
         'token' => env('WAHA_API_TOKEN'),
         'session' => env('WAHA_SESSION', 'default'),
         'webhook_url' => env('WAHA_WEBHOOK_URL'),
+        'public_files_base' => env('WAHA_PUBLIC_FILES_BASE', 'https://apicomunica.iete.app'),
     ],
 
     'gemini' => [

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\WebhookLog;
 use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -240,7 +241,7 @@ class WahaWebhookController extends Controller
         return [
             'phone' => $this->cleanPhone($phone),
             'text' => $text,
-            'media_url' => $mediaUrl,
+            'media_url' => $this->normalizeFileUrl($mediaUrl),
         ];
     }
 
@@ -303,5 +304,31 @@ class WahaWebhookController extends Controller
 
             return null;
         }
+    }
+
+    /**
+     * @param string $url
+     * @return string
+     */
+    protected function normalizeFileUrl(string $url): string
+    {
+        /**
+         * Se não for URL, retorna como está
+         */
+        if (! str_starts_with($url, 'http://localhost:3000')) {
+            return $url;
+        }
+
+        $publicBase = rtrim(Config::get('services.waha.public_files_base', ''), '/');
+
+        if (! $publicBase) {
+            return $url;
+        }
+
+        return preg_replace(
+            '#^http://localhost:3000#',
+            $publicBase,
+            $url
+        );
     }
 }
