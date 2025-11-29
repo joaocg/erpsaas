@@ -2,9 +2,6 @@
 
 namespace App\Services\Gemini;
 
-use Gemini;
-use Gemini\Data\Blob;
-use Gemini\Enums\MimeType;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -12,163 +9,148 @@ class GeminiClient
 {
     public function analyze(string $path, array $context = []): array
     {
-        $apiKey = config('services.gemini.key');
+        $endpoint = config('services.gemini.url');      // GEMINI_API_URL já com .../models/...:generateContent
+        $apiKey   = config('services.gemini.key');      // GEMINI_API_KEY
 
-        if (empty($apiKey)) {
-            Log::warning('Gemini credentials missing, returning fallback payload.');
+        if (empty($endpoint) || empty($apiKey)) {
+            Log::warning('Gemini credentials missing, returning fallback payload.', [
+                'endpoint' => $endpoint,
+            ]);
 
             return $this->fallbackResponse($context);
         }
 
-        $content = $this->loadAttachment($path);
+        if (! is_readable($path)) {
+            Log::warning('Gemini could not read attachment contents.', [
+                'path' => $path,
+            ]);
 
-        if ($content === null) {
             return $this->fallbackResponse($context);
         }
 
-        [$fileContents, $mimeType] = $content;
-        $prompt = $this->buildPrompt($context);
+        $fileContents = file_get_contents($path);
+        $base64File   = base64_encode($fileContents);
+        $mimeType     = mime_content_type($path) ?: 'image/jpeg';
+
+        $prompt = 'Analise o anexo e devolva APENAS um JSON com os campos: '
+            . 'summary (string), topics (array de strings), amount (número ou null), '
+            . 'currency (string) e detected_type (string: "expense", "income", "appointment" ou "exam"). '
+            . 'Não escreva nenhuma explicação fora do JSON.';
+
+        $prompt .= $this->formatContextPrompt($context);
+
+        $payload = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                        [
+                            'inlineData' => [
+                                'mimeType' => $mimeType,
+                                'data'     => $base64File,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
 
         try {
-            $result = Gemini::client($apiKey)
-                ->generativeModel(model: config('services.gemini.model', 'gemini-1.5-flash'))
-                ->generateContent([
-                    $prompt,
-                    new Blob(
-                        mimeType: $mimeType,
-                        data: base64_encode($fileContents),
-                    ),
+            $response = Http::acceptJson()
+                ->withHeaders([
+                    'X-Goog-Api-Key' => $apiKey,
+                ])
+                ->post($endpoint, $payload);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                // Extrai o texto principal gerado pelo modelo
+                $text = $this->extractTextFromGeminiResponse($data);
+
+                if ($text) {
+                    $decoded = json_decode($text, true);
+
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        return array_merge(
+                            $this->fallbackResponse($context),
+                            $decoded
+                        );
+                    }
+
+                    Log::warning('Gemini returned non-JSON or invalid JSON text', [
+                        'raw_text' => $text,
+                    ]);
+                }
+
+                // Se não conseguir extrair JSON, loga e volta fallback
+                Log::warning('Gemini response did not contain expected text content.', [
+                    'response' => $data,
                 ]);
-
-            $text = trim((string) $result->text());
-            $decoded = json_decode($text, true);
-
-            if ($this->isValidResponse($decoded)) {
-                return $decoded;
+            } else {
+                Log::error('Gemini request failed', [
+                    'status'   => $response->status(),
+                    'body'     => $response->body(),
+                    'endpoint' => $endpoint,
+                ]);
             }
-
-            Log::warning('Gemini returned non-JSON response', [
-                'raw' => $text,
-            ]);
         } catch (\Throwable $exception) {
-            Log::error('Gemini SDK error', [
-                'message' => $exception->getMessage(),
-                'code' => $exception->getCode(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
+            Log::error('Gemini request failed', [
+                'error'    => $exception->getMessage(),
+                'endpoint' => $endpoint,
             ]);
-
-            return $this->fallbackResponse($context);
         }
 
         return $this->fallbackResponse($context);
     }
 
-    protected function loadAttachment(string $path): ?array
+    protected function extractTextFromGeminiResponse(array $data): ?string
     {
-        if ($this->isHttpUrl($path)) {
-            $response = Http::timeout(15)->get($path);
+        // Estrutura típica do generateContent:
+        // {
+        //   "candidates": [
+        //     {
+        //       "content": {
+        //         "parts": [ { "text": "..." } ]
+        //       }
+        //     }
+        //   ]
+        // }
 
-            if (! $response->successful()) {
-                Log::warning('Gemini could not fetch remote attachment.', [
-                    'path' => $path,
-                    'status' => $response->status(),
-                ]);
+        $candidates = $data['candidates'] ?? [];
 
-                return null;
-            }
+        foreach ($candidates as $candidate) {
+            $parts = $candidate['content']['parts'] ?? [];
 
-            $contents = $response->body();
-            $mimeType = $this->resolveMimeTypeFromHeader($response->header('Content-Type'));
-        } else {
-            if (! is_readable($path)) {
-                Log::warning('Gemini could not read attachment contents.', [
-                    'path' => $path,
-                ]);
-
-                return null;
-            }
-
-            $contents = file_get_contents($path) ?: '';
-            $mimeType = $this->resolveMimeType($path);
-        }
-
-        if ($contents === '') {
-            Log::warning('Gemini attachment contents are empty.', [
-                'path' => $path,
-            ]);
-
-            return null;
-        }
-
-        return [$contents, $mimeType];
-    }
-
-    protected function buildPrompt(array $context): string
-    {
-        $prompt = 'Analise o anexo e devolva APENAS um JSON com os campos: summary (string), topics (array de strings), amount (número ou null), currency (string) e detected_type (string: "expense", "income", "appointment" ou "exam"). Não inclua texto fora do JSON.';
-
-        $filteredContext = array_filter($context, fn ($value) => $value !== null && $value !== '');
-
-        if (! empty($filteredContext)) {
-            $prompt .= '\nContexto adicional: ' . json_encode($filteredContext, JSON_UNESCAPED_UNICODE);
-        }
-
-        return $prompt;
-    }
-
-    protected function resolveMimeType(string $path): MimeType
-    {
-        $detected = mime_content_type($path) ?: '';
-
-        return MimeType::tryFrom($detected) ?? MimeType::IMAGE_JPEG;
-    }
-
-    protected function resolveMimeTypeFromHeader(?string $header): MimeType
-    {
-        if (empty($header)) {
-            return MimeType::IMAGE_JPEG;
-        }
-
-        $mimeOnly = strtolower(strtok($header, ';'));
-
-        return MimeType::tryFrom($mimeOnly) ?? MimeType::IMAGE_JPEG;
-    }
-
-    protected function isValidResponse(mixed $decoded): bool
-    {
-        if (! is_array($decoded)) {
-            return false;
-        }
-
-        $requiredKeys = ['summary', 'topics', 'amount', 'currency', 'detected_type'];
-
-        foreach ($requiredKeys as $key) {
-            if (! array_key_exists($key, $decoded)) {
-                return false;
+            foreach ($parts as $part) {
+                if (! empty($part['text'])) {
+                    return $part['text'];
+                }
             }
         }
 
-        return true;
+        return null;
+    }
+
+    protected function formatContextPrompt(array $context): string
+    {
+        $filtered = array_filter($context, fn ($v) => $v !== null && $v !== '');
+
+        if (empty($filtered)) {
+            return '';
+        }
+
+        return "\nContexto adicional (pode usar se for útil): " . json_encode($filtered, JSON_UNESCAPED_UNICODE);
     }
 
     protected function fallbackResponse(array $context = []): array
     {
         return [
-            'summary' => 'Processamento offline concluído.',
-            'topics' => ['valor', 'categoria', 'data'],
-            'amount' => $context['amount'] ?? null,
-            'currency' => $context['currency'] ?? 'BRL',
+            'summary'       => 'Processamento offline concluído.',
+            'topics'        => ['valor', 'categoria', 'data'],
+            'amount'        => $context['amount'] ?? null,
+            'currency'      => $context['currency'] ?? 'BRL',
             'detected_type' => $context['type'] ?? null,
         ];
-    }
-
-    protected function isHttpUrl(string $path): bool
-    {
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return true;
-        }
-
-        return filter_var($path, FILTER_VALIDATE_URL) !== false;
     }
 }
