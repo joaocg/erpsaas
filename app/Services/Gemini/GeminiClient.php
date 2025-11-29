@@ -43,6 +43,8 @@ class GeminiClient
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'endpoint' => $endpoint,
+                'model' => config('services.gemini.model'),
+                'version' => config('services.gemini.version'),
             ]);
         } catch (\Throwable $exception) {
             Log::error('Gemini request failed', [
@@ -78,7 +80,7 @@ class GeminiClient
     {
         $base = $baseUrl ?? (string) config('services.gemini.base_url');
         $version = trim((string) config('services.gemini.version', 'v1beta'), '/');
-        $model = trim((string) config('services.gemini.model', 'gemini-1.5-flash')); // 1.5 flash suporta inlineData
+        $model = trim((string) config('services.gemini.model', 'gemini-1.5-flash-latest')); // inlineData é suportado nas variantes 1.5
 
         if (! filter_var($base, FILTER_VALIDATE_URL) || $version === '' || $model === '') {
             return null;
