@@ -274,6 +274,7 @@ class WahaWebhookController extends Controller
         }
 
         try {
+            // Requisita o arquivo autenticando com o X-Api-Key
             $response = Http::withHeaders([
                 'X-Api-Key' => $token,
             ])->timeout(20)->get($mediaUrl);
@@ -281,25 +282,27 @@ class WahaWebhookController extends Controller
             if ($response->failed()) {
                 Log::warning('WAHA media download failed', [
                     'media_url' => $mediaUrl,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'status'    => $response->status(),
+                    'body'      => $response->body(),
                 ]);
 
                 return null;
             }
 
-            $path = parse_url($mediaUrl, PHP_URL_PATH) ?: $mediaUrl;
+            // Define pasta e nome do arquivo para salvar em storage/app
+            $path     = parse_url($mediaUrl, PHP_URL_PATH) ?: $mediaUrl;
             $filename = basename($path) ?: Str::uuid()->toString();
 
             $storagePath = sprintf('whatsapp/%s/%s', $session->phone_e164, $filename);
 
+            // Salva o conteúdo da mídia no storage
             Storage::put($storagePath, $response->body());
 
             return $storagePath;
         } catch (\Throwable $exception) {
             Log::error('WAHA media download exception', [
                 'media_url' => $mediaUrl,
-                'error' => $exception->getMessage(),
+                'error'     => $exception->getMessage(),
             ]);
 
             return null;

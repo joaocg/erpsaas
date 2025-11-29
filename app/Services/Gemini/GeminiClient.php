@@ -2,24 +2,26 @@
 
 namespace App\Services\Gemini;
 
-use Illuminate\Support\Facades\Http;
+use Gemini\Client;
+use Gemini\Data\Blob;
+use Gemini\Enums\MimeType;
+use Gemini\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Support\Facades\Log;
 
 class GeminiClient
 {
     public function analyze(string $path, array $context = []): array
     {
-        $endpoint = config('services.gemini.url');      // GEMINI_API_URL já com .../models/...:generateContent
-        $apiKey   = config('services.gemini.key');      // GEMINI_API_KEY
+        $apiKey = config('services.gemini.key');
 
-        if (empty($endpoint) || empty($apiKey)) {
-            Log::warning('Gemini credentials missing, returning fallback payload.', [
-                'endpoint' => $endpoint,
-            ]);
+        if (empty($apiKey)) {
+            Log::warning('Gemini credentials missing, returning fallback payload.');
 
             return $this->fallbackResponse($context);
         }
 
+        // Verifica se o arquivo é legível
         if (! is_readable($path)) {
             Log::warning('Gemini could not read attachment contents.', [
                 'path' => $path,
@@ -28,108 +30,127 @@ class GeminiClient
             return $this->fallbackResponse($context);
         }
 
+        // Lê o arquivo e codifica em base64
         $fileContents = file_get_contents($path);
         $base64File   = base64_encode($fileContents);
         $mimeType     = mime_content_type($path) ?: 'image/jpeg';
 
+        // Prompt em português instruindo a Gemini a retornar apenas JSON
         $prompt = 'Analise o anexo e devolva APENAS um JSON com os campos: '
             . 'summary (string), topics (array de strings), amount (número ou null), '
             . 'currency (string) e detected_type (string: "expense", "income", "appointment" ou "exam"). '
             . 'Não escreva nenhuma explicação fora do JSON.';
 
+        // Acrescenta contexto quando necessário
         $prompt .= $this->formatContextPrompt($context);
 
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $prompt],
-                        [
-                            'inlineData' => [
-                                'mimeType' => $mimeType,
-                                'data'     => $base64File,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ];
-
         try {
-            $response = Http::acceptJson()
-                ->withHeaders([
-                    'X-Goog-Api-Key' => $apiKey,
-                ])
-                ->post($endpoint, $payload);
+            // Constrói o cliente SDK e chama o modelo
+            $response = $this->buildClient($apiKey)
+                ->generativeModel($this->model())
+                ->generateContent(
+                    $prompt,
+                    new Blob(
+                        mimeType: $this->resolveMimeType($mimeType),
+                        data: $base64File,
+                    ),
+                );
 
-            if ($response->successful()) {
-                $data = $response->json();
+            $decoded = $this->decodeResponse($response);
 
-                // Extrai o texto principal gerado pelo modelo
-                $text = $this->extractTextFromGeminiResponse($data);
-
-                if ($text) {
-                    $decoded = json_decode($text, true);
-
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                        return array_merge(
-                            $this->fallbackResponse($context),
-                            $decoded
-                        );
-                    }
-
-                    Log::warning('Gemini returned non-JSON or invalid JSON text', [
-                        'raw_text' => $text,
-                    ]);
-                }
-
-                // Se não conseguir extrair JSON, loga e volta fallback
-                Log::warning('Gemini response did not contain expected text content.', [
-                    'response' => $data,
-                ]);
-            } else {
-                Log::error('Gemini request failed', [
-                    'status'   => $response->status(),
-                    'body'     => $response->body(),
-                    'endpoint' => $endpoint,
-                ]);
+            if ($decoded !== null) {
+                return array_merge(
+                    $this->fallbackResponse($context),
+                    $decoded,
+                );
             }
+
+            // Caso o retorno não seja o JSON esperado
+            Log::warning('Gemini response did not contain expected JSON text content.', [
+                'response' => $response->toArray(),
+            ]);
         } catch (\Throwable $exception) {
             Log::error('Gemini request failed', [
-                'error'    => $exception->getMessage(),
-                'endpoint' => $endpoint,
+                'error' => $exception->getMessage(),
             ]);
         }
 
         return $this->fallbackResponse($context);
     }
 
-    protected function extractTextFromGeminiResponse(array $data): ?string
+    /**
+     * Decodifica a resposta do modelo em um array ou retorna null
+     */
+    protected function decodeResponse(GenerateContentResponse $response): ?array
     {
-        // Estrutura típica do generateContent:
-        // {
-        //   "candidates": [
-        //     {
-        //       "content": {
-        //         "parts": [ { "text": "..." } ]
-        //       }
-        //     }
-        //   ]
-        // }
+        try {
+            $text = $response->text();
+        } catch (\Throwable $exception) {
+            Log::warning('Gemini response could not provide simple text output.', [
+                'error' => $exception->getMessage(),
+            ]);
 
-        $candidates = $data['candidates'] ?? [];
-
-        foreach ($candidates as $candidate) {
-            $parts = $candidate['content']['parts'] ?? [];
-
-            foreach ($parts as $part) {
-                if (! empty($part['text'])) {
-                    return $part['text'];
-                }
-            }
+            return null;
         }
 
+        $decoded = json_decode($text, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        Log::warning('Gemini returned non-JSON or invalid JSON text', [
+            'raw_text' => $text,
+        ]);
+
         return null;
+    }
+
+    /**
+     * Constrói o cliente Gemini usando a chave de API e configurações de base URL/versão
+     */
+    protected function buildClient(string $apiKey): Client
+    {
+        $factory = Gemini::factory()
+            ->withApiKey($apiKey);
+
+        $baseUrl = rtrim((string) config('services.gemini.base_url'), '/');
+        $version = ltrim((string) config('services.gemini.version', ''), '/');
+
+        if ($baseUrl && $version) {
+            $factory->withBaseUrl("{$baseUrl}/{$version}");
+        }
+
+        return $factory->make();
+    }
+
+    /**
+     * Retorna o nome completo do modelo (ex.: models/gemini‑1.5‑flash)
+     */
+    protected function model(): string
+    {
+        $model = config('services.gemini.model', 'gemini-1.5-flash');
+
+        if (! str_starts_with($model, 'models/')) {
+            $model = "models/{$model}";
+        }
+
+        return $model;
+    }
+
+    /**
+     * Converte um mime type de string para o enum MimeType do SDK
+     */
+    protected function resolveMimeType(string $mimeType): MimeType
+    {
+        return MimeType::tryFrom($mimeType)
+            ?? match (true) {
+                str_contains($mimeType, 'png')  => MimeType::IMAGE_PNG,
+                str_contains($mimeType, 'gif')  => MimeType::IMAGE_JPEG,
+                str_contains($mimeType, 'webp') => MimeType::IMAGE_WEBP,
+                str_contains($mimeType, 'pdf')  => MimeType::APPLICATION_PDF,
+                default                         => MimeType::IMAGE_JPEG,
+            };
     }
 
     protected function formatContextPrompt(array $context): string

@@ -38,9 +38,9 @@ class ProcessGeminiAttachment implements ShouldQueue
             return;
         }
 
+        // Se o anexo tiver usuário associado, define o contexto de autenticação/empresa
         if ($attachment->user) {
             $user = $attachment->user;
-
             Auth::setUser($user);
 
             if (! empty($user->current_company_id)) {
@@ -48,34 +48,38 @@ class ProcessGeminiAttachment implements ShouldQueue
             }
         }
 
+        // Constrói o contexto para a Gemini (valor, tipo etc.)
         $context = [
-            'type' => $attachment->gemini_detected_type,
-            'amount' => $attachment->gemini_amount,
+            'type'     => $attachment->gemini_detected_type,
+            'amount'   => $attachment->gemini_amount,
             'currency' => $attachment->gemini_currency,
         ];
 
         $storagePath = $attachment->path;
 
+        // Se o arquivo não estiver no storage (pode ser um caminho externo), envia o caminho original
         if (! Storage::exists($storagePath)) {
             Log::warning('Attachment not found in storage for Gemini processing.', [
                 'attachment_id' => $attachment->id,
-                'path' => $storagePath,
+                'path'          => $storagePath,
             ]);
 
             $result = $geminiClient->analyze($storagePath, $context);
         } else {
+            // Obtém o caminho absoluto e envia para a Gemini
             $localPath = Storage::path($storagePath);
-            $result = $geminiClient->analyze($localPath, $context);
+            $result    = $geminiClient->analyze($localPath, $context);
         }
 
+        // Atualiza o modelo Attachment com os resultados da Gemini
         $attachment->update([
-            'gemini_status' => 'processed',
-            'gemini_summary' => $result['summary'] ?? null,
-            'gemini_topics' => $result['topics'] ?? [],
-            'gemini_amount' => $result['amount'] ?? $attachment->gemini_amount,
-            'gemini_currency' => $result['currency'] ?? $attachment->gemini_currency,
-            'gemini_detected_type' => $result['detected_type'] ?? $attachment->gemini_detected_type,
-            'processed_at' => now(),
+            'gemini_status'       => 'processed',
+            'gemini_summary'      => $result['summary'] ?? null,
+            'gemini_topics'       => $result['topics'] ?? [],
+            'gemini_amount'       => $result['amount'] ?? $attachment->gemini_amount,
+            'gemini_currency'     => $result['currency'] ?? $attachment->gemini_currency,
+            'gemini_detected_type'=> $result['detected_type'] ?? $attachment->gemini_detected_type,
+            'processed_at'        => now(),
         ]);
 
         $detectedType = $attachment->gemini_detected_type ?? $result['detected_type'] ?? null;
