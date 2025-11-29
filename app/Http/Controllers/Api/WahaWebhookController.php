@@ -12,6 +12,9 @@ use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class WahaWebhookController extends Controller
@@ -99,14 +102,18 @@ class WahaWebhookController extends Controller
          * Se for mídia (imagem/doc), cria Attachment e joga pro Gemini
          */
         if ($mediaUrl) {
-            $attachment = Attachment::create([
-                'user_id' => $session->user_id,
-                'path' => $mediaUrl,
-                'source' => 'whatsapp',
-                'raw_payload' => $payload,
-            ]);
+            $storagePath = $this->downloadWhatsappMedia($mediaUrl, $session);
 
-            ProcessGeminiAttachment::dispatch($attachment);
+            if ($storagePath) {
+                $attachment = Attachment::create([
+                    'user_id' => $session->user_id,
+                    'path' => $storagePath,
+                    'source' => 'whatsapp',
+                    'raw_payload' => $payload,
+                ]);
+
+                ProcessGeminiAttachment::dispatch($attachment);
+            }
         }
 
         /**
@@ -251,5 +258,50 @@ class WahaWebhookController extends Controller
 
         // Mantém só números
         return preg_replace('/\D/', '', $number);
+    }
+
+    protected function downloadWhatsappMedia(string $mediaUrl, WhatsappSession $session): ?string
+    {
+        $token = config('services.waha.token');
+
+        if (empty($token)) {
+            Log::warning('WAHA token missing, cannot download media.', [
+                'media_url' => $mediaUrl,
+            ]);
+
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-Api-Key' => $token,
+            ])->timeout(20)->get($mediaUrl);
+
+            if ($response->failed()) {
+                Log::warning('WAHA media download failed', [
+                    'media_url' => $mediaUrl,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            $path = parse_url($mediaUrl, PHP_URL_PATH) ?: $mediaUrl;
+            $filename = basename($path) ?: Str::uuid()->toString();
+
+            $storagePath = sprintf('whatsapp/%s/%s', $session->phone_e164, $filename);
+
+            Storage::put($storagePath, $response->body());
+
+            return $storagePath;
+        } catch (\Throwable $exception) {
+            Log::error('WAHA media download exception', [
+                'media_url' => $mediaUrl,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }
