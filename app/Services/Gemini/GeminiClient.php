@@ -70,9 +70,10 @@ class GeminiClient
                 'response' => $response->toArray(),
             ]);
         } catch (\Throwable $exception) {
-            Log::error('Gemini base64 length', ['bytes' => strlen($fileContents), 'mime' => $mimeType]);
             Log::error('Gemini request failed', [
                 'error' => $exception->getMessage(),
+                'bytes' => strlen($fileContents),
+                'mime' => $mimeType
             ]);
         }
 
