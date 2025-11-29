@@ -11,6 +11,8 @@ use App\Models\WebhookLog;
 use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+
 
 class WahaWebhookController extends Controller
 {
@@ -76,6 +78,20 @@ class WahaWebhookController extends Controller
             if ($user) {
                 $session->user()->associate($user);
                 $session->save();
+            }
+        } else {
+            $user = $session->user;
+        }
+
+        /**
+         * Se tiver usuário, seta contexto de autenticação e empresa
+         * para o CurrentCompanyScope funcionar.
+         */
+        if ($user) {
+            Auth::setUser($user);
+
+            if (! empty($user->current_company_id)) {
+                session(['current_company_id' => $user->current_company_id]);
             }
         }
 

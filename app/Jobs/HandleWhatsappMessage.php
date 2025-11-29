@@ -34,7 +34,7 @@ class HandleWhatsappMessage implements ShouldQueue
         FinancialRecordService $financialRecordService,
         WahaClient $wahaClient
     ): void {
-        $session = WhatsappSession::withoutGlobalScopes()->find($this->sessionId);
+        $session = WhatsappSession::find($this->sessionId);
 
         if (! $session) {
             return;
@@ -49,11 +49,12 @@ class HandleWhatsappMessage implements ShouldQueue
             $session->save();
         }
 
-        /**
-         * Se tiver usuário, "loga" ele no contexto do job
-         */
         if ($user) {
             Auth::setUser($user);
+
+            if (! empty($user->current_company_id)) {
+                session(['current_company_id' => $user->current_company_id]);
+            }
         }
 
         $intent = $intentDetectionService->detect($this->message);

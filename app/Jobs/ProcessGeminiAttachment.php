@@ -31,14 +31,20 @@ class ProcessGeminiAttachment implements ShouldQueue
 
     public function handle(GeminiClient $geminiClient, FinancialRecordService $financialRecordService): void
     {
-        $attachment = Attachment::withoutGlobalScopes()->find($this->attachment->id);
+        $attachment = Attachment::find($this->attachment->id);
 
         if (! $attachment) {
             return;
         }
 
         if ($attachment->user) {
-            Auth::setUser($attachment->user);
+            $user = $attachment->user;
+
+            Auth::setUser($user);
+
+            if (! empty($user->current_company_id)) {
+                session(['current_company_id' => $user->current_company_id]);
+            }
         }
 
         $context = [
