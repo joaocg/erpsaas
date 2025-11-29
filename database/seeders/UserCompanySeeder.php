@@ -33,8 +33,10 @@ class UserCompanySeeder extends Seeder
             ->create([
                 'name' => 'Admin',
                 'email' => 'admin@erpsaas.com',
+                'phone_e164' => '+15555550100',
                 'password' => bcrypt('password'),
                 'current_company_id' => 1,  // Assuming this will be the ID of the created company
+                'whatsapp_opt_in_at' => now(),
             ]);
 
         $additionalCompanies = [

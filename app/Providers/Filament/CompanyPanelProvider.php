@@ -26,6 +26,11 @@ use App\Filament\Company\Pages\Service\ConnectedAccount;
 use App\Filament\Company\Pages\Service\LiveCurrency;
 use App\Filament\Company\Resources\Accounting\BudgetResource;
 use App\Filament\Company\Resources\Accounting\TransactionResource;
+use App\Filament\Company\Resources\Automation\AttachmentResource;
+use App\Filament\Company\Resources\Automation\CategoryResource;
+use App\Filament\Company\Resources\Automation\FinancialRecordResource;
+use App\Filament\Company\Resources\Automation\MedicalAppointmentResource;
+use App\Filament\Company\Resources\Automation\MedicalExamResource;
 use App\Filament\Company\Resources\Banking\AccountResource;
 use App\Filament\Company\Resources\Common\OfferingResource;
 use App\Filament\Company\Resources\Purchases\BillResource;
@@ -158,6 +163,16 @@ class CompanyPanelProvider extends PanelProvider
                                 // ...BudgetResource::getNavigationItems(),
                                 ...AccountChart::getNavigationItems(),
                                 ...TransactionResource::getNavigationItems(),
+                            ]),
+                        NavigationGroup::make('Automação & WhatsApp')
+                            ->label('Automação & WhatsApp')
+                            ->icon('heroicon-o-sparkles')
+                            ->items([
+                                ...CategoryResource::getNavigationItems(),
+                                ...FinancialRecordResource::getNavigationItems(),
+                                ...MedicalAppointmentResource::getNavigationItems(),
+                                ...MedicalExamResource::getNavigationItems(),
+                                ...AttachmentResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Banking')
                             ->localizeLabel()
