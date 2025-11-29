@@ -32,6 +32,9 @@ class GeminiClient
         $base64File   = base64_encode($fileContents);
         $mimeType     = mime_content_type($path) ?: 'image/jpeg';
 
+        Log::debug('Gemini base64 length', ['bytes' => strlen($fileContents), 'mime' => $mimeType]);
+
+
         // Prompt em português instruindo a Gemini a retornar apenas JSON
         $prompt = 'Analise o anexo e devolva APENAS um JSON com os campos: '
             . 'summary (string), topics (array de strings), amount (número ou null), '
@@ -50,7 +53,7 @@ class GeminiClient
                     new Blob(
                         mimeType: $this->resolveMimeType($mimeType),
                         data: $base64File,
-                    ),
+                    )
                 );
 
             // Decodifica a resposta em um array
