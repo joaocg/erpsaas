@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class CurrentCompanyScope implements Scope
 {
@@ -16,22 +17,33 @@ class CurrentCompanyScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
+        /** @var Request $request */
+        $request = app(Request::class);
+
+        // Bypass para o webhook do WAHA (ajusta o path conforme tua rota)
+        if ($request->is('api/waha/webhook') || $request->is('api/waha/webhook/*')) {
+            return;
+        }
+
         $companyId = session('current_company_id');
 
+        // Em console (queue, artisan etc.), não aplica escopo
         if (! $companyId && app()->runningInConsole()) {
             return;
         }
 
+        // Tenta pegar do usuário logado
         if (! $companyId && ($user = Auth::user()) && ($companyId = $user->current_company_id)) {
             session(['current_company_id' => $companyId]);
         }
 
         if ($companyId) {
             $builder->where("{$model->getTable()}.company_id", $companyId);
-        } else {
-            Log::error('CurrentCompanyScope: No company_id found for user ' . Auth::id());
 
-            throw new ModelNotFoundException('CurrentCompanyScope: No company_id set in the session or on the user.');
+            return;
         }
+
+        Log::error('CurrentCompanyScope: No company_id found for user ' . Auth::id());
+        throw new ModelNotFoundException('CurrentCompanyScope: No company_id set in the session or on the user.');
     }
 }
