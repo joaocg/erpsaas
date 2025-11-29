@@ -307,10 +307,10 @@ class WahaWebhookController extends Controller
     }
 
     /**
-     * @param string $url
+     * @param string|null $url
      * @return string
      */
-    protected function normalizeFileUrl(string $url): string
+    protected function normalizeFileUrl(string $url = null): string
     {
         /**
          * Se não for URL, retorna como está
