@@ -57,7 +57,7 @@ class GeminiClient
 
 // Chama o modelo (ajuste o ModelName conforme o modelo habilitado na sua conta)
             $client   = new GeminiAPIClient($apiKey);
-            $response = $client->generativeModel(ModelName::GEMINI_1_5_PRO_LATEST)->generateContent(
+            $response = $client->generativeModel(ModelName::GEMINI_1_5_FLASH)->generateContent(
                 new TextPart($prompt),
                 new ImagePart(
                     $mimeTypeEnum,
