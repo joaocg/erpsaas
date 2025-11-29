@@ -51,13 +51,13 @@ class GeminiClient
 
         try {
 
-// Detecta o MIME via PHP e converte para o enum; se falhar, usa JPEG como fallback
+            // Detecta o MIME via PHP e converte para o enum; se falhar, usa JPEG como fallback
             $mimeTypeString = mime_content_type($path) ?: GeminiAPIMimeType::IMAGE_JPEG->value;
             $mimeTypeEnum   = GeminiAPIMimeType::tryFrom($mimeTypeString) ?? GeminiAPIMimeType::IMAGE_JPEG;
 
-// Chama o modelo (ajuste o ModelName conforme o modelo habilitado na sua conta)
+            // Chama o modelo (ajuste o ModelName conforme o modelo habilitado na sua conta)
             $client   = new GeminiAPIClient($apiKey);
-            $response = $client->generativeModel(ModelName::GEMINI_1_5_FLASH_LATEST)->generateContent(
+            $response = $client->generativeModel('gemini-2.5-pro')->generateContent(
                 new TextPart($prompt),
                 new ImagePart(
                     $mimeTypeEnum,
@@ -110,11 +110,16 @@ class GeminiClient
             Log::warning('Gemini response could not provide simple text output.', [
                 'error' => $exception->getMessage(),
             ]);
-
             return null;
         }
 
-        $decoded = json_decode($text, true);
+        if (preg_match('/```json\\s*(.*?)\\s*```/s', $text, $matches)) {
+            $json = $matches[1];
+        } else {
+            $json = $text;
+        }
+
+        $decoded = json_decode($json, true);
 
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             return $decoded;
@@ -151,18 +156,6 @@ class GeminiClient
         }
 
         return $model;
-    }
-
-    protected function resolveMimeType(string $mimeType): MimeType
-    {
-        return MimeType::tryFrom($mimeType)
-            ?? match (true) {
-                str_contains($mimeType, 'png')   => MimeType::IMAGE_PNG,
-                str_contains($mimeType, 'gif')   => MimeType::IMAGE_JPEG,
-                str_contains($mimeType, 'webp')  => MimeType::IMAGE_WEBP,
-                str_contains($mimeType, 'pdf')   => MimeType::APPLICATION_PDF,
-                default                          => MimeType::IMAGE_JPEG,
-            };
     }
 
     protected function formatContextPrompt(array $context): string
