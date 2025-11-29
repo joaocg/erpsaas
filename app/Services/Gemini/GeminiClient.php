@@ -5,7 +5,7 @@ namespace App\Services\Gemini;
 use Gemini\Client;
 use Gemini\Data\Blob;
 use Gemini\Enums\MimeType;
-use Gemini\Gemini;
+use Gemini;
 use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Support\Facades\Log;
 
@@ -17,16 +17,13 @@ class GeminiClient
 
         if (empty($apiKey)) {
             Log::warning('Gemini credentials missing, returning fallback payload.');
-
             return $this->fallbackResponse($context);
         }
 
-        // Verifica se o arquivo é legível
         if (! is_readable($path)) {
             Log::warning('Gemini could not read attachment contents.', [
                 'path' => $path,
             ]);
-
             return $this->fallbackResponse($context);
         }
 
@@ -56,6 +53,7 @@ class GeminiClient
                     ),
                 );
 
+            // Decodifica a resposta em um array
             $decoded = $this->decodeResponse($response);
 
             if ($decoded !== null) {
@@ -78,9 +76,6 @@ class GeminiClient
         return $this->fallbackResponse($context);
     }
 
-    /**
-     * Decodifica a resposta do modelo em um array ou retorna null
-     */
     protected function decodeResponse(GenerateContentResponse $response): ?array
     {
         try {
@@ -106,9 +101,6 @@ class GeminiClient
         return null;
     }
 
-    /**
-     * Constrói o cliente Gemini usando a chave de API e configurações de base URL/versão
-     */
     protected function buildClient(string $apiKey): Client
     {
         $factory = Gemini::factory()
@@ -124,9 +116,6 @@ class GeminiClient
         return $factory->make();
     }
 
-    /**
-     * Retorna o nome completo do modelo (ex.: models/gemini‑1.5‑flash)
-     */
     protected function model(): string
     {
         $model = config('services.gemini.model', 'gemini-1.5-flash');
@@ -138,18 +127,15 @@ class GeminiClient
         return $model;
     }
 
-    /**
-     * Converte um mime type de string para o enum MimeType do SDK
-     */
     protected function resolveMimeType(string $mimeType): MimeType
     {
         return MimeType::tryFrom($mimeType)
             ?? match (true) {
-                str_contains($mimeType, 'png')  => MimeType::IMAGE_PNG,
-                str_contains($mimeType, 'gif')  => MimeType::IMAGE_JPEG,
-                str_contains($mimeType, 'webp') => MimeType::IMAGE_WEBP,
-                str_contains($mimeType, 'pdf')  => MimeType::APPLICATION_PDF,
-                default                         => MimeType::IMAGE_JPEG,
+                str_contains($mimeType, 'png')   => MimeType::IMAGE_PNG,
+                str_contains($mimeType, 'gif')   => MimeType::IMAGE_JPEG,
+                str_contains($mimeType, 'webp')  => MimeType::IMAGE_WEBP,
+                str_contains($mimeType, 'pdf')   => MimeType::APPLICATION_PDF,
+                default                          => MimeType::IMAGE_JPEG,
             };
     }
 
