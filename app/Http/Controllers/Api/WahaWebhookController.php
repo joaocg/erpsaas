@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\WebhookLog;
 use App\Models\WhatsappSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class WahaWebhookController extends Controller
 {
@@ -23,9 +25,12 @@ class WahaWebhookController extends Controller
             'processed_at' => now(),
         ]);
 
-        $phone = data_get($payload, 'messages.0.from') ?? data_get($payload, 'from');
+        $message = $this->extractIncomingMessage($payload);
+        $phone = $this->extractPhone($message ?? $payload);
 
         if (! $phone) {
+            Log::warning('WAHA webhook without phone', ['payload' => Arr::only($payload, ['event', 'payload.event'])]);
+
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
@@ -43,9 +48,7 @@ class WahaWebhookController extends Controller
             }
         }
 
-        $mediaUrl = data_get($payload, 'messages.0.image.url')
-            ?? data_get($payload, 'messages.0.document.url')
-            ?? data_get($payload, 'media.url');
+        $mediaUrl = $this->extractMediaUrl($message ?? $payload);
 
         if ($mediaUrl) {
             $attachment = Attachment::create([
@@ -58,12 +61,57 @@ class WahaWebhookController extends Controller
             ProcessGeminiAttachment::dispatch($attachment);
         }
 
-        $text = data_get($payload, 'messages.0.text.body') ?? data_get($payload, 'message');
+        $text = $this->extractText($message ?? $payload);
 
         if ($text) {
             HandleWhatsappMessage::dispatch($session->id, $text);
         }
 
         return response()->json(['status' => 'accepted']);
+    }
+
+    protected function extractIncomingMessage(array $payload): ?array
+    {
+        $messages = data_get($payload, 'payload.data.messages');
+
+        if (is_array($messages)) {
+            $incoming = collect($messages)->first(function ($message) {
+                return data_get($message, 'key.fromMe') === false;
+            });
+
+            if ($incoming) {
+                return $incoming;
+            }
+        }
+
+        return data_get($payload, 'messages.0');
+    }
+
+    protected function extractPhone(array $message): ?string
+    {
+        $phone = data_get($message, 'key.remoteJid') ?? data_get($message, 'from');
+
+        if (! $phone) {
+            return null;
+        }
+
+        return preg_replace('/@.*$/', '', $phone);
+    }
+
+    protected function extractMediaUrl(array $message): ?string
+    {
+        return data_get($message, 'message.imageMessage.url')
+            ?? data_get($message, 'message.documentMessage.url')
+            ?? data_get($message, 'messages.0.image.url')
+            ?? data_get($message, 'messages.0.document.url')
+            ?? data_get($message, 'media.url');
+    }
+
+    protected function extractText(array $message): ?string
+    {
+        return data_get($message, 'message.conversation')
+            ?? data_get($message, 'message.extendedTextMessage.text')
+            ?? data_get($message, 'messages.0.text.body')
+            ?? data_get($message, 'message');
     }
 }
