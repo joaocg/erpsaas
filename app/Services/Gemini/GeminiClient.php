@@ -36,7 +36,7 @@ class GeminiClient
         // Lê o arquivo e codifica em base64
         $fileContents = file_get_contents($path);
         $base64File   = base64_encode($fileContents);
-        $mimeType     = mime_content_type($path) ?? GeminiAPIMimeType::IMAGE_JPEG;
+
 
 
         // Prompt em português instruindo a Gemini a retornar apenas JSON
@@ -51,11 +51,16 @@ class GeminiClient
 
         try {
 
-            $client = new GeminiAPIClient($apiKey);
+// Detecta o MIME via PHP e converte para o enum; se falhar, usa JPEG como fallback
+            $mimeTypeString = mime_content_type($path) ?: GeminiAPIMimeType::IMAGE_JPEG->value;
+            $mimeTypeEnum   = GeminiAPIMimeType::tryFrom($mimeTypeString) ?? GeminiAPIMimeType::IMAGE_JPEG;
+
+// Chama o modelo (ajuste o ModelName conforme o modelo habilitado na sua conta)
+            $client   = new GeminiAPIClient($apiKey);
             $response = $client->generativeModel(ModelName::GEMINI_PRO)->generateContent(
                 new TextPart($prompt),
                 new ImagePart(
-                    $mimeType,
+                    $mimeTypeEnum,
                     $base64File,
                 ),
             );
@@ -90,7 +95,7 @@ class GeminiClient
             Log::error('Gemini request failed', [
                 'error' => $exception->getMessage(),
                 'bytes' => strlen($fileContents),
-                'mime' => $mimeType
+                'mime' => $mimeTypeString
             ]);
         }
 
