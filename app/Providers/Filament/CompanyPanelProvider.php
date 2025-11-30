@@ -139,8 +139,7 @@ class CompanyPanelProvider extends PanelProvider
                         ...OfferingResource::getNavigationItems(),
                     ])
                     ->groups([
-                        NavigationGroup::make('Sales')
-                            ->localizeLabel()
+                        NavigationGroup::make(__('navigation.groups.sales'))
                             ->icon('heroicon-o-currency-dollar')
                             ->items([
                                 ...ClientResource::getNavigationItems(),
@@ -148,15 +147,13 @@ class CompanyPanelProvider extends PanelProvider
                                 ...InvoiceResource::getNavigationItems(),
                                 ...RecurringInvoiceResource::getNavigationItems(),
                             ]),
-                        NavigationGroup::make('Purchases')
-                            ->localizeLabel()
+                        NavigationGroup::make(__('navigation.groups.purchases'))
                             ->icon('heroicon-o-shopping-cart')
                             ->items([
                                 ...BillResource::getNavigationItems(),
                                 ...VendorResource::getNavigationItems(),
                             ]),
-                        NavigationGroup::make('Accounting')
-                            ->localizeLabel()
+                        NavigationGroup::make(__('navigation.groups.accounting'))
                             ->icon('heroicon-o-clipboard-document-list')
                             ->extraSidebarAttributes(['class' => 'es-sidebar-group'])
                             ->items([
@@ -164,8 +161,7 @@ class CompanyPanelProvider extends PanelProvider
                                 ...AccountChart::getNavigationItems(),
                                 ...TransactionResource::getNavigationItems(),
                             ]),
-                        NavigationGroup::make('Automação & WhatsApp')
-                            ->label('Automação & WhatsApp')
+                        NavigationGroup::make(__('navigation.groups.automation_whatsapp'))
                             ->icon('heroicon-o-sparkles')
                             ->items([
                                 ...CategoryResource::getNavigationItems(),
@@ -174,12 +170,10 @@ class CompanyPanelProvider extends PanelProvider
                                 ...MedicalExamResource::getNavigationItems(),
                                 ...AttachmentResource::getNavigationItems(),
                             ]),
-                        NavigationGroup::make('Banking')
-                            ->localizeLabel()
+                        NavigationGroup::make(__('navigation.groups.banking'))
                             ->icon('heroicon-o-building-library')
                             ->items(AccountResource::getNavigationItems()),
-                        NavigationGroup::make('Services')
-                            ->localizeLabel()
+                        NavigationGroup::make(__('navigation.groups.services'))
                             ->icon('heroicon-o-wrench-screwdriver')
                             ->items([
                                 ...ConnectedAccount::getNavigationItems(),
