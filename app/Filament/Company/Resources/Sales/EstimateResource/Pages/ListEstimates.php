@@ -21,7 +21,8 @@ class ListEstimates extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label(__('Create estimate')),
         ];
     }
 
@@ -41,16 +42,16 @@ class ListEstimates extends ListRecords
     {
         return [
             'all' => Tab::make()
-                ->label('All'),
+                ->label(__('All')),
 
             'active' => Tab::make()
-                ->label('Active')
+                ->label(__('Active'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->active();
                 }),
 
             'draft' => Tab::make()
-                ->label('Draft')
+                ->label(__('Draft'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->where('status', EstimateStatus::Draft);
                 }),
