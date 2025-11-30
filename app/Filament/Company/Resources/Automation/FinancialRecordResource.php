@@ -49,11 +49,13 @@ class FinancialRecordResource extends Resource
                         Forms\Components\Select::make('category_id')
                             ->label('Categoria')
                             ->relationship('category', 'name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->name ?? 'Sem nome')
                             ->searchable()
                             ->preload(),
                         Forms\Components\Select::make('attachment_id')
                             ->label('Anexo')
                             ->relationship('attachment', 'original_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->original_name ?? 'Sem nome')
                             ->searchable()
                             ->preload(),
                         Forms\Components\Textarea::make('description')
