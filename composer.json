@@ -52,7 +52,8 @@
         },
         "files": [
             "app/Helpers/helpers.php",
-            "app/Support/Concerns/HasIconPosition.php"
+            "app/Support/Concerns/HasIconPosition.php",
+            "app/Support/Concerns/HasIconSize.php"
         ]
     },
     "autoload-dev": {
