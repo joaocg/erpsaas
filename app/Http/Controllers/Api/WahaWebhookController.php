@@ -36,8 +36,7 @@ class WahaWebhookController extends Controller
          * Normaliza o webhook da WAHA em algo que a gente consiga usar
          */
         $normalized = $this->extractIncomingMessage($payload);
-
-        if (! $normalized) {
+        if (!$normalized) {
             Log::info('WAHA normalized message: ignorada (sem conteúdo ou mensagem nossa)', [
                 'event' => data_get($payload, 'event'),
                 'payload_event' => data_get($payload, 'payload.event'),
@@ -51,7 +50,7 @@ class WahaWebhookController extends Controller
         /**
          * Se não for uma mensagem válida (ou é mensagem nossa / status / outro evento), só responde OK
          */
-        if (! $normalized) {
+        if (!$normalized) {
             return response()->json(['status' => 'ignored']);
         }
 
@@ -59,9 +58,8 @@ class WahaWebhookController extends Controller
         $text = $normalized['text'];       // texto da mensagem (se tiver)
         $mediaUrl = $normalized['media_url'];  // URL da imagem/doc (se tiver)
 
-        if (! $phone) {
+        if (!$phone) {
             Log::warning('WAHA Número ausente.', ['payload' => $normalized]);
-
             return response()->json(['message' => 'Número ausente.'], 422);
         }
 
@@ -78,7 +76,6 @@ class WahaWebhookController extends Controller
          */
         if (! $session->user_id) {
             $user = User::where('phone_e164', $phone)->first();
-
             if ($user) {
                 $session->user()->associate($user);
                 $session->save();
@@ -93,7 +90,6 @@ class WahaWebhookController extends Controller
          */
         if ($user) {
             Auth::setUser($user);
-
             if (! empty($user->current_company_id)) {
                 session(['current_company_id' => $user->current_company_id]);
             }
@@ -103,16 +99,17 @@ class WahaWebhookController extends Controller
          * Se for mídia (imagem/doc), cria Attachment e joga pro Gemini
          */
         if ($mediaUrl) {
-            $storagePath = $this->downloadWhatsappMedia($mediaUrl, $session);
-
-            if ($storagePath) {
+            $media = $this->downloadWhatsappMedia($mediaUrl, $session);
+            if ($media) {
                 $attachment = Attachment::create([
-                    'user_id' => $session->user_id,
-                    'path' => $storagePath,
-                    'source' => 'whatsapp',
-                    'raw_payload' => $payload,
+                    'user_id'       => $session->user_id,
+                    'path'          => $media['path'],
+                    'original_name' => $media['original_name'],
+                    'mime'          => $media['mime'],
+                    'size'          => $media['size'],
+                    'source'        => 'whatsapp',
+                    'raw_payload'   => $payload,
                 ]);
-
                 ProcessGeminiAttachment::dispatch($attachment);
             }
         }
@@ -250,18 +247,13 @@ class WahaWebhookController extends Controller
         if (! $number) {
             return null;
         }
-
-        // Remove tudo após @
         $number = explode('@', $number)[0];
-
-        // Remove qualquer sufixo após :
         $number = explode(':', $number)[0];
 
-        // Mantém só números
         return preg_replace('/\D/', '', $number);
     }
 
-    protected function downloadWhatsappMedia(string $mediaUrl, WhatsappSession $session): ?string
+    protected function downloadWhatsappMedia(string $mediaUrl, WhatsappSession $session): ?array
     {
         $token = config('services.waha.token');
 
@@ -274,7 +266,7 @@ class WahaWebhookController extends Controller
         }
 
         try {
-            // Requisita o arquivo autenticando com o X-Api-Key
+
             $response = Http::withHeaders([
                 'X-Api-Key' => $token,
             ])->timeout(20)->get($mediaUrl);
@@ -289,22 +281,35 @@ class WahaWebhookController extends Controller
                 return null;
             }
 
-            // Define pasta e nome do arquivo para salvar em storage/app
+            /**
+             * Define pasta e nome do arquivo para salvar em storage/app
+             */
             $path     = parse_url($mediaUrl, PHP_URL_PATH) ?: $mediaUrl;
             $filename = basename($path) ?: Str::uuid()->toString();
-
             $storagePath = sprintf('whatsapp/%s/%s', $session->phone_e164, $filename);
+            $contents = $response->body();
 
-            // Salva o conteúdo da mídia no storage
-            Storage::put($storagePath, $response->body());
+            Storage::put($storagePath, $contents);
 
-            return $storagePath;
+            $mime = $response->header('content-type') ?: null;
+            $size = (int) ($response->header('content-length') ?? 0) ?: strlen($contents);
+
+            if (! $mime) {
+                $mime = Storage::mimeType($storagePath) ?: null;
+            }
+
+            return [
+                'path' => $storagePath,
+                'original_name' => $filename,
+                'mime' => $mime,
+                'size' => $size,
+            ];
+
         } catch (\Throwable $exception) {
             Log::error('WAHA media download exception', [
                 'media_url' => $mediaUrl,
                 'error'     => $exception->getMessage(),
             ]);
-
             return null;
         }
     }
