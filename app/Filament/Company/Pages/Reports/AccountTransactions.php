@@ -60,20 +60,20 @@ class AccountTransactions extends BaseReportPage
     {
         return [
             Column::make('date')
-                ->label('DATE')
+                ->label(__('Date'))
                 ->markAsDate()
                 ->alignment(Alignment::Left),
             Column::make('description')
-                ->label('DESCRIPTION')
+                ->label(__('Description'))
                 ->alignment(Alignment::Left),
             Column::make('debit')
-                ->label('DEBIT')
+                ->label(__('Debit'))
                 ->alignment(Alignment::Right),
             Column::make('credit')
-                ->label('CREDIT')
+                ->label(__('Credit'))
                 ->alignment(Alignment::Right),
             Column::make('balance')
-                ->label('RUNNING BALANCE')
+                ->label(__('Running balance'))
                 ->alignment(Alignment::Right),
         ];
     }
@@ -84,7 +84,7 @@ class AccountTransactions extends BaseReportPage
             ->columns(5)
             ->schema([
                 Select::make('selectedAccount')
-                    ->label('Account')
+                    ->label(__('Account'))
                     ->options($this->getAccountOptions())
                     ->selectablePlaceholder(false)
                     ->searchable(),
@@ -96,13 +96,13 @@ class AccountTransactions extends BaseReportPage
                     'class' => 'report-hidden-label',
                 ]),
                 Select::make('selectedPayee')
-                    ->label('Payee')
+                    ->label(__('Payee'))
                     ->options($this->getEntityOptions())
                     ->searchable()
                     ->selectablePlaceholder(false),
                 Actions::make([
                     Actions\Action::make('applyFilters')
-                        ->label('Update report')
+                        ->label(__('Update report'))
                         ->action('applyFilters')
                         ->keyBindings(['mod+s'])
                         ->button(),
@@ -119,7 +119,7 @@ class AccountTransactions extends BaseReportPage
             ->toArray();
 
         $allAccountsOption = [
-            'All Accounts' => ['all' => 'All Accounts'],
+            __('All accounts') => ['all' => __('All accounts')],
         ];
 
         return $allAccountsOption + $accounts;
@@ -139,12 +139,12 @@ class AccountTransactions extends BaseReportPage
             ->toArray();
 
         $allEntitiesOption = [
-            'All Payees' => ['all' => 'All Payees'],
+            __('All payees') => ['all' => __('All payees')],
         ];
 
         return $allEntitiesOption + [
-            'Clients' => $clients,
-            'Vendors' => $vendors,
+            __('Clients') => $clients,
+            __('Vendors') => $vendors,
         ];
     }
 
@@ -176,12 +176,12 @@ class AccountTransactions extends BaseReportPage
 
     public function getEmptyStateHeading(): string | Htmlable
     {
-        return 'No Transactions Found';
+        return __('No transactions found');
     }
 
     public function getEmptyStateDescription(): string | Htmlable | null
     {
-        return 'Adjust the account or date range, or start by creating a transaction.';
+        return __('Adjust the account or date range or start by creating a transaction.');
     }
 
     public function getEmptyStateIcon(): string
@@ -193,7 +193,7 @@ class AccountTransactions extends BaseReportPage
     {
         return [
             Action::make('createTransaction')
-                ->label('Create transaction')
+                ->label(__('Create transaction'))
                 ->url(TransactionResource::getUrl()),
         ];
     }
