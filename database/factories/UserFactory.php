@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Common\OrganizationType;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -68,6 +69,7 @@ class UserFactory extends Factory
                     'name' => $user->name . '\'s Company',
                     'user_id' => $user->id,
                     'personal_company' => true,
+                    'organization_type' => OrganizationType::Company,
                 ])
                 ->when(is_callable($callback), $callback),
             'ownedCompanies'

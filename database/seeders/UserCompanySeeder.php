@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Common\OrganizationType;
 use App\Models\Company;
 use App\Models\User;
 use Database\Factories\CompanyFactory;
@@ -20,6 +21,7 @@ class UserCompanySeeder extends Seeder
                 return $factory
                     ->state([
                         'name' => 'ERPSAAS',
+                        'organization_type' => OrganizationType::Company,
                     ])
                     ->withTransactions(250)
                     ->withOfferings()
@@ -49,6 +51,7 @@ class UserCompanySeeder extends Seeder
                     'name' => $companyData['name'],
                     'user_id' => $user->id,
                     'personal_company' => false,
+                    'organization_type' => OrganizationType::Company,
                 ])
                 ->withCompanyProfile($companyData['country'])
                 ->withCompanyDefaults($companyData['currency'], $companyData['locale'])

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Common\OrganizationType;
 use App\Models\Accounting\Bill;
 use App\Models\Accounting\Estimate;
 use App\Models\Accounting\Invoice;
@@ -36,6 +37,7 @@ class CompanyFactory extends Factory
             'name' => $this->faker->unique()->company(),
             'user_id' => User::factory(),
             'personal_company' => true,
+            'organization_type' => OrganizationType::Company,
         ];
     }
 

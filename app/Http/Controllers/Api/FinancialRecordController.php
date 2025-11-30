@@ -16,7 +16,7 @@ class FinancialRecordController extends Controller
 
     public function index(Request $request)
     {
-        $records = FinancialRecord::with(['category', 'attachment', 'ledgers'])
+        $records = FinancialRecord::with(['category', 'attachment', 'ledgers', 'transaction'])
             ->where('user_id', $request->user()->id)
             ->latest('occurred_on')
             ->paginate(20);

@@ -2,6 +2,7 @@
 
 namespace App\Actions\FilamentCompanies;
 
+use App\Enums\Common\OrganizationType;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,7 @@ class CreateNewUser implements CreatesNewUsers
             'user_id' => $user->id,
             'name' => explode(' ', $user->name, 2)[0] . "'s Company",
             'personal_company' => true,
+            'organization_type' => OrganizationType::Company,
         ]));
     }
 }

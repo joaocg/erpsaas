@@ -2,6 +2,7 @@
 
 namespace App\Actions\FilamentCompanies;
 
+use App\Enums\Common\OrganizationType;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -33,6 +34,7 @@ class CreateCompany implements CreatesCompanies
         $user->switchCompany($company = $user->ownedCompanies()->create([
             'name' => $input['name'],
             'personal_company' => false,
+            'organization_type' => OrganizationType::Company,
         ]));
 
         return $company;
