@@ -14,6 +14,11 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Categories');
+    }
+
     protected static ?string $navigationGroup = 'Automação & WhatsApp';
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
