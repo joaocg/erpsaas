@@ -6,9 +6,11 @@ use App\Filament\Company\Resources\Automation\AttachmentResource\Pages;
 use App\Models\Attachment;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class AttachmentResource extends Resource
 {
@@ -32,7 +34,23 @@ class AttachmentResource extends Resource
                             ->disk('public')
                             ->directory('attachments')
                             ->preserveFilenames()
-                            ->required(),
+                            ->required()
+                            ->afterStateUpdated(function (TemporaryUploadedFile|string|null $state, Set $set): void {
+                                if (! $state instanceof TemporaryUploadedFile) {
+                                    return;
+                                }
+
+                                $set('original_name', $state->getClientOriginalName());
+                                $set('mime', $state->getMimeType());
+                                $set('size', $state->getSize());
+
+                                $set('raw_payload', json_encode([
+                                    'uploaded_via' => 'filament',
+                                    'original_name' => $state->getClientOriginalName(),
+                                    'mime' => $state->getMimeType(),
+                                    'size' => $state->getSize(),
+                                ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                            }),
                         Forms\Components\TextInput::make('original_name')
                             ->label('Nome original')
                             ->maxLength(255),
@@ -65,6 +83,20 @@ class AttachmentResource extends Resource
                             ->maxLength(50),
                         Forms\Components\Textarea::make('raw_payload')
                             ->label('Payload bruto')
+                            ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
+                            ->dehydrateStateUsing(function ($state) {
+                                if (blank($state)) {
+                                    return null;
+                                }
+
+                                if (is_string($state)) {
+                                    $decoded = json_decode($state, true);
+
+                                    return $decoded ?? $state;
+                                }
+
+                                return $state;
+                            })
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
