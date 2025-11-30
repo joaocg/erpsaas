@@ -14,6 +14,11 @@ class MedicalAppointmentResource extends Resource
 {
     protected static ?string $model = MedicalAppointment::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Medical Appointments');
+    }
+
     protected static ?string $navigationGroup = 'Automação & WhatsApp';
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';

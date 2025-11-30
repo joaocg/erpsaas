@@ -33,6 +33,11 @@ class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Transactions');
+    }
+
     protected static ?string $recordTitleAttribute = 'description';
 
     public static function form(Form $form): Form

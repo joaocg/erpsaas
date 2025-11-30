@@ -14,6 +14,11 @@ class FinancialRecordResource extends Resource
 {
     protected static ?string $model = FinancialRecord::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Financial Records');
+    }
+
     protected static ?string $navigationGroup = 'Automação & WhatsApp';
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
