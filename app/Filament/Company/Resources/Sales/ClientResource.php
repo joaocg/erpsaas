@@ -25,6 +25,11 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Clients');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -251,24 +256,25 @@ class ClientResource extends Resource
             ->columns([
                 Columns::id(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('Name'))
                     ->searchable()
                     ->sortable()
                     ->description(static fn (Client $client) => $client->primaryContact?->full_name),
                 Tables\Columns\TextColumn::make('primaryContact.email')
-                    ->label('Email')
+                    ->label(__('Email'))
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('primaryContact.phones')
-                    ->label('Phone')
+                    ->label(__('Phone'))
                     ->toggleable()
                     ->state(static fn (Client $client) => $client->primaryContact?->first_available_phone),
                 Tables\Columns\TextColumn::make('billingAddress.address_string')
-                    ->label('Billing address')
+                    ->label(__('Billing address'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->listWithLineBreaks(),
                 Tables\Columns\TextColumn::make('balance')
-                    ->label('Balance')
+                    ->label(__('Balance'))
                     ->getStateUsing(function (Client $client) {
                         return $client->invoices()
                             ->unpaid()
@@ -287,7 +293,7 @@ class ClientResource extends Resource
 
                         $formattedOverdue = CurrencyConverter::formatCentsToMoney($overdue);
 
-                        return "Overdue: {$formattedOverdue}";
+                        return __('Overdue: :amount', ['amount' => $formattedOverdue]);
                     })
                     ->sortable(query: function (Builder $query, string $direction) {
                         return $query

@@ -27,6 +27,11 @@ class AccountResource extends Resource
 
     protected static ?string $modelLabel = 'account';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Accounts');
+    }
+
     public static function getModelLabel(): string
     {
         $modelLabel = static::$modelLabel;

@@ -14,6 +14,11 @@ class MedicalExamResource extends Resource
 {
     protected static ?string $model = MedicalExam::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Medical Exams');
+    }
+
     protected static ?string $navigationGroup = 'Automação & WhatsApp';
 
     protected static ?string $navigationIcon = 'heroicon-o-beaker';

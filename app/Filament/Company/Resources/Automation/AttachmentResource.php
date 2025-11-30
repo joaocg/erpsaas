@@ -16,6 +16,11 @@ class AttachmentResource extends Resource
 {
     protected static ?string $model = Attachment::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Attachments');
+    }
+
     protected static ?string $navigationGroup = 'Automação & WhatsApp';
 
     protected static ?string $navigationIcon = 'heroicon-o-paper-clip';
