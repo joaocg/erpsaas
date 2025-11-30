@@ -33,7 +33,7 @@
                     $iconPosition = $getIconPosition();
                     $alignment = $getAlignment();
                     $direction = $getDirection();
-                    $gap = $getGap();
+                    $gap = isset($getGap) ? $getGap() : null;
                     $padding = $getPadding();
                     $color = $getColor();
                     $icon = $getIcon($value);
