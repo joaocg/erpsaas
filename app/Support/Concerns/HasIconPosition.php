@@ -2,21 +2,12 @@
 
 namespace Filament\Support\Concerns;
 
-use Filament\Support\Enums\IconPosition;
-
 trait HasIconPosition
 {
-    protected IconPosition|string|null $iconPosition = null;
-
-    public function iconPosition(IconPosition|string|null $position): static
-    {
-        $this->iconPosition = $position;
-
-        return $this;
-    }
-
-    public function getIconPosition(): IconPosition|string|null
-    {
-        return $this->evaluate($this->iconPosition) ?? IconPosition::Before;
-    }
+    /*
+     * Filament v3 already ships icon position handling inside the HasIcon trait.
+     * This compatibility shim only needs to exist so that packages targeting
+     * newer Filament versions (where the concern was split out) can keep using
+     * the trait name without causing method collisions with HasIcon.
+     */
 }
