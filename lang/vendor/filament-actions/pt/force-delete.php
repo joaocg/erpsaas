@@ -4,11 +4,11 @@ return [
 
     'single' => [
 
-        'label' => 'Excluir',
+        'label' => 'Forçar exclusão',
 
         'modal' => [
 
-            'heading' => 'Excluir :label',
+            'heading' => 'Forçar exclusão de :label',
 
             'actions' => [
 
@@ -32,11 +32,11 @@ return [
 
     'multiple' => [
 
-        'label' => 'Excluir selecionado',
+        'label' => 'Forçar exclusão selecionado',
 
         'modal' => [
 
-            'heading' => 'Excluir :label selecionado',
+            'heading' => 'Forçar exclusão de :label selecionado',
 
             'actions' => [
 
