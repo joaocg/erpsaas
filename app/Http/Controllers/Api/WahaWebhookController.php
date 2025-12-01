@@ -128,7 +128,7 @@ class WahaWebhookController extends Controller
                     'source'        => 'whatsapp',
                     'raw_payload'   => $payload,
                 ]);
-                ProcessGeminiAttachment::dispatch($attachment);
+                ProcessGeminiAttachment::dispatch($attachment->id, $session->id);
             }
         }
 

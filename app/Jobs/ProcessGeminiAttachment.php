@@ -5,16 +5,16 @@ namespace App\Jobs;
 use App\Models\Attachment;
 use App\Models\MedicalAppointment;
 use App\Models\MedicalExam;
+use App\Models\WhatsappSession;
 use App\Services\FinancialRecordService;
-use App\Services\Gemini\GeminiClient;
+use App\Services\Gemini\GeminiAttachmentService;
+use App\Services\Waha\WahaClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class ProcessGeminiAttachment implements ShouldQueue
 {
@@ -25,103 +25,128 @@ class ProcessGeminiAttachment implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public Attachment $attachment)
+    public function __construct(public int $attachmentId, public ?int $sessionId = null)
     {
         $this->onQueue('default');
     }
 
-    public function handle(GeminiClient $geminiClient, FinancialRecordService $financialRecordService): void
-    {
-        $attachment = Attachment::find($this->attachment->id);
+    public function handle(
+        GeminiAttachmentService $geminiAttachmentService,
+        FinancialRecordService $financialRecordService,
+        WahaClient $wahaClient
+    ): void {
+        $attachment = Attachment::find($this->attachmentId);
 
         if (! $attachment) {
             return;
         }
 
-        // Se o anexo tiver usuário associado, define o contexto de autenticação/empresa
-        if ($attachment->user) {
-            $user = $attachment->user;
+        $session = $this->sessionId ? WhatsappSession::find($this->sessionId) : null;
+        $user = $session?->user ?? $attachment->user;
+
+        if ($user) {
             Auth::setUser($user);
+
+            if (empty($user->current_company_id)) {
+                $fallbackCompany = $user->companies()->first();
+
+                if ($fallbackCompany) {
+                    $user->switchCompany($fallbackCompany);
+                }
+            }
 
             if (! empty($user->current_company_id)) {
                 session(['current_company_id' => $user->current_company_id]);
             }
         }
 
-        // Constrói o contexto para a Gemini (valor, tipo etc.)
-        $context = [
-            'type'     => $attachment->gemini_detected_type,
-            'amount'   => $attachment->gemini_amount,
-            'currency' => $attachment->gemini_currency,
-        ];
+        $parsed = $geminiAttachmentService->analyzeAttachment($attachment);
 
-        $storagePath = $attachment->path;
+        if ($parsed['intent'] === 'create_financial_record') {
+            if (! $user) {
+                if ($session) {
+                    $wahaClient->sendTextMessage($session->phone_e164, 'Identificamos um lançamento, mas precisamos que conclua seu cadastro no app para vincular.');
+                }
 
-        // Se o arquivo não estiver no storage (pode ser um caminho externo), envia o caminho original
-        if (! Storage::disk('local')->exists($storagePath)) {
-            Log::warning('Attachment not found in storage for Gemini processing.', [
-                'attachment_id' => $attachment->id,
-                'path'          => $storagePath,
+                return;
+            }
+
+            $record = $financialRecordService->createRecord($user, [
+                'type' => $parsed['type'] ?? 'expense',
+                'amount' => $parsed['amount'] ?? 0,
+                'currency' => 'BRL',
+                'occurred_on' => $parsed['occurred_on'] ?? now(),
+                'description' => $parsed['description'] ?? 'Lançamento via anexo WhatsApp',
+                'metadata' => [
+                    'source' => 'whatsapp_attachment',
+                    'attachment_id' => $attachment->id,
+                ],
             ]);
 
-            $result = $geminiClient->analyze($storagePath, $context);
-        } else {
-            // Obtém o caminho absoluto e envia para a Gemini
-            $localPath = Storage::disk('local')->path($storagePath);
-            $result    = $geminiClient->analyze($localPath, $context);
-        }
+            if ($session) {
+                $wahaClient->sendTextMessage(
+                    $session->phone_e164,
+                    sprintf(
+                        'Lançamento %s registrado a partir do anexo no valor de R$ %.2f.',
+                        $record->type,
+                        $record->amount
+                    )
+                );
+            }
 
-        // Atualiza o modelo Attachment com os resultados da Gemini
-        $attachment->update([
-            'gemini_status'       => 'processed',
-            'gemini_summary'      => $result['summary'] ?? null,
-            'gemini_topics'       => $result['topics'] ?? [],
-            'gemini_amount'       => $result['amount'] ?? $attachment->gemini_amount,
-            'gemini_currency'     => $result['currency'] ?? $attachment->gemini_currency,
-            'gemini_detected_type'=> $result['detected_type'] ?? $attachment->gemini_detected_type,
-            'processed_at'        => now(),
-        ]);
-
-        $detectedType = $attachment->gemini_detected_type ?? $result['detected_type'] ?? null;
-
-        if (! $detectedType || ! $attachment->user) {
             return;
         }
 
-        if (in_array($detectedType, ['expense', 'income'], true)) {
-            $financialRecordService->createRecord($attachment->user, [
-                'type' => $detectedType,
-                'amount' => $result['amount'] ?? 0,
-                'currency' => $result['currency'] ?? 'BRL',
-                'occurred_on' => now(),
-                'attachment_id' => $attachment->id,
-                'description' => $result['summary'] ?? 'Lançamento automático',
-                'metadata' => $result,
-            ]);
-        }
+        if ($parsed['intent'] === 'create_appointment') {
+            if (! $user) {
+                if ($session) {
+                    $wahaClient->sendTextMessage($session->phone_e164, 'Identificamos uma consulta, mas precisamos do cadastro no app para vincular.');
+                }
 
-        if ($detectedType === 'appointment') {
+                return;
+            }
+
             MedicalAppointment::create([
-                'user_id' => $attachment->user_id,
-                'attachment_id' => $attachment->id,
-                'provider_name' => 'Consulta Gemini',
-                'occurred_on' => now(),
-                'status' => 'done',
-                'notes' => $result['summary'] ?? null,
-                'metadata' => $result,
+                'user_id' => $user->id,
+                'provider_name' => $parsed['provider_name'] ?? 'Consulta (anexo WhatsApp)',
+                'occurred_on' => $parsed['occurred_on'] ?? now(),
+                'status' => 'scheduled',
+                'notes' => $parsed['description'] ?? 'Consulta registrada a partir de anexo.',
             ]);
+
+            if ($session) {
+                $wahaClient->sendTextMessage($session->phone_e164, 'Consulta registrada a partir do anexo e vinculada ao seu perfil.');
+            }
+
+            return;
         }
 
-        if ($detectedType === 'exam') {
+        if ($parsed['intent'] === 'create_exam') {
+            if (! $user) {
+                if ($session) {
+                    $wahaClient->sendTextMessage($session->phone_e164, 'Identificamos um exame, mas precisamos do cadastro no app para vincular.');
+                }
+
+                return;
+            }
+
             MedicalExam::create([
-                'user_id' => $attachment->user_id,
-                'attachment_id' => $attachment->id,
-                'exam_type' => 'Exame Gemini',
-                'occurred_on' => now(),
-                'status' => 'done',
-                'notes' => $result['summary'] ?? null,
-                'results_json' => $result,
+                'user_id' => $user->id,
+                'exam_type' => $parsed['exam_type'] ?? 'Exame (anexo WhatsApp)',
+                'occurred_on' => $parsed['occurred_on'] ?? now(),
+                'status' => 'scheduled',
+                'notes' => $parsed['description'] ?? 'Exame registrado a partir de anexo.',
             ]);
+
+            if ($session) {
+                $wahaClient->sendTextMessage($session->phone_e164, 'Exame registrado a partir do anexo e vinculado ao seu perfil.');
+            }
+
+            return;
+        }
+
+        if ($session) {
+            $wahaClient->sendTextMessage($session->phone_e164, 'Não consegui entender as informações desse anexo. Pode tentar enviar um texto explicando o que é esse lançamento?');
         }
     }
 }
