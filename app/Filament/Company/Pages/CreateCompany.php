@@ -58,7 +58,9 @@ class CreateCompany extends FilamentCreateCompany
                     ->live()
                     ->softRequired(),
                 TextInput::make('name')
-                    ->label(fn (Get $get) => $get('organization_type') === OrganizationType::Family->value
+                    ->label(fn (Get $get) => ($get('organization_type') instanceof OrganizationType
+                        ? $get('organization_type')
+                        : OrganizationType::tryFrom($get('organization_type'))) === OrganizationType::Family
                         ? __('Family name')
                         : __('Company name'))
                     ->autofocus()
@@ -108,12 +110,16 @@ class CreateCompany extends FilamentCreateCompany
         $personalCompany = $user?->personalCompany() === null;
 
         return DB::transaction(function () use ($user, $data, $personalCompany) {
+            $organizationType = $data['organization_type'] instanceof OrganizationType
+                ? $data['organization_type']
+                : OrganizationType::tryFrom($data['organization_type'] ?? '')
+                    ?? OrganizationType::Company;
+
             /** @var Company $company */
             $company = $user?->ownedCompanies()->create([
                 'name' => $data['name'],
                 'personal_company' => $personalCompany,
-                'organization_type' => OrganizationType::tryFrom($data['organization_type'] ?? '')
-                    ?? OrganizationType::Company,
+                'organization_type' => $organizationType,
             ]);
 
             $profile = $company->profile()->create([
