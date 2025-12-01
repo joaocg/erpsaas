@@ -76,6 +76,15 @@ class WahaWebhookController extends Controller
          */
         if (! $session->user_id) {
             $user = User::where('phone_e164', $phone)->first();
+
+            // Tenta encontrar o usuário com variações comuns do número (ex: sem DDI)
+            if (! $user) {
+                $maybeE164 = $this->normalizeToBrazilE164($phone);
+
+                if ($maybeE164 && $maybeE164 !== $phone) {
+                    $user = User::where('phone_e164', $maybeE164)->first();
+                }
+            }
             if ($user) {
                 $session->user()->associate($user);
                 $session->save();
@@ -249,6 +258,27 @@ class WahaWebhookController extends Controller
             'text' => $text,
             'media_url' => $this->normalizeFileUrl($mediaUrl),
         ];
+    }
+
+    protected function normalizeToBrazilE164(?string $phone): ?string
+    {
+        if (! $phone) {
+            return null;
+        }
+
+        $numeric = preg_replace('/\D/', '', $phone);
+
+        if (! $numeric) {
+            return null;
+        }
+
+        // Caso venha sem o DDI (55) mas com DDD e número (11 dígitos)
+        if (strlen($numeric) === 11) {
+            return '55' . $numeric;
+        }
+
+        // Se já tiver 13 ou mais dígitos, assume que já está em E.164
+        return $numeric;
     }
 
     protected function cleanPhone(?string $number): ?string
