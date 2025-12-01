@@ -16,6 +16,7 @@ class FinancialRecordService
         $category = $this->resolveCategory($user, $payload['category_id'] ?? null, $payload['type'] ?? null);
 
         $record = FinancialRecord::create([
+            'company_id' => $user->current_company_id,
             'user_id' => $user->id,
             'category_id' => $category?->id,
             'attachment_id' => $payload['attachment_id'] ?? null,
@@ -29,7 +30,7 @@ class FinancialRecordService
 
         $this->syncLedgers($record);
 
-        return $record->load(['ledgers', 'category', 'attachment']);
+        return $record->load(['ledgers', 'category', 'attachment', 'transaction']);
     }
 
     public function syncLedgers(FinancialRecord $record): void

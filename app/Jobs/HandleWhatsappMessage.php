@@ -52,6 +52,14 @@ class HandleWhatsappMessage implements ShouldQueue
         if ($user) {
             Auth::setUser($user);
 
+            if (empty($user->current_company_id)) {
+                $fallbackCompany = $user->companies()->first();
+
+                if ($fallbackCompany) {
+                    $user->switchCompany($fallbackCompany);
+                }
+            }
+
             if (! empty($user->current_company_id)) {
                 session(['current_company_id' => $user->current_company_id]);
             }

@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Pages;
 
 use App\Enums\Common\AddressType;
+use App\Enums\Common\OrganizationType;
 use App\Enums\Setting\EntityType;
 use App\Models\Company;
 use App\Models\Locale\Country;
@@ -12,6 +13,7 @@ use App\Utilities\Currency\CurrencyAccessor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
@@ -49,21 +51,29 @@ class CreateCompany extends FilamentCreateCompany
     {
         return $form
             ->schema([
+                Select::make('organization_type')
+                    ->label(__('Registration type'))
+                    ->options(OrganizationType::class)
+                    ->default(OrganizationType::Company)
+                    ->live()
+                    ->softRequired(),
                 TextInput::make('name')
-                    ->label(__('filament-companies::default.labels.company_name'))
+                    ->label(fn (Get $get) => $get('organization_type') === OrganizationType::Family->value
+                        ? __('Family name')
+                        : __('Company name'))
                     ->autofocus()
                     ->maxLength(255)
                     ->softRequired(),
                 TextInput::make('profile.email')
-                    ->label('Company email')
+                    ->label(__('Company email'))
                     ->email()
                     ->softRequired(),
                 Select::make('profile.entity_type')
-                    ->label('Entity type')
+                    ->label(__('Entity type'))
                     ->options(EntityType::class)
                     ->softRequired(),
                 Select::make('profile.country')
-                    ->label('Country')
+                    ->label(__('Country'))
                     ->live()
                     ->searchable()
                     ->options(Country::getAvailableCountryOptions())
@@ -71,12 +81,12 @@ class CreateCompany extends FilamentCreateCompany
                     ->getOptionLabelUsing(fn ($value): ?string => Country::find($value)?->name . ' ' . Country::find($value)?->flag)
                     ->softRequired(),
                 Select::make('locale.language')
-                    ->label('Language')
+                    ->label(__('Language'))
                     ->searchable()
                     ->options(Localization::getAllLanguages())
                     ->softRequired(),
                 Select::make('currencies.code')
-                    ->label('Currency')
+                    ->label(__('Currency'))
                     ->searchable()
                     ->options(CurrencyAccessor::getAllCurrencyOptions())
                     ->optionsLimit(5)
@@ -102,6 +112,8 @@ class CreateCompany extends FilamentCreateCompany
             $company = $user?->ownedCompanies()->create([
                 'name' => $data['name'],
                 'personal_company' => $personalCompany,
+                'organization_type' => OrganizationType::tryFrom($data['organization_type'] ?? '')
+                    ?? OrganizationType::Company,
             ]);
 
             $profile = $company->profile()->create([

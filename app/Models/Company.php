@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Accounting\DocumentType;
+use App\Enums\Common\OrganizationType;
 use App\Models\Accounting\AccountSubtype;
 use App\Models\Banking\BankAccount;
 use App\Models\Banking\ConnectedBankAccount;
@@ -35,6 +36,7 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
      */
     protected $casts = [
         'personal_company' => 'boolean',
+        'organization_type' => OrganizationType::class,
     ];
 
     /**
@@ -45,6 +47,7 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
     protected $fillable = [
         'name',
         'personal_company',
+        'organization_type',
     ];
 
     /**
@@ -206,5 +209,12 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
     public function vendors(): HasMany
     {
         return $this->hasMany(Common\Vendor::class, 'company_id');
+    }
+
+    public function getOrganizationLabel(): string
+    {
+        $type = $this->organization_type ?? OrganizationType::Company;
+
+        return $type->getLabel();
     }
 }
