@@ -41,6 +41,11 @@ class RecurringInvoiceResource extends Resource
 {
     protected static ?string $model = RecurringInvoice::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Recurring Invoices');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;

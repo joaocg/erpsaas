@@ -35,6 +35,11 @@ class TransactionResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'description';
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Transactions');
+    }
+
     public static function form(Form $form): Form
     {
         return $form

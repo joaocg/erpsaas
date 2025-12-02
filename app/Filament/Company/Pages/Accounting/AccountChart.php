@@ -36,6 +36,11 @@ class AccountChart extends Page
 
     protected static string $view = 'filament.company.pages.accounting.chart';
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Chart of Accounts');
+    }
+
     #[Url]
     public ?string $activeTab = AccountCategory::Asset->value;
 

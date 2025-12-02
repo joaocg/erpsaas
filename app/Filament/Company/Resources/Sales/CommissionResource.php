@@ -17,6 +17,11 @@ class CommissionResource extends Resource
 {
     protected static ?string $model = Commission::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Commissions');
+    }
+
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     public static function form(Form $form): Form

@@ -16,6 +16,11 @@ class PartnerClientLinkResource extends Resource
 {
     protected static ?string $model = PartnerClientLink::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Partner Client Links');
+    }
+
     protected static ?string $navigationIcon = 'heroicon-o-link';
 
     public static function form(Form $form): Form

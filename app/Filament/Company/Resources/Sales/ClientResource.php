@@ -25,6 +25,11 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Clients');
+    }
+
     public static function form(Form $form): Form
     {
         return $form

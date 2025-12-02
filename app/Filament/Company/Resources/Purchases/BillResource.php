@@ -48,6 +48,11 @@ class BillResource extends Resource
 {
     protected static ?string $model = Bill::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Bills');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;
