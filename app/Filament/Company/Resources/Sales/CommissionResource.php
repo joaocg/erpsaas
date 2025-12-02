@@ -4,7 +4,7 @@ namespace App\Filament\Company\Resources\Sales;
 
 use App\Enums\CommissionStatus;
 use App\Filament\Company\Resources\Sales\CommissionResource\Pages;
-use App\Models\Accounting\Invoice;
+use App\Models\Company;
 use App\Models\Commission;
 use App\Models\Partner;
 use App\Services\CommissionService;
@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
 class CommissionResource extends Resource
 {
     protected static ?string $model = Commission::class;
+
+    protected static ?string $tenantModel = Company::class;
 
     protected static ?string $tenantRelationshipName = 'commissions';
 
