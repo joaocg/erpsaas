@@ -33,14 +33,14 @@ class ReferrerResource extends Resource
                     ->required(),
                 Forms\Components\Section::make('Dados do indicador')
                     ->schema([
-                        Forms\Components\Select::make('employeeship_id')
+                        Forms\Components\Select::make('user_id')
                             ->label('Colaborador interno')
                             ->relationship(
-                                name: 'employeeship',
+                                name: 'user',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: static function (Builder $query) use ($companyId) {
                                     if ($companyId) {
-                                        $query->where('company_id', $companyId);
+                                        $query->whereHas('companies', fn ($relationQuery) => $relationQuery->where('company_id', $companyId));
                                     }
                                 }
                             )

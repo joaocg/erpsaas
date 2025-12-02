@@ -6,10 +6,10 @@ use App\Concerns\CompanyOwned;
 use App\Models\Accounting\Invoice;
 use App\Models\Common\Client;
 use App\Models\Company;
-use App\Models\Employeeship;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Wallo\FilamentCompanies\FilamentCompanies;
 
 class ReferralCase extends Model
 {
@@ -19,7 +19,7 @@ class ReferralCase extends Model
         'company_id',
         'referrer_id',
         'client_id',
-        'responsible_employeeship_id',
+        'responsible_user_id',
         'invoice_id',
         'title',
         'description',
@@ -52,7 +52,7 @@ class ReferralCase extends Model
 
     public function responsible(): BelongsTo
     {
-        return $this->belongsTo(Employeeship::class, 'responsible_employeeship_id');
+        return $this->belongsTo(FilamentCompanies::userModel(), 'responsible_user_id');
     }
 
     public function invoice(): BelongsTo

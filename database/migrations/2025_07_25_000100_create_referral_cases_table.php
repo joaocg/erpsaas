@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('referrer_id')->constrained('referrers')->cascadeOnDelete();
             $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
-            $table->foreignId('responsible_employeeship_id')->nullable()->constrained('employeeships')->nullOnDelete();
+            $table->foreignId('responsible_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('invoice_id')->nullable()->constrained('invoices')->nullOnDelete();
             $table->string('title');
             $table->text('description')->nullable();

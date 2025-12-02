@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('referrers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('employeeship_id')->nullable()->constrained('employeeships')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('contact_id')->nullable()->constrained('contacts')->nullOnDelete();
             $table->foreignId('parent_id')->nullable()->constrained('referrers')->nullOnDelete();
             $table->decimal('default_commission_rate', 5, 2)->nullable();

@@ -5,11 +5,11 @@ namespace App\Models\Referral;
 use App\Concerns\CompanyOwned;
 use App\Models\Common\Contact;
 use App\Models\Company;
-use App\Models\Employeeship;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Wallo\FilamentCompanies\FilamentCompanies;
 
 class Referrer extends Model
 {
@@ -17,7 +17,7 @@ class Referrer extends Model
 
     protected $fillable = [
         'company_id',
-        'employeeship_id',
+        'user_id',
         'contact_id',
         'parent_id',
         'default_commission_rate',
@@ -34,8 +34,8 @@ class Referrer extends Model
     protected function name(): Attribute
     {
         return Attribute::get(function () {
-            if ($this->employeeship?->name) {
-                return $this->employeeship->name;
+            if ($this->user?->name) {
+                return $this->user->name;
             }
 
             return $this->contact?->full_name;
@@ -47,9 +47,9 @@ class Referrer extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function employeeship(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Employeeship::class);
+        return $this->belongsTo(FilamentCompanies::userModel());
     }
 
     public function contact(): BelongsTo

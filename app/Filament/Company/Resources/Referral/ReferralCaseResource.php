@@ -91,14 +91,14 @@ class ReferralCaseResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\Select::make('responsible_employeeship_id')
+                        Forms\Components\Select::make('responsible_user_id')
                             ->label('Responsável interno')
                             ->relationship(
                                 name: 'responsible',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: static function (Builder $query) use ($companyId) {
                                     if ($companyId) {
-                                        $query->where('company_id', $companyId);
+                                        $query->whereHas('companies', fn ($relationQuery) => $relationQuery->where('company_id', $companyId));
                                     }
                                 }
                             )
