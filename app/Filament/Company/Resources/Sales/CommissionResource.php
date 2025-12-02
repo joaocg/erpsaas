@@ -21,6 +21,8 @@ class CommissionResource extends Resource
 {
     protected static ?string $model = Commission::class;
 
+    protected static ?string $tenantRelationshipName = 'commissions';
+
     public static function getNavigationLabel(): string
     {
         return __('Commissions');
