@@ -49,12 +49,12 @@ class CompanyDefault extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public static function getNavigationLabel(): string
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public function getMaxContentWidth(): MaxWidth | string | null
@@ -131,7 +131,7 @@ class CompanyDefault extends Page
                     ->searchable()
                     ->preload(),
                 Placeholder::make('currency_code')
-                    ->label(translate('Currency'))
+                    ->label(__('Currency'))
                     ->hintIcon('heroicon-o-question-mark-circle', 'You cannot change this after your company has been created. You can still use other currencies for transactions.')
                     ->content(static fn (CompanyDefaultModel $record) => "{$record->currency->code} {$record->currency->symbol} - {$record->currency->name}"),
             ])->columns();
