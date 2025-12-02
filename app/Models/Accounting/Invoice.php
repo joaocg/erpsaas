@@ -13,6 +13,9 @@ use App\Enums\Accounting\TransactionType;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Models\Banking\BankAccount;
 use App\Models\Common\Client;
+use App\Models\Commission;
+use App\Models\LegalCase;
+use App\Models\Partner;
 use App\Models\Company;
 use App\Models\Setting\DocumentDefault;
 use App\Observers\InvoiceObserver;
@@ -31,6 +34,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
@@ -47,6 +51,7 @@ class Invoice extends Document
     protected $fillable = [
         'company_id',
         'client_id',
+        'partner_id',
         'estimate_id',
         'recurring_invoice_id',
         'logo',
@@ -65,6 +70,7 @@ class Invoice extends Document
         'discount_method',
         'discount_computation',
         'discount_rate',
+        'commission_percent',
         'subtotal',
         'tax_total',
         'discount_total',
@@ -87,6 +93,7 @@ class Invoice extends Document
         'discount_method' => DocumentDiscountMethod::class,
         'discount_computation' => AdjustmentComputation::class,
         'discount_rate' => RateCast::class,
+        'commission_percent' => 'decimal:2',
     ];
 
     protected $appends = [
@@ -105,6 +112,11 @@ class Invoice extends Document
         return $this->belongsTo(Client::class);
     }
 
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
     public function estimate(): BelongsTo
     {
         return $this->belongsTo(Estimate::class);
@@ -113,6 +125,11 @@ class Invoice extends Document
     public function recurringInvoice(): BelongsTo
     {
         return $this->belongsTo(RecurringInvoice::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class);
     }
 
     public function transactions(): MorphMany

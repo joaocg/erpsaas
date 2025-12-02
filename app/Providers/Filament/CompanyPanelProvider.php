@@ -33,6 +33,9 @@ use App\Filament\Company\Resources\Purchases\VendorResource;
 use App\Filament\Company\Resources\Sales\ClientResource;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
+use App\Filament\Company\Resources\Sales\PartnerClientLinkResource;
+use App\Filament\Company\Resources\Sales\PartnerResource;
+use App\Filament\Company\Resources\Sales\CommissionResource;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource;
 use App\Filament\Components\PanelShiftDropdown;
 use App\Filament\Pages\Auth\Login;
@@ -138,9 +141,12 @@ class CompanyPanelProvider extends PanelProvider
                             ->label('Sales')
                             ->icon('heroicon-o-currency-dollar')
                             ->items([
+                                ...PartnerResource::getNavigationItems(),
                                 ...ClientResource::getNavigationItems(),
                                 ...EstimateResource::getNavigationItems(),
                                 ...InvoiceResource::getNavigationItems(),
+                                ...PartnerClientLinkResource::getNavigationItems(),
+                                ...CommissionResource::getNavigationItems(),
                                 ...RecurringInvoiceResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make('Purchases')
