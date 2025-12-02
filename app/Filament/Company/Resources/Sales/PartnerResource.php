@@ -14,6 +14,16 @@ class PartnerResource extends Resource
 {
     protected static ?string $model = Partner::class;
 
+    public static function getModelLabel(): string
+    {
+        return __('Partner');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Partners');
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Partners');
