@@ -22,6 +22,9 @@ class FinancialRecord extends Model
         'category_id',
         'attachment_id',
         'transaction_id',
+        'referrer_id',
+        'referral_case_id',
+        'referral_commission_id',
         'type',
         'amount',
         'currency',
@@ -58,5 +61,20 @@ class FinancialRecord extends Model
     public function ledgers(): HasMany
     {
         return $this->hasMany(FinancialLedger::class);
+    }
+
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(Referral\Referrer::class);
+    }
+
+    public function referralCase(): BelongsTo
+    {
+        return $this->belongsTo(Referral\ReferralCase::class);
+    }
+
+    public function referralCommission(): BelongsTo
+    {
+        return $this->belongsTo(Referral\ReferralCommission::class);
     }
 }
