@@ -29,6 +29,7 @@ use App\Models\Accounting\DocumentLineItem;
 use App\Models\Accounting\Invoice;
 use App\Models\Common\Client;
 use App\Models\Common\Offering;
+use App\Models\Partner;
 use App\Utilities\Currency\CurrencyAccessor;
 use App\Utilities\Currency\CurrencyConverter;
 use App\Utilities\RateCalculator;
@@ -83,6 +84,33 @@ class InvoiceResource extends Resource
                                 CreateCurrencySelect::make('currency_code')
                                     ->disabled(function (?Invoice $record) {
                                         return $record?->hasPayments();
+                                    }),
+                                Forms\Components\Select::make('partner_id')
+                                    ->label('Partner')
+                                    ->relationship('partner', 'name', function ($query) {
+                                        return $query->where('active', true);
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $partner = Partner::find($state);
+
+                                        if ($partner && ! $get('commission_percent')) {
+                                            $set('commission_percent', $partner->commission_percent);
+                                        }
+                                    }),
+                                Forms\Components\TextInput::make('commission_percent')
+                                    ->label('Commission %')
+                                    ->numeric()
+                                    ->step('0.01')
+                                    ->suffix('%')
+                                    ->default(function (?Invoice $record) {
+                                        return $record?->commission_percent;
                                     }),
                             ]),
                             Forms\Components\Group::make([
@@ -419,6 +447,16 @@ class InvoiceResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->hiddenOn(InvoicesRelationManager::class),
+                Tables\Columns\TextColumn::make('partner.name')
+                    ->label('Partner')
+                    ->sortable()
+                    ->toggleable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('commission_percent')
+                    ->label('Commission %')
+                    ->formatStateUsing(fn ($state) => $state ? number_format((float) $state, 2) . '%' : null)
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('total')
                     ->currencyWithConversion(static fn (Invoice $record) => $record->currency_code)
                     ->sortable()
@@ -443,6 +481,10 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->preload()
                     ->hiddenOn(InvoicesRelationManager::class),
+                Tables\Filters\SelectFilter::make('partner')
+                    ->relationship('partner', 'name')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(InvoiceStatus::class)
                     ->multiple(),
