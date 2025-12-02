@@ -9,10 +9,13 @@ use App\Models\Accounting\Estimate;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\RecurringInvoice;
 use App\Models\Accounting\Transaction;
+use App\Models\Commission;
+use App\Models\Partner;
 use App\Models\Setting\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -219,6 +222,18 @@ class Client extends Model
         }
 
         return $this;
+    }
+
+    public function partners(): BelongsToMany
+    {
+        return $this->belongsToMany(Partner::class, 'partner_client_links')
+            ->withPivot(['linked_at', 'notes', 'company_id'])
+            ->withTimestamps();
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class);
     }
 
     public function transactions(): MorphMany

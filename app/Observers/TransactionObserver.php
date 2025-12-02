@@ -9,6 +9,7 @@ use App\Models\Accounting\Invoice;
 use App\Models\Accounting\Transaction;
 use App\Models\Common\Client;
 use App\Models\Common\Vendor;
+use App\Services\CommissionService;
 use App\Services\TransactionService;
 use App\Utilities\Currency\CurrencyConverter;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +19,7 @@ class TransactionObserver
 {
     public function __construct(
         protected TransactionService $transactionService,
+        protected CommissionService $commissionService,
     ) {}
 
     /**
@@ -187,6 +189,10 @@ class TransactionObserver
             'status' => $newStatus,
             'paid_at' => $paidAt,
         ]);
+
+        if (in_array($newStatus, [InvoiceStatus::Paid, InvoiceStatus::Overpaid], true)) {
+            $this->commissionService->accrueForPaidInvoice($invoice, $paidAt);
+        }
     }
 
     protected function updateBillTotals(Bill $bill, ?Transaction $excludedTransaction = null): void
@@ -240,5 +246,9 @@ class TransactionObserver
             'status' => $newStatus,
             'paid_at' => $paidAt,
         ]);
+
+        if ($newStatus === BillStatus::Paid) {
+            $this->commissionService->markBillAsPaid($bill, $paidAt);
+        }
     }
 }
