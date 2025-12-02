@@ -9,13 +9,23 @@ class Account extends Cluster
 {
     protected static ?string $navigationIcon = 'heroicon-s-user';
 
-    protected static ?string $navigationLabel = __('My Account');
+    protected static ?string $navigationLabel = null;
 
-    protected static ?string $clusterBreadcrumb = __('My Account');
+    protected static ?string $clusterBreadcrumb = null;
 
     public static function getNavigationUrl(): string
     {
         return static::getUrl(panel: 'user');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('My Account');
+    }
+
+    public static function getClusterBreadcrumb(): string
+    {
+        return __('My Account');
     }
 
     public static function canAccess(): bool
