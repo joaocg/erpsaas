@@ -27,7 +27,7 @@ class ClientResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Clients');
+        return __('Clients');
     }
 
     public static function form(Form $form): Form

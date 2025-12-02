@@ -50,7 +50,7 @@ class BillResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Bills');
+        return __('Bills');
     }
 
     public static function form(Form $form): Form

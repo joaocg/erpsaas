@@ -10,6 +10,6 @@ class Settings extends Cluster
 
     public static function getNavigationLabel(): string
     {
-        return translate('Settings');
+        return __('Settings');
     }
 }

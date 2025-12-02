@@ -29,7 +29,7 @@ class Reports extends Page
 
     public static function getNavigationLabel(): string
     {
-        return translate('Reports');
+        return __('Reports');
     }
 
     public static function getNavigationItems(): array

@@ -37,7 +37,7 @@ class TransactionResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Transactions');
+        return __('Transactions');
     }
 
     public static function form(Form $form): Form

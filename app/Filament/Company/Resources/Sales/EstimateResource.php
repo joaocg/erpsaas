@@ -51,7 +51,7 @@ class EstimateResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Estimates');
+        return __('Estimates');
     }
 
     public static function form(Form $form): Form

@@ -38,7 +38,7 @@ class AccountChart extends Page
 
     public static function getNavigationLabel(): string
     {
-        return translate('Chart of Accounts');
+        return __('Chart of Accounts');
     }
 
     #[Url]

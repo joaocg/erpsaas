@@ -27,7 +27,7 @@ class VendorResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Vendors');
+        return __('Vendors');
     }
 
     public static function form(Form $form): Form

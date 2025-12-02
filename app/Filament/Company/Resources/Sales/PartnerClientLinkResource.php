@@ -18,7 +18,7 @@ class PartnerClientLinkResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Partner Client Links');
+        return __('Partner Client Links');
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-link';

@@ -43,7 +43,7 @@ class RecurringInvoiceResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Recurring Invoices');
+        return __('Recurring Invoices');
     }
 
     public static function form(Form $form): Form

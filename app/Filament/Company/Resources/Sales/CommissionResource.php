@@ -19,7 +19,7 @@ class CommissionResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Commissions');
+        return __('Commissions');
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';

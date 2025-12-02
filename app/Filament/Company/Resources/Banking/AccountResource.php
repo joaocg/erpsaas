@@ -29,14 +29,14 @@ class AccountResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Accounts');
+        return __('Accounts');
     }
 
     public static function getModelLabel(): string
     {
         $modelLabel = static::$modelLabel;
 
-        return translate($modelLabel);
+        return __($modelLabel);
     }
 
     public static function form(Form $form): Form

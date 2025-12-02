@@ -16,7 +16,7 @@ class PartnerResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Partners');
+        return __('Partners');
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
@@ -25,36 +25,36 @@ class PartnerResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Partner Details')
+                Forms\Components\Section::make(__('Partner Details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Name')
+                            ->label(__('Name'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('document')
-                            ->label('Document')
+                            ->label(__('Document'))
                             ->maxLength(255),
                         Forms\Components\TextInput::make('email')
-                            ->label('Email')
+                            ->label(__('Email'))
                             ->email()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
-                            ->label('Phone')
+                            ->label(__('Phone'))
                             ->maxLength(255),
                         Forms\Components\TextInput::make('commission_percent')
-                            ->label('Commission %')
+                            ->label(__('Commission %'))
                             ->numeric()
                             ->step('0.01')
                             ->suffix('%')
                             ->default(20),
                         Forms\Components\Select::make('parent_id')
-                            ->label('Parent partner')
+                            ->label(__('Parent partner'))
                             ->relationship('parent', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Forms\Components\Toggle::make('active')
-                            ->label('Active')
+                            ->label(__('Active'))
                             ->default(true),
                     ])->columns(2),
             ]);
@@ -65,44 +65,44 @@ class PartnerResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('document')
-                    ->label('Document')
+                    ->label(__('Document'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
+                    ->label(__('Email'))
                     ->toggleable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
-                    ->label('Phone')
+                    ->label(__('Phone'))
                     ->toggleable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('commission_percent')
-                    ->label('Commission %')
+                    ->label(__('Commission %'))
                     ->formatStateUsing(fn ($state) => $state ? number_format((float) $state, 2) . '%' : null)
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('clients_count')
-                    ->label('Clients')
+                    ->label(__('Clients'))
                     ->counts('clients')
                     ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('commissions_count')
-                    ->label('Commissions')
+                    ->label(__('Commissions'))
                     ->counts('commissions')
                     ->badge()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('active')
-                    ->label('Active')
+                    ->label(__('Active'))
                     ->boolean()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('active')
-                    ->label('Active'),
+                    ->label(__('Active')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

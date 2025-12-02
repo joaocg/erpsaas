@@ -30,7 +30,7 @@ class OfferingResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Offerings');
+        return __('Offerings');
     }
 
     public static function form(Form $form): Form

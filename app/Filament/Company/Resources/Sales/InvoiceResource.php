@@ -53,7 +53,7 @@ class InvoiceResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return translate('Invoices');
+        return __('Invoices');
     }
 
     public static function form(Form $form): Form
