@@ -139,6 +139,7 @@ class CompanyPanelProvider extends PanelProvider
                     ->groups([
                         NavigationGroup::make('Sales')
                             ->label('Sales')
+                            ->localizeLabel()
                             ->icon('heroicon-o-currency-dollar')
                             ->items([
                                 ...PartnerResource::getNavigationItems(),
@@ -151,6 +152,7 @@ class CompanyPanelProvider extends PanelProvider
                             ]),
                         NavigationGroup::make('Purchases')
                             ->label('Purchases')
+                            ->localizeLabel()
                             ->icon('heroicon-o-shopping-cart')
                             ->items([
                                 ...BillResource::getNavigationItems(),

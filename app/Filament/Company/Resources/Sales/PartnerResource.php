@@ -14,6 +14,11 @@ class PartnerResource extends Resource
 {
     protected static ?string $model = Partner::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Partners');
+    }
+
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function form(Form $form): Form

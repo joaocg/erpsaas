@@ -49,6 +49,11 @@ class EstimateResource extends Resource
 {
     protected static ?string $model = Estimate::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Estimates');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;

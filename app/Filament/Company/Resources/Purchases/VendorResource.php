@@ -25,6 +25,11 @@ class VendorResource extends Resource
 {
     protected static ?string $model = Vendor::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return translate('Vendors');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
