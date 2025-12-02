@@ -110,7 +110,7 @@ class PanelShiftDropdown implements Plugin
         return [
             'main' => [
                 'panelId' => 'main',
-                'label' => 'Main',
+                'label' => __('Main'),
                 'items' => [],
                 'renderItems' => true,
             ],
@@ -173,13 +173,13 @@ class PanelShiftDropdown implements Plugin
             $displayAndAccessibilityId = 'display-and-accessibility';
             $panels['main']['items'][] = [
                 'panelId' => $displayAndAccessibilityId,
-                'label' => 'Display & Accessibility',
+                'label' => __('Display & Accessibility'),
                 'icon' => 'heroicon-s-moon',
             ];
 
             $panels[$displayAndAccessibilityId] = [
                 'panelId' => $displayAndAccessibilityId,
-                'label' => 'Display & Accessibility',
+                'label' => __('Display & Accessibility'),
                 'items' => [],
                 'renderItems' => false,
             ];
@@ -192,13 +192,13 @@ class PanelShiftDropdown implements Plugin
             $companySettingsId = 'company-settings';
             $panels['main']['items'][] = [
                 'panelId' => $companySettingsId,
-                'label' => 'Company Settings',
+                'label' => __('Company Settings'),
                 'icon' => 'heroicon-s-building-office-2',
             ];
 
             $panels[$companySettingsId] = [
                 'panelId' => $companySettingsId,
-                'label' => 'Company Settings',
+                'label' => __('Company Settings'),
                 'items' => [],
                 'renderItems' => false,
             ];
@@ -206,13 +206,13 @@ class PanelShiftDropdown implements Plugin
             $switchCompanyPanelId = 'company-switcher';
             $panels[$companySettingsId]['items'][] = [
                 'panelId' => $switchCompanyPanelId,
-                'label' => 'Switch Company',
+                'label' => __('Switch Company'),
                 'icon' => '',
             ];
 
             $panels[$switchCompanyPanelId] = [
                 'panelId' => $switchCompanyPanelId,
-                'label' => 'Switch Company',
+                'label' => __('Switch Company'),
                 'items' => [],
                 'renderItems' => false,
             ];

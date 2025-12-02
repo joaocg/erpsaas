@@ -27,6 +27,11 @@ class Reports extends Page
 
     protected static string $view = 'filament.company.pages.reports';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Reports');
+    }
+
     public static function getNavigationItems(): array
     {
         return [
