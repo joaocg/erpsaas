@@ -23,7 +23,7 @@ enum PaymentTerms: string implements HasLabel
     {
         $label = ucwords(str_replace('_', ' ', $this->value));
 
-        return translate($label);
+        return __($label);
     }
 
     public function getDays(): int

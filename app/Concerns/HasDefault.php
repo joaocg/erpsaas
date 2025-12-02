@@ -19,12 +19,12 @@ trait HasDefault
 
     public static function enabledLabel(): string
     {
-        return translate('Yes');
+        return __('Yes');
     }
 
     public static function disabledLabel(): string
     {
-        return translate('No');
+        return __('No');
     }
 
     public static function bootHasDefault(): void

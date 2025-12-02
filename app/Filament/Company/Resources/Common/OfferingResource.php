@@ -28,6 +28,11 @@ class OfferingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-square-3-stack-3d';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Offerings');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
