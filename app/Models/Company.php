@@ -124,6 +124,16 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
         return $this->hasMany(Contact::class, 'company_id');
     }
 
+    public function partners(): HasMany
+    {
+        return $this->hasMany(Partner::class, 'company_id');
+    }
+
+    public function partnerClientLinks(): HasMany
+    {
+        return $this->hasMany(PartnerClientLink::class, 'company_id');
+    }
+
     public function currencies(): HasMany
     {
         return $this->hasMany(Currency::class, 'company_id');
