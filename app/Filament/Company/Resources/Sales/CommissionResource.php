@@ -4,7 +4,7 @@ namespace App\Filament\Company\Resources\Sales;
 
 use App\Enums\CommissionStatus;
 use App\Filament\Company\Resources\Sales\CommissionResource\Pages;
-use App\Models\Company;
+use App\Models\Accounting\Invoice;
 use App\Models\Commission;
 use App\Models\Partner;
 use App\Services\CommissionService;
@@ -15,6 +15,7 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class CommissionResource extends Resource
@@ -59,6 +60,8 @@ class CommissionResource extends Resource
                                     return;
                                 }
 
+                                $set('client_id', null);
+
                                 $partner = Partner::find($state);
 
                                 if (! $partner) {
@@ -72,9 +75,25 @@ class CommissionResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('client_id')
                             ->label(__('Client'))
-                            ->relationship('client', 'name')
+                            ->relationship(
+                                name: 'client',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, Get $get) {
+                                    $partnerId = $get('partner_id');
+
+                                    if (! $partnerId) {
+                                        $query->whereRaw('1 = 0');
+
+                                        return;
+                                    }
+
+                                    $query->whereHas('partners', fn (Builder $partnerQuery) => $partnerQuery->where('partners.id', $partnerId));
+                                },
+                            )
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->disabled(fn (Get $get) => ! $get('partner_id'))
                             ->required(),
                         Forms\Components\Select::make('invoice_id')
                             ->label(__('Invoice'))
