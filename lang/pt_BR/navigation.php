@@ -6,6 +6,7 @@ return [
         'settings' => 'Configurações',
         'offerings' => 'Produtos & Serviços',
         'sales' => 'Vendas',
+        'referrals' => 'Indicações & Comissões',
         'purchases' => 'Compras',
         'accounting' => 'Contabilidade',
         'automation_whatsapp' => 'Automação & WhatsApp',

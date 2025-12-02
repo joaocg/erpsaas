@@ -35,6 +35,8 @@ use App\Filament\Company\Resources\Banking\AccountResource;
 use App\Filament\Company\Resources\Common\OfferingResource;
 use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Filament\Company\Resources\Purchases\VendorResource;
+use App\Filament\Company\Resources\Referral\ReferralCaseResource;
+use App\Filament\Company\Resources\Referral\ReferrerResource;
 use App\Filament\Company\Resources\Sales\ClientResource;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
@@ -146,6 +148,12 @@ class CompanyPanelProvider extends PanelProvider
                                 ...EstimateResource::getNavigationItems(),
                                 ...InvoiceResource::getNavigationItems(),
                                 ...RecurringInvoiceResource::getNavigationItems(),
+                            ]),
+                        NavigationGroup::make(__('navigation.groups.referrals'))
+                            ->icon('heroicon-o-sparkles')
+                            ->items([
+                                ...ReferrerResource::getNavigationItems(),
+                                ...ReferralCaseResource::getNavigationItems(),
                             ]),
                         NavigationGroup::make(__('navigation.groups.purchases'))
                             ->icon('heroicon-o-shopping-cart')
