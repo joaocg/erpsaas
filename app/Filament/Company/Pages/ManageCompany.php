@@ -8,7 +8,7 @@ class ManageCompany extends CompanySettings
 {
     public static function getLabel(): string
     {
-        return 'Manage Company';
+        return __('Manage Company');
     }
 
     public static function getSlug(): string

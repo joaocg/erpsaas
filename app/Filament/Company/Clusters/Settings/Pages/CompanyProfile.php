@@ -52,12 +52,12 @@ class CompanyProfile extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public static function getNavigationLabel(): string
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public function getMaxContentWidth(): MaxWidth | string | null

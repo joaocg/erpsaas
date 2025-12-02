@@ -135,10 +135,10 @@ class MacroServiceProvider extends ServiceProvider
 
                         if ($computation === 'percentage' || $computation === 'compound') {
                             if ($numericValue < 0 || $numericValue > 100) {
-                                $fail(translate('The rate must be between 0 and 100.'));
+                                $fail(__('The rate must be between 0 and 100.'));
                             }
                         } elseif ($computation === 'fixed' && $numericValue < 0) {
-                            $fail(translate('The rate must be greater than 0.'));
+                            $fail(__('The rate must be greater than 0.'));
                         }
                     };
                 });

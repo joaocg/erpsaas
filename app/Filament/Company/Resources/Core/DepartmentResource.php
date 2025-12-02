@@ -24,7 +24,7 @@ class DepartmentResource extends Resource
     {
         $modelLabel = static::$modelLabel;
 
-        return translate($modelLabel);
+        return __($modelLabel);
     }
 
     public static function form(Form $form): Form

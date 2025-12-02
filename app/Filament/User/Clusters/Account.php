@@ -9,9 +9,9 @@ class Account extends Cluster
 {
     protected static ?string $navigationIcon = 'heroicon-s-user';
 
-    protected static ?string $navigationLabel = 'My Account';
+    protected static ?string $navigationLabel = __('My Account');
 
-    protected static ?string $clusterBreadcrumb = 'My Account';
+    protected static ?string $clusterBreadcrumb = __('My Account');
 
     public static function getNavigationUrl(): string
     {
