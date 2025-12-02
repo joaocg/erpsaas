@@ -53,12 +53,12 @@ class Localization extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public static function getNavigationLabel(): string
     {
-        return translate(static::$title);
+        return __(static::$title);
     }
 
     public function getMaxContentWidth(): MaxWidth | string | null
@@ -158,9 +158,9 @@ class Localization extends Page
 
     protected function getFinancialAndFiscalSection(): Component
     {
-        $beforeNumber = translate('Before number');
-        $afterNumber = translate('After number');
-        $selectPosition = translate('Select position');
+        $beforeNumber = __('Before number');
+        $afterNumber = __('After number');
+        $selectPosition = __('Select position');
 
         return Section::make('Financial & Fiscal')
             ->schema([
