@@ -46,7 +46,7 @@ class ChildrenRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modelLabel(translate('Department'))
+            ->modelLabel(__('Department'))
             ->inverseRelationship('parent')
             ->columns([
                 Tables\Columns\TextColumn::make('name')

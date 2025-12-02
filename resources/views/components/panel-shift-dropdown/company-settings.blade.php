@@ -33,7 +33,7 @@
 
 <x-panel-shift-dropdown.item
     :url="\App\Filament\Company\Clusters\Settings::getUrl()"
-    label="All Settings"
+    label="{{ __('All Settings') }}"
     icon="heroicon-m-cog-6-tooth"
 />
 
@@ -44,7 +44,7 @@
 />
 
 <x-panel-shift-dropdown.toggle
-    label="Switch Company"
+    label="{{ __('Switch Company') }}"
     icon="heroicon-m-arrows-right-left"
     panel-id="company-switcher"
 />

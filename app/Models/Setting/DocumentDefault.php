@@ -126,7 +126,7 @@ class DocumentDefault extends Model
             'other' => 'Other',
         ];
 
-        return array_map(translate(...), $options);
+        return array_map(fn ($value) => __($value), $options);
     }
 
     public static function getAvailableUnitNameOptions(): array
@@ -137,7 +137,7 @@ class DocumentDefault extends Model
             'other' => 'Other',
         ];
 
-        return array_map(translate(...), $options);
+        return array_map(fn ($value) => __($value), $options);
     }
 
     public static function getAvailablePriceNameOptions(): array
@@ -148,7 +148,7 @@ class DocumentDefault extends Model
             'other' => 'Other',
         ];
 
-        return array_map(translate(...), $options);
+        return array_map(fn ($value) => __($value), $options);
     }
 
     public static function getAvailableAmountNameOptions(): array
@@ -159,7 +159,7 @@ class DocumentDefault extends Model
             'other' => 'Other',
         ];
 
-        return array_map(translate(...), $options);
+        return array_map(fn ($value) => __($value), $options);
     }
 
     public function getLabelOptionFor(string $optionType, ?string $optionValue)
