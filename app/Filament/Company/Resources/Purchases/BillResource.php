@@ -53,6 +53,16 @@ class BillResource extends Resource
         return __('Bills');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('Bill');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Bills');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;

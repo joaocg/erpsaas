@@ -15,8 +15,19 @@ use Filament\Tables\Table;
 class PartnerClientLinkResource extends Resource
 {
     protected static ?string $model = PartnerClientLink::class;
+    protected static ?string $tenantRelationshipName = 'partnerClientLinks';
 
     public static function getNavigationLabel(): string
+    {
+        return __('Partner Client Links');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Partner Client Link');
+    }
+
+    public static function getPluralModelLabel(): string
     {
         return __('Partner Client Links');
     }
