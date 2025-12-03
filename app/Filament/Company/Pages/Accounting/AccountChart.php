@@ -37,12 +37,12 @@ class AccountChart extends Page
 
     protected static string $view = 'filament.company.pages.accounting.chart';
 
-    public function getTitle(): string | Htmlable
+    public static function getNavigationLabel(): string
     {
         return __(static::$title);
     }
 
-    public static function getTi(): string
+    public function getTitle(): string | Htmlable
     {
         return __(static::$title);
     }
