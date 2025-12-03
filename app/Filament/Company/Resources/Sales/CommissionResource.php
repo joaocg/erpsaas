@@ -6,16 +6,23 @@ use App\Enums\CommissionStatus;
 use App\Filament\Company\Resources\Sales\CommissionResource\Pages;
 use App\Models\Company;
 use App\Models\Commission;
+use App\Models\Partner;
 use App\Services\CommissionService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class CommissionResource extends Resource
 {
+    protected static ?string $title = 'Commission';
+    protected static ?string $titlePlural= 'Commissions';
+
     protected static ?string $model = Commission::class;
 
     protected static ?string $tenantModel = Company::class;
@@ -24,7 +31,17 @@ class CommissionResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return __('Commissions');
+        return __(static::$titlePlural);
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __(static::$title);
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __(static::$titlePlural);
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -33,57 +50,101 @@ class CommissionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Commission Details')
+                Forms\Components\Section::make(__('Commission Details'))
                     ->schema([
                         Forms\Components\Select::make('partner_id')
-                            ->label('Partner')
+                            ->label(__('Partner'))
                             ->relationship('partner', 'name')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $set('client_id', null);
+
+                                $partner = Partner::find($state);
+
+                                if (! $partner) {
+                                    return;
+                                }
+
+                                $set('commission_percent', $partner->commission_percent);
+
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\Select::make('client_id')
-                            ->label('Client')
+                            ->label(__('Client'))
                             ->relationship('client', 'name')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->disabled(fn (Get $get) => ! $get('partner_id'))
                             ->required(),
                         Forms\Components\Select::make('invoice_id')
-                            ->label('Invoice')
+                            ->label(__('Invoice'))
                             ->relationship('invoice', 'invoice_number')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $invoice = Invoice::find($state);
+
+                                if (! $invoice) {
+                                    return;
+                                }
+
+                                $set('base_amount', $invoice->amount_paid ?? $invoice->total);
+
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\Select::make('bill_id')
-                            ->label('Bill')
+                            ->label(__('Bill'))
                             ->relationship('bill', 'bill_number')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Forms\Components\TextInput::make('base_amount')
-                            ->label('Base amount')
+                            ->label(__('Base amount'))
                             ->numeric()
                             ->step('0.01')
+                            ->live(debounce: 500)
+                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('commission_percent')
-                            ->label('Commission %')
+                            ->label(__('Commission %'))
                             ->numeric()
                             ->step('0.01')
                             ->suffix('%')
+                            ->live(debounce: 500)
+                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('commission_amount')
-                            ->label('Commission amount')
+                            ->label(__('Commission amount'))
                             ->numeric()
                             ->step('0.01')
                             ->required(),
                         Forms\Components\Select::make('status')
-                            ->label('Status')
+                            ->label(__('Status'))
                             ->options(CommissionStatus::class)
                             ->required(),
                         Forms\Components\DatePicker::make('due_date')
-                            ->label('Due date')
+                            ->label(__('Due date'))
                             ->required(),
                         Forms\Components\DateTimePicker::make('paid_at')
-                            ->label('Paid at')
+                            ->label(__('Paid at'))
                             ->seconds(false),
                     ])->columns(2),
             ]);
@@ -94,29 +155,29 @@ class CommissionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('partner.name')
-                    ->label('Partner')
+                    ->label(__('Partner'))
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('client.name')
-                    ->label('Client')
+                    ->label(__('Client'))
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('invoice.invoice_number')
-                    ->label('Invoice')
+                    ->label(__('Invoice'))
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('base_amount')
-                    ->label('Base')
+                    ->label(__('Base'))
                     ->formatStateUsing(fn ($state) => $state !== null ? number_format((float) $state, 2) : null)
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('commission_percent')
-                    ->label('Commission %')
+                    ->label(__('Commission %'))
                     ->formatStateUsing(fn ($state) => $state ? number_format((float) $state, 2) . '%' : null)
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('commission_amount')
-                    ->label('Commission amount')
+                    ->label(__('Commission amount'))
                     ->formatStateUsing(fn ($state) => $state !== null ? number_format((float) $state, 2) : null)
                     ->sortable()
                     ->toggleable(),
@@ -124,22 +185,22 @@ class CommissionResource extends Resource
                     ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('due_date')
-                    ->label('Due date')
+                    ->label(__('Due date'))
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paid_at')
-                    ->label('Paid at')
+                    ->label(__('Paid at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('partner_id')
-                    ->label('Partner')
+                    ->label(__('Partner'))
                     ->relationship('partner', 'name')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Status')
+                    ->label(__('Status'))
                     ->options(CommissionStatus::class)
                     ->multiple(),
                 Tables\Filters\Filter::make('due_date')
@@ -155,7 +216,7 @@ class CommissionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('generate_bill')
-                    ->label('Generate Bill')
+                    ->label(__('Generate Bill'))
                     ->icon('heroicon-o-document-text')
                     ->requiresConfirmation()
                     ->visible(fn (Commission $record) => $record->invoice && ! $record->bill_id && $record->status !== CommissionStatus::Canceled)
@@ -166,7 +227,7 @@ class CommissionResource extends Resource
                         );
                     }),
                 Tables\Actions\Action::make('mark_paid')
-                    ->label('Mark as Paid')
+                    ->label(__('Mark as Paid'))
                     ->icon('heroicon-o-check')
                     ->color('success')
                     ->requiresConfirmation()
@@ -193,5 +254,24 @@ class CommissionResource extends Resource
             'create' => Pages\CreateCommission::route('/create'),
             'edit' => Pages\EditCommission::route('/{record}/edit'),
         ];
+    }
+
+    protected static function updateCommissionAmount(Set $set, Get $get): void
+    {
+        $baseAmount = (float) ($get('base_amount') ?? 0);
+        $percent = $get('commission_percent');
+
+        if ($percent === null || $percent === '') {
+            $set('commission_amount', null);
+
+            return;
+        }
+
+        $set('commission_amount', static::calculateCommissionAmount($baseAmount, (float) $percent));
+    }
+
+    protected static function calculateCommissionAmount(float $baseAmount, float $percent): float
+    {
+        return round($baseAmount * ($percent / 100), 2);
     }
 }

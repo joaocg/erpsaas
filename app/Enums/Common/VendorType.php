@@ -16,16 +16,16 @@ enum VendorType: string implements HasDescription, HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Regular => 'Regular',
-            self::Contractor => '1099-NEC Contractor',
+            self::Regular => __('Regular'),
+            self::Contractor => __('1099-NEC Contractor'),
         };
     }
 
     public function getDescription(): ?string
     {
         return match ($this) {
-            self::Regular => 'Vendors who supply goods or services to your business, such as office supplies, utilities, or equipment.',
-            self::Contractor => 'Independent contractors providing services to your business, typically requiring 1099-NEC reporting for tax purposes.',
+            self::Regular => __('Vendors who supply goods or services to your business, such as office supplies, utilities, or equipment.'),
+            self::Contractor => __('Independent contractors providing services to your business, typically requiring 1099-NEC reporting for tax purposes.'),
         };
     }
 }

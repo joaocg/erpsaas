@@ -17,7 +17,7 @@ function createCompany(string $name): Company
             'profile.email' => 'company@gmail.com',
             'profile.entity_type' => EntityType::LimitedLiabilityCompany,
             'profile.country' => 'US',
-            'locale.language' => 'en',
+            'locale.language' => config('app.locale'),
             'currencies.code' => 'USD',
         ])
         ->call('register')
