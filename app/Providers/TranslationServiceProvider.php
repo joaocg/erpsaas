@@ -37,7 +37,7 @@ class TranslationServiceProvider extends ServiceProvider
             $label = $this->getLabel();
 
             if (filled($label)) {
-                $translatedLabel = translate($label);
+                $translatedLabel = __($label);
                 $this->label(ucfirst($translatedLabel));
             }
 
@@ -48,7 +48,7 @@ class TranslationServiceProvider extends ServiceProvider
             $label = $this->getLabel();
 
             if (filled($label)) {
-                $translatedLabel = translate($label);
+                $translatedLabel = __($label);
                 $this->label(ucfirst($translatedLabel));
             }
 
@@ -60,7 +60,7 @@ class TranslationServiceProvider extends ServiceProvider
     {
         $label = filled($customLabel) ? $customLabel : static::processedLabel($object->getLabel());
 
-        $object->label(translate($label));
+        $object->label(__($label));
 
         return $object;
     }

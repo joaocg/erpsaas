@@ -10,12 +10,12 @@ trait NotifiesOnDelete
 {
     public static function notifyBeforeDelete(Model $record, string $reason): void
     {
-        $reason = translate($reason);
+        $reason = __($reason);
 
         Notification::make()
             ->danger()
-            ->title(translate('Action denied'))
-            ->body(translate(':Name cannot be deleted because it is :reason. Please update settings before deletion.', [
+            ->title(__('Action denied'))
+            ->body(__(':Name cannot be deleted because it is :reason. Please update settings before deletion.', [
                 'Name' => $record->getAttribute('name'),
                 'reason' => $reason,
             ]))
@@ -25,19 +25,19 @@ trait NotifiesOnDelete
 
     public static function notifyBeforeDeleteMultiple(Collection $records, string $reason): void
     {
-        $reason = translate($reason);
+        $reason = __($reason);
 
         $namesList = implode('<br>', array_map(static function ($record) {
             return '&bull; ' . $record->getAttribute('name');
         }, $records->all()));
 
-        $message = translate('The following items cannot be deleted because they are :reason. Please update settings before deletion.', compact('reason')) . '<br><br>';
+        $message = __('The following items cannot be deleted because they are :reason. Please update settings before deletion.', compact('reason')) . '<br><br>';
 
         $message .= $namesList;
 
         Notification::make()
             ->danger()
-            ->title(translate('Action denied'))
+            ->title(__('Action denied'))
             ->body($message)
             ->persistent()
             ->send();

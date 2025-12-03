@@ -51,6 +51,11 @@ class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Invoices');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;
@@ -59,15 +64,15 @@ class InvoiceResource extends Resource
 
         return $form
             ->schema([
-                DocumentHeaderSection::make('Invoice Header')
+                DocumentHeaderSection::make(__('Invoice Header'))
                     ->defaultHeader($settings->header)
                     ->defaultSubheader($settings->subheader),
-                Forms\Components\Section::make('Invoice Details')
+                Forms\Components\Section::make(__('Invoice Details'))
                     ->schema([
                         Forms\Components\Split::make([
                             Forms\Components\Group::make([
                                 CreateClientSelect::make('client_id')
-                                    ->label('Client')
+                                    ->label(__('Client'))
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
@@ -86,7 +91,7 @@ class InvoiceResource extends Resource
                                         return $record?->hasPayments();
                                     }),
                                 Forms\Components\Select::make('partner_id')
-                                    ->label('Partner')
+                                    ->label(__('Partner'))
                                     ->relationship('partner', 'name', function ($query) {
                                         return $query->where('active', true);
                                     })
@@ -105,7 +110,7 @@ class InvoiceResource extends Resource
                                         }
                                     }),
                                 Forms\Components\TextInput::make('commission_percent')
-                                    ->label('Commission %')
+                                    ->label(__('Commission %'))
                                     ->numeric()
                                     ->step('0.01')
                                     ->suffix('%')
@@ -115,13 +120,13 @@ class InvoiceResource extends Resource
                             ]),
                             Forms\Components\Group::make([
                                 Forms\Components\TextInput::make('invoice_number')
-                                    ->label('Invoice number')
+                                    ->label(__('Invoice number'))
                                     ->default(static fn () => Invoice::getNextDocumentNumber()),
                                 Forms\Components\TextInput::make('order_number')
-                                    ->label('P.O/S.O Number'),
+                                    ->label(__('P.O/S.O Number')),
                                 Cluster::make([
                                     Forms\Components\DatePicker::make('date')
-                                        ->label('Invoice date')
+                                        ->label(__('Invoice date'))
                                         ->live()
                                         ->default(company_today()->toDateString())
                                         ->disabled(function (?Invoice $record) {
@@ -144,13 +149,13 @@ class InvoiceResource extends Resource
                                             }
                                         }),
                                     Forms\Components\Select::make('payment_terms')
-                                        ->label('Payment terms')
+                                        ->label(__('Payment terms'))
                                         ->options(function () {
                                             return collect(PaymentTerms::cases())
                                                 ->mapWithKeys(function (PaymentTerms $paymentTerm) {
                                                     return [$paymentTerm->value => $paymentTerm->getLabel()];
                                                 })
-                                                ->put('custom', 'Custom')
+                                                ->put('custom', __('Custom'))
                                                 ->toArray();
                                         })
                                         ->selectablePlaceholder(false)
@@ -168,10 +173,10 @@ class InvoiceResource extends Resource
                                             }
                                         }),
                                 ])
-                                    ->label('Invoice date')
+                                    ->label(__('Invoice date'))
                                     ->columns(3),
                                 Forms\Components\DatePicker::make('due_date')
-                                    ->label('Payment due')
+                                    ->label(__('Payment due'))
                                     ->default(function () use ($settings) {
                                         return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
@@ -199,7 +204,7 @@ class InvoiceResource extends Resource
                                         }
                                     }),
                                 Forms\Components\Select::make('discount_method')
-                                    ->label('Discount method')
+                                    ->label(__('Discount method'))
                                     ->options(DocumentDiscountMethod::class)
                                     ->softRequired()
                                     ->default($settings->discount_method)
@@ -222,26 +227,26 @@ class InvoiceResource extends Resource
                             ->orderColumn('line_number')
                             ->reorderAtStart()
                             ->cloneable()
-                            ->addActionLabel('Add an item')
+                            ->addActionLabel(__('Add an item'))
                             ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                    Header::make($settings->resolveColumnLabel('item_name', __('Items')))
                                         ->width('30%'),
-                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                    Header::make($settings->resolveColumnLabel('unit_name', __('Quantity')))
                                         ->width('10%'),
-                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                    Header::make($settings->resolveColumnLabel('price_name', __('Price')))
                                         ->width('10%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Adjustments')->width('30%');
+                                    $headers[] = Header::make(__('Adjustments'))->width('30%');
                                 } else {
-                                    $headers[] = Header::make('Taxes')->width('30%');
+                                    $headers[] = Header::make(__('Taxes'))->width('30%');
                                 }
 
-                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', __('Amount')))
                                     ->width('10%')
                                     ->align('right');
 
@@ -250,9 +255,9 @@ class InvoiceResource extends Resource
                             ->schema([
                                 Forms\Components\Group::make([
                                     CreateOfferingSelect::make('offering_id')
-                                        ->label('Item')
+                                        ->label(__('Item'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select item')
+                                        ->placeholder(__('Select item'))
                                         ->required()
                                         ->live()
                                         ->inlineSuffix()
@@ -307,7 +312,7 @@ class InvoiceResource extends Resource
                                             }
                                         }),
                                     Forms\Components\TextInput::make('description')
-                                        ->placeholder('Enter item description')
+                                        ->placeholder(__('Enter item description'))
                                         ->hiddenLabel(),
                                 ])->columnSpan(1),
                                 Forms\Components\TextInput::make('quantity')
@@ -323,9 +328,9 @@ class InvoiceResource extends Resource
                                     ->default(0),
                                 Forms\Components\Group::make([
                                     CreateAdjustmentSelect::make('salesTaxes')
-                                        ->label('Taxes')
+                                        ->label(__('Taxes'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select taxes')
+                                        ->placeholder(__('Select taxes'))
                                         ->category(AdjustmentCategory::Tax)
                                         ->type(AdjustmentType::Sales)
                                         ->adjustmentsRelationship('salesTaxes')
@@ -337,9 +342,9 @@ class InvoiceResource extends Resource
                                         ->live()
                                         ->searchable(),
                                     CreateAdjustmentSelect::make('salesDiscounts')
-                                        ->label('Discounts')
+                                        ->label(__('Discounts'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select discounts')
+                                        ->placeholder(__('Select discounts'))
                                         ->category(AdjustmentCategory::Discount)
                                         ->type(AdjustmentType::Sales)
                                         ->adjustmentsRelationship('salesDiscounts')
@@ -429,7 +434,7 @@ class InvoiceResource extends Resource
                     ->badge()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('due_date')
-                    ->label('Due')
+                    ->label(__('Due'))
                     ->asRelativeDay()
                     ->sortable()
                     ->hideOnTabs(['draft']),
@@ -437,7 +442,7 @@ class InvoiceResource extends Resource
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('invoice_number')
-                    ->label('Number')
+                    ->label(__('Number'))
                     ->searchable()
                     ->description(function (Invoice $record) {
                         return $record->source_type?->getLabel();
@@ -448,12 +453,12 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->hiddenOn(InvoicesRelationManager::class),
                 Tables\Columns\TextColumn::make('partner.name')
-                    ->label('Partner')
+                    ->label(__('Partner'))
                     ->sortable()
                     ->toggleable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('commission_percent')
-                    ->label('Commission %')
+                    ->label(__('Commission %'))
                     ->formatStateUsing(fn ($state) => $state ? number_format((float) $state, 2) . '%' : null)
                     ->sortable()
                     ->toggleable(),
@@ -463,13 +468,13 @@ class InvoiceResource extends Resource
                     ->toggleable()
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('amount_paid')
-                    ->label('Amount paid')
+                    ->label(__('Amount paid'))
                     ->currencyWithConversion(static fn (Invoice $record) => $record->currency_code)
                     ->sortable()
                     ->alignEnd()
                     ->showOnTabs(['unpaid']),
                 Tables\Columns\TextColumn::make('amount_due')
-                    ->label('Amount due')
+                    ->label(__('Amount due'))
                     ->currencyWithConversion(static fn (Invoice $record) => $record->currency_code)
                     ->sortable()
                     ->alignEnd()
@@ -489,13 +494,13 @@ class InvoiceResource extends Resource
                     ->options(InvoiceStatus::class)
                     ->multiple(),
                 Tables\Filters\TernaryFilter::make('has_payments')
-                    ->label('Has payments')
+                    ->label(__('Has payments'))
                     ->queries(
                         true: fn (Builder $query) => $query->whereHas('payments'),
                         false: fn (Builder $query) => $query->whereDoesntHave('payments'),
                     ),
                 Tables\Filters\SelectFilter::make('source_type')
-                    ->label('Source type')
+                    ->label(__('Source type'))
                     ->options([
                         DocumentType::Estimate->value => DocumentType::Estimate->getLabel(),
                         DocumentType::RecurringInvoice->value => DocumentType::RecurringInvoice->getLabel(),
@@ -511,13 +516,13 @@ class InvoiceResource extends Resource
                         };
                     }),
                 DateRangeFilter::make('date')
-                    ->fromLabel('From date')
-                    ->untilLabel('To date')
-                    ->indicatorLabel('Date'),
+                    ->fromLabel(__('From date'))
+                    ->untilLabel(__('To date'))
+                    ->indicatorLabel(__('Date')),
                 DateRangeFilter::make('due_date')
-                    ->fromLabel('From due date')
-                    ->untilLabel('To due date')
-                    ->indicatorLabel('Due'),
+                    ->fromLabel(__('From due date'))
+                    ->untilLabel(__('To due date'))
+                    ->indicatorLabel(__('Due')),
             ])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
@@ -534,7 +539,7 @@ class InvoiceResource extends Resource
                         Invoice::getApproveDraftAction(Tables\Actions\Action::class),
                         Invoice::getMarkAsSentAction(Tables\Actions\Action::class),
                         Tables\Actions\Action::make('recordPayment')
-                            ->label('Record Payment')
+                            ->label(__('Record Payment'))
                             ->icon('heroicon-m-credit-card')
                             ->visible(function (Invoice $record) {
                                 return $record->canRecordPayment();
@@ -555,11 +560,11 @@ class InvoiceResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ReplicateBulkAction::make()
-                        ->label('Replicate')
+                        ->label(__('Replicate'))
                         ->modalWidth(MaxWidth::Large)
-                        ->modalDescription('Replicating invoices will also replicate their line items. Are you sure you want to proceed?')
-                        ->successNotificationTitle('Invoices replicated successfully')
-                        ->failureNotificationTitle('Failed to replicate invoices')
+                        ->modalDescription(__('Replicating invoices will also replicate their line items. Are you sure you want to proceed?'))
+                        ->successNotificationTitle(__('Invoices replicated successfully'))
+                        ->failureNotificationTitle(__('Failed to replicate invoices'))
                         ->databaseTransaction()
                         ->excludeAttributes([
                             'status',
@@ -593,18 +598,18 @@ class InvoiceResource extends Resource
                             'updated_at',
                         ]),
                     Tables\Actions\BulkAction::make('approveDrafts')
-                        ->label('Approve')
+                        ->label(__('Approve'))
                         ->icon('heroicon-o-check-circle')
                         ->databaseTransaction()
-                        ->successNotificationTitle('Invoices approved')
-                        ->failureNotificationTitle('Failed to Approve Invoices')
+                        ->successNotificationTitle(__('Invoices approved'))
+                        ->failureNotificationTitle(__('Failed to Approve Invoices'))
                         ->before(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $isInvalid = $records->contains(fn (Invoice $record) => ! $record->canBeApproved());
 
                             if ($isInvalid) {
                                 Notification::make()
-                                    ->title('Approval failed')
-                                    ->body('Only draft invoices can be approved. Please adjust your selection and try again.')
+                                    ->title(__('Approval failed'))
+                                    ->body(__('Only draft invoices can be approved. Please adjust your selection and try again.'))
                                     ->persistent()
                                     ->danger()
                                     ->send();
@@ -620,18 +625,18 @@ class InvoiceResource extends Resource
                             $action->success();
                         }),
                     Tables\Actions\BulkAction::make('markAsSent')
-                        ->label('Mark as sent')
+                        ->label(__('Mark as sent'))
                         ->icon('heroicon-o-paper-airplane')
                         ->databaseTransaction()
-                        ->successNotificationTitle('Invoices sent')
-                        ->failureNotificationTitle('Failed to Mark Invoices as Sent')
+                        ->successNotificationTitle(__('Invoices sent'))
+                        ->failureNotificationTitle(__('Failed to Mark Invoices as Sent'))
                         ->before(function (Collection $records, Tables\Actions\BulkAction $action) {
                             $isInvalid = $records->contains(fn (Invoice $record) => ! $record->canBeMarkedAsSent());
 
                             if ($isInvalid) {
                                 Notification::make()
-                                    ->title('Sending failed')
-                                    ->body('Only unsent invoices can be marked as sent. Please adjust your selection and try again.')
+                                    ->title(__('Sending failed'))
+                                    ->body(__('Only unsent invoices can be marked as sent. Please adjust your selection and try again.'))
                                     ->persistent()
                                     ->danger()
                                     ->send();
