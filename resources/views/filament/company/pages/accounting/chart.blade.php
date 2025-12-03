@@ -59,10 +59,10 @@
                                             <br>
                                             <small class="text-gray-500 dark:text-gray-400">
                                                 @if($account->last_transaction_date)
-                                                    Last transaction
-                                                    on {{ \Illuminate\Support\Carbon::parse($account->last_transaction_date)->toDefaultDateFormat() }}
+                                                    {{ __('Last transaction') }}
+                                                    {{ __('on :date', ['date' => \Illuminate\Support\Carbon::parse($account->last_transaction_date)->toDefaultDateFormat()]) }}
                                                 @else
-                                                    No transactions for this account
+                                                    {{ __('No transactions for this account') }}
                                                 @endif
                                             </small>
                                         </td>
@@ -71,7 +71,7 @@
                                         <td colspan="1" class="es-table__cell px-4 py-4">
                                             @if($account->archived)
                                                 <x-filament::badge color="gray" size="sm">
-                                                    Archived
+                                                    {{ __('Archived') }}
                                                 </x-filament::badge>
                                             @endif
                                         </td>
@@ -88,7 +88,7 @@
                                     <tr class="es-table__row">
                                         <td colspan="5"
                                             class="es-table__cell px-4 py-4 italic text-xs text-gray-500 dark:text-gray-400">
-                                            {{ __("You haven't added any {$accountSubtype->name} accounts yet.") }}
+                                            {{ __('You have not added any :type accounts yet.', ['type' => $accountSubtype->name]) }}
                                         </td>
                                     </tr>
                                 @endforelse

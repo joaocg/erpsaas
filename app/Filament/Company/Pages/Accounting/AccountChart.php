@@ -66,7 +66,7 @@ class AccountChart extends Page
     public function editAccountAction(): Action
     {
         return EditAction::make('editAccount')
-            ->label('Edit account')
+            ->label(__('Edit account'))
             ->iconButton()
             ->icon('heroicon-m-pencil-square')
             ->record(fn (array $arguments) => Account::find($arguments['account']))
@@ -78,7 +78,7 @@ class AccountChart extends Page
         return CreateAction::make('createAccount')
             ->link()
             ->model(Account::class)
-            ->label('Add a new account')
+            ->label(__('Add a new account'))
             ->icon('heroicon-o-plus-circle')
             ->form(fn (Form $form) => $this->getAccountForm($form)->operation('create'))
             ->fillForm(fn (array $arguments): array => $this->getAccountFormDefaults($arguments['accountSubtype']));
@@ -112,7 +112,7 @@ class AccountChart extends Page
     protected function getTypeFormComponent(bool $useActiveTab = true): Component
     {
         return Select::make('subtype_id')
-            ->label('Type')
+            ->label(__('Type'))
             ->required()
             ->live()
             ->disabledOn('edit')
@@ -134,10 +134,10 @@ class AccountChart extends Page
     protected function getCodeFormComponent(): Component
     {
         return TextInput::make('code')
-            ->label('Code')
+            ->label(__('Code'))
             ->required()
             ->hiddenOn('edit')
-            ->validationAttribute('account code')
+            ->validationAttribute(__('account code'))
             ->unique(table: Account::class, column: 'code', ignoreRecord: true)
             ->validateAccountCode(static fn (Get $get) => $get('subtype_id'));
     }
@@ -198,7 +198,7 @@ class AccountChart extends Page
                 ->relationship('bankAccount')
                 ->schema([
                     Select::make('type')
-                        ->label('Bank account type')
+                        ->label(__('Bank account type'))
                         ->options(function (Get $get) {
                             $accountSubtypeId = $get('../subtype_id');
 
@@ -231,7 +231,7 @@ class AccountChart extends Page
                         ->disabledOn('edit')
                         ->required(),
                     TextInput::make('number')
-                        ->label('Bank account number')
+                        ->label(__('Bank account number'))
                         ->unique(ignoreRecord: true, modifyRuleUsing: static function (Unique $rule, $state) {
                             $companyId = Auth::user()->currentCompany->id;
 
@@ -257,7 +257,7 @@ class AccountChart extends Page
     protected function getNameFormComponent(): Component
     {
         return TextInput::make('name')
-            ->label('Name')
+            ->label(__('Name'))
             ->required();
     }
 
@@ -268,7 +268,7 @@ class AccountChart extends Page
             ->required(false)
             ->requiredIfAccepted('is_bank_account')
             ->validationMessages([
-                'required_if_accepted' => 'The currency is required for bank accounts.',
+                'required_if_accepted' => __('The currency is required for bank accounts.'),
             ])
             ->visible(function (Get $get): bool {
                 return filled($get('subtype_id')) && AccountSubtype::find($get('subtype_id'))->multi_currency;
@@ -278,14 +278,14 @@ class AccountChart extends Page
     protected function getDescriptionFormComponent(): Component
     {
         return Textarea::make('description')
-            ->label('Description');
+            ->label(__('Description'));
     }
 
     protected function getArchiveFormComponent(): Component
     {
         return Checkbox::make('archived')
-            ->label('Archive account')
-            ->helperText('Archived accounts will not be available for selection in transactions, offerings, or other new records.')
+            ->label(__('Archive account'))
+            ->helperText(__('Archived accounts will not be available for selection in transactions, offerings, or other new records.'))
             ->hiddenOn('create');
     }
 
