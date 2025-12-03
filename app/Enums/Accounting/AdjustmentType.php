@@ -16,7 +16,7 @@ enum AdjustmentType: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return translate($this->name);
+        return __($this->name);
     }
 
     public function getColor(): string | array | null
