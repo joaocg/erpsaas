@@ -33,7 +33,7 @@
                     $iconPosition = $getIconPosition();
                     $alignment = $getAlignment();
                     $direction = $getDirection();
-                    $gap = $getGap();
+                    $gap = method_exists($field, 'getGap') ? $field->getGap() : null;
                     $padding = $getPadding();
                     $color = $getColor();
                     $icon = $getIcon($value);
