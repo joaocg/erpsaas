@@ -30,7 +30,7 @@ use Livewire\Attributes\Url;
 
 class AccountChart extends Page
 {
-    protected static ?string $title = 'Chart of Accounts';
+    protected static ?string $title = null;
 
     protected static ?string $slug = 'accounting/chart';
 
