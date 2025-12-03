@@ -14,17 +14,23 @@ enum AccountCategory: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return $this->name;
+        return match ($this) {
+            self::Asset => __('Asset'),
+            self::Liability => __('Liability'),
+            self::Equity => __('Equity'),
+            self::Revenue => __('Revenue'),
+            self::Expense => __('Expense'),
+        };
     }
 
     public function getPluralLabel(): ?string
     {
         return match ($this) {
-            self::Asset => 'Assets',
-            self::Liability => 'Liabilities',
-            self::Equity => 'Equity',
-            self::Revenue => 'Revenue',
-            self::Expense => 'Expenses',
+            self::Asset => __('Assets'),
+            self::Liability => __('Liabilities'),
+            self::Equity => __('Equity'),
+            self::Revenue => __('Revenue'),
+            self::Expense => __('Expenses'),
         };
     }
 

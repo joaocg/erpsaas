@@ -33,16 +33,16 @@ class ListRecurringInvoices extends ListRecords
     {
         return [
             'all' => Tab::make()
-                ->label('All'),
+                ->label(__('All')),
 
             'active' => Tab::make()
-                ->label('Active')
+                ->label(__('Active'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->where('status', RecurringInvoiceStatus::Active);
                 }),
 
             'draft' => Tab::make()
-                ->label('Draft')
+                ->label(__('Draft'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->where('status', RecurringInvoiceStatus::Draft);
                 }),
