@@ -235,5 +235,13 @@
     "filament-panels::resources/pages/edit-record.form.actions.save.label": "Salvar",
     "filament-panels::resources/pages/edit-record.notifications.saved.title": "Salvo",
     "filament-tables::table.actions.toggle_columns.label": "Colunas",
-    "filament-tables::table.filters.actions.apply.label": "Aplicar filtros"
+    "filament-tables::table.filters.actions.apply.label": "Aplicar filtros",
+    "Asset": "Ativo",
+    "Assets": "Ativos",
+    "Liability": "Passivo",
+    "Liabilities": "Passivos",
+    "Equity": "Patrimônio Líquido",
+    "Revenue": "Receita",
+    "Revenues": "Receitas",
+    "Expenses": "Despesas"
 }

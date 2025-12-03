@@ -227,5 +227,14 @@
     "Column Labels": "Rótulos de coluna",
     "Scheduling Form": "Formulário de agendamento",
     "Budget Allocations": "Alocações orçamentárias",
-    "Dates & Time": "Datas e horários"
+    "Dates & Time": "Datas e horários",
+    "Asset": "Ativo",
+    "Assets": "Ativos",
+    "Liability": "Passivo",
+    "Liabilities": "Passivos",
+    "Equity": "Patrimônio Líquido",
+    "Revenue": "Receita",
+    "Revenues": "Receitas",
+    "Expense": "Despesa",
+    "Expenses": "Despesas"
 }
