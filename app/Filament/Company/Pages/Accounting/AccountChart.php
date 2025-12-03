@@ -22,6 +22,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Pages\Page;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Unique;
@@ -30,15 +31,20 @@ use Livewire\Attributes\Url;
 
 class AccountChart extends Page
 {
-    protected static ?string $title = null;
+    protected static ?string $title = 'Chart of Accounts';
 
     protected static ?string $slug = 'accounting/chart';
 
     protected static string $view = 'filament.company.pages.accounting.chart';
 
-    public static function getNavigationLabel(): string
+    public function getTitle(): string | Htmlable
     {
-        return __('Chart of Accounts');
+        return __(static::$title);
+    }
+
+    public static function getTi(): string
+    {
+        return __(static::$title);
     }
 
     #[Url]
