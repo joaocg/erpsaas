@@ -36,10 +36,6 @@ class AccountChart extends Page
 
     protected static string $view = 'filament.company.pages.accounting.chart';
 
-    public function getTitle(): string
-    {
-        return __('Chart of Accounts');
-    }
     public static function getNavigationLabel(): string
     {
         return __('Chart of Accounts');
@@ -300,7 +296,7 @@ class AccountChart extends Page
             AccountSubtype::all();
 
         return $accountSubtypes->groupBy(fn (AccountSubtype $accountSubtype) => $accountSubtype->type->getLabel())
-            ->map(fn (Collection $accountSubtypes, string $type) => $accountSubtypes->mapWithKeys(static fn (AccountSubtype $accountSubtype) => [$accountSubtype->id => $accountSubtype->name]))
+            ->map(fn (Collection $accountSubtypes, string $type) => $accountSubtypes->mapWithKeys(static fn (AccountSubtype $accountSubtype) => [$accountSubtype->id => __($accountSubtype->name)]))
             ->toArray();
     }
 
