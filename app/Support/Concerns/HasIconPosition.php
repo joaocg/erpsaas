@@ -2,22 +2,16 @@
 
 namespace Filament\Support\Concerns;
 
-use Closure;
-use Filament\Support\Enums\IconPosition;
-
+/**
+ * This placeholder prevents trait resolution collisions when packages expect
+ * the Filament-provided concern to exist alongside {@see HasIcon}.
+ *
+ * The real icon positioning helpers are already supplied by Filament\Support\Concerns\HasIcon,
+ * which exposes the `iconPosition()` and `getIconPosition()` methods. Keeping
+ * this trait empty allows classes that `use HasIcon, HasIconPosition` to load
+ * without method conflicts while still honoring package expectations that the
+ * trait be available.
+ */
 trait HasIconPosition
 {
-    protected IconPosition|string|Closure|null $iconPosition = null;
-
-    public function iconPosition(IconPosition|string|Closure|null $position): static
-    {
-        $this->iconPosition = $position;
-
-        return $this;
-    }
-
-    public function getIconPosition(): IconPosition|string|null
-    {
-        return $this->evaluate($this->iconPosition) ?? IconPosition::Before;
-    }
 }
