@@ -4,13 +4,18 @@ namespace App\Filament\Company\Resources\Sales;
 
 use App\Enums\CommissionStatus;
 use App\Filament\Company\Resources\Sales\CommissionResource\Pages;
+use App\Models\Company;
 use App\Models\Commission;
+use App\Models\Partner;
 use App\Services\CommissionService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class CommissionResource extends Resource
@@ -45,18 +50,54 @@ class CommissionResource extends Resource
                             ->relationship('partner', 'name')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $set('client_id', null);
+
+                                $partner = Partner::find($state);
+
+                                if (! $partner) {
+                                    return;
+                                }
+
+                                $set('commission_percent', $partner->commission_percent);
+
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\Select::make('client_id')
                             ->label(__('Client'))
                             ->relationship('client', 'name')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->disabled(fn (Get $get) => ! $get('partner_id'))
                             ->required(),
                         Forms\Components\Select::make('invoice_id')
                             ->label(__('Invoice'))
                             ->relationship('invoice', 'invoice_number')
                             ->searchable()
                             ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                $invoice = Invoice::find($state);
+
+                                if (! $invoice) {
+                                    return;
+                                }
+
+                                $set('base_amount', $invoice->amount_paid ?? $invoice->total);
+
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\Select::make('bill_id')
                             ->label(__('Bill'))
@@ -68,12 +109,20 @@ class CommissionResource extends Resource
                             ->label(__('Base amount'))
                             ->numeric()
                             ->step('0.01')
+                            ->live(debounce: 500)
+                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('commission_percent')
                             ->label(__('Commission %'))
                             ->numeric()
                             ->step('0.01')
                             ->suffix('%')
+                            ->live(debounce: 500)
+                            ->afterStateUpdated(function (Set $set, Get $get) {
+                                static::updateCommissionAmount($set, $get);
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('commission_amount')
                             ->label(__('Commission amount'))
@@ -198,5 +247,24 @@ class CommissionResource extends Resource
             'create' => Pages\CreateCommission::route('/create'),
             'edit' => Pages\EditCommission::route('/{record}/edit'),
         ];
+    }
+
+    protected static function updateCommissionAmount(Set $set, Get $get): void
+    {
+        $baseAmount = (float) ($get('base_amount') ?? 0);
+        $percent = $get('commission_percent');
+
+        if ($percent === null || $percent === '') {
+            $set('commission_amount', null);
+
+            return;
+        }
+
+        $set('commission_amount', static::calculateCommissionAmount($baseAmount, (float) $percent));
+    }
+
+    protected static function calculateCommissionAmount(float $baseAmount, float $percent): float
+    {
+        return round($baseAmount * ($percent / 100), 2);
     }
 }
