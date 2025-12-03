@@ -16,8 +16,6 @@ class PartnerClientLinkResource extends Resource
 {
     protected static ?string $model = PartnerClientLink::class;
 
-    protected static ?string $tenantRelationshipName = 'partnerClientLinks';
-
     public static function getNavigationLabel(): string
     {
         return __('Partner Client Links');

@@ -22,10 +22,6 @@ class CommissionResource extends Resource
 {
     protected static ?string $model = Commission::class;
 
-    protected static ?string $tenantModel = Company::class;
-
-    protected static ?string $tenantRelationshipName = 'commissions';
-
     public static function getNavigationLabel(): string
     {
         return __('Commissions');
@@ -75,21 +71,7 @@ class CommissionResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('client_id')
                             ->label(__('Client'))
-                            ->relationship(
-                                name: 'client',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: function (Builder $query, Get $get) {
-                                    $partnerId = $get('partner_id');
-
-                                    if (! $partnerId) {
-                                        $query->whereRaw('1 = 0');
-
-                                        return;
-                                    }
-
-                                    $query->whereHas('partners', fn (Builder $partnerQuery) => $partnerQuery->where('partners.id', $partnerId));
-                                },
-                            )
+                            ->relationship('client', 'name')
                             ->searchable()
                             ->preload()
                             ->live()
