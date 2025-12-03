@@ -47,6 +47,16 @@ class AccountChart extends Page
         return __(static::$title);
     }
 
+    public static function getModelLabel(): string
+    {
+        return __(static::$title);
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __(static::$title);
+    }
+
     #[Url]
     public ?string $activeTab = AccountCategory::Asset->value;
 

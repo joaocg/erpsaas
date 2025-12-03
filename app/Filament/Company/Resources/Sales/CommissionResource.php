@@ -20,21 +20,24 @@ use Illuminate\Support\Carbon;
 
 class CommissionResource extends Resource
 {
+    protected static ?string $title = 'Commission';
+    protected static ?string $titlePlural= 'Commissions';
+
     protected static ?string $model = Commission::class;
 
     public static function getNavigationLabel(): string
     {
-        return __('Commissions');
+        return __(static::$titlePlural);
     }
 
     public static function getModelLabel(): string
     {
-        return __('Commission');
+        return __(static::$title);
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('Commissions');
+        return __(static::$titlePlural);
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
