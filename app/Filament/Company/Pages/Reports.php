@@ -23,6 +23,7 @@ use Filament\Support\Colors\Color;
 
 class Reports extends Page
 {
+    protected static ?string $title = 'Reports';
     protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
 
     protected static string $view = 'filament.company.pages.reports';
