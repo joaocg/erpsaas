@@ -317,7 +317,7 @@ class RecurringInvoiceResource extends Resource
                     ->searchable()
                     ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Columns\TextColumn::make('schedule')
-                    ->label('Schedule')
+                    ->label(__('Schedule'))
                     ->getStateUsing(function (RecurringInvoice $record) {
                         return $record->getScheduleDescription();
                     })
@@ -325,22 +325,22 @@ class RecurringInvoiceResource extends Resource
                         return $record->getTimelineDescription();
                     }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('Created'))
                     ->date()
                     ->sortable()
                     ->showOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('start_date')
-                    ->label('First invoice')
+                    ->label(__('First invoice'))
                     ->date()
                     ->sortable()
                     ->showOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('last_date')
-                    ->label('Last invoice')
+                    ->label(__('Last invoice'))
                     ->date()
                     ->sortable()
                     ->hideOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('next_date')
-                    ->label('Next invoice')
+                    ->label(__('Next invoice'))
                     ->date()
                     ->sortable()
                     ->hideOnTabs(['draft']),
