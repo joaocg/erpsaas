@@ -30,11 +30,16 @@ use Livewire\Attributes\Url;
 
 class AccountChart extends Page
 {
-    protected static ?string $title = 'Chart of Accounts';
+    protected static ?string $title = null;
 
     protected static ?string $slug = 'accounting/chart';
 
     protected static string $view = 'filament.company.pages.accounting.chart';
+
+    public function getTitle(): string
+    {
+        return __('Chart of Accounts');
+    }
 
     public static function getNavigationLabel(): string
     {
