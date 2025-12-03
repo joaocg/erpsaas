@@ -5,7 +5,7 @@
             wire:click="$set('activeTab', 'currency-list')"
             :badge="$currencyListQuery"
         >
-            {{ translate('Currency List') }}
+            {{ __('Currency List') }}
         </x-filament::tabs.item>
 
         <x-filament::tabs.item
@@ -13,7 +13,7 @@
             wire:click="$set('activeTab', 'company-currencies')"
             :badge="$companyCurrenciesQuery"
         >
-            {{ translate('Company Currencies') }}
+            {{ __('Company Currencies') }}
         </x-filament::tabs.item>
     </x-filament::tabs>
 

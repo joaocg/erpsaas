@@ -14,7 +14,7 @@ enum AdjustmentComputation: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return translate($this->name);
+        return __($this->name);
     }
 
     public function isPercentage(): bool

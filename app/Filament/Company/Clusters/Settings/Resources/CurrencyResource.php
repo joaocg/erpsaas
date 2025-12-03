@@ -26,7 +26,7 @@ class CurrencyResource extends Resource
     {
         $modelLabel = static::$modelLabel;
 
-        return translate($modelLabel);
+        return __($modelLabel);
     }
 
     public static function form(Form $form): Form
@@ -73,7 +73,7 @@ class CurrencyResource extends Resource
                     ->weight(FontWeight::Medium)
                     ->icon(static fn (CurrencyModel $record) => $record->isEnabled() ? 'heroicon-o-lock-closed' : null)
                     ->tooltip(static function (CurrencyModel $record) {
-                        $tooltipMessage = translate('Default :record', [
+                        $tooltipMessage = __('Default :record', [
                             'record' => static::getModelLabel(),
                         ]);
 
