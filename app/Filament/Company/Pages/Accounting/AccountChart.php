@@ -40,7 +40,6 @@ class AccountChart extends Page
     {
         return __('Chart of Accounts');
     }
-
     public static function getNavigationLabel(): string
     {
         return __('Chart of Accounts');
