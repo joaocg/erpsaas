@@ -41,6 +41,11 @@ class RecurringInvoiceResource extends Resource
 {
     protected static ?string $model = RecurringInvoice::class;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Recurring Invoices');
+    }
+
     public static function form(Form $form): Form
     {
         $company = Auth::user()->currentCompany;
@@ -49,15 +54,15 @@ class RecurringInvoiceResource extends Resource
 
         return $form
             ->schema([
-                DocumentHeaderSection::make('Invoice Header')
+                DocumentHeaderSection::make(__('Invoice Header'))
                     ->defaultHeader($settings->header)
                     ->defaultSubheader($settings->subheader),
-                Forms\Components\Section::make('Invoice Details')
+                Forms\Components\Section::make(__('Invoice Details'))
                     ->schema([
                         Forms\Components\Split::make([
                             Forms\Components\Group::make([
                                 CreateClientSelect::make('client_id')
-                                    ->label('Client')
+                                    ->label(__('Client'))
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
@@ -75,21 +80,21 @@ class RecurringInvoiceResource extends Resource
                             ]),
                             Forms\Components\Group::make([
                                 Forms\Components\Placeholder::make('invoice_number')
-                                    ->label('Invoice number')
-                                    ->content('Auto-generated'),
+                                    ->label(__('Invoice number'))
+                                    ->content(__('Auto-generated')),
                                 Forms\Components\TextInput::make('order_number')
-                                    ->label('P.O/S.O Number'),
+                                    ->label(__('P.O/S.O Number')),
                                 Forms\Components\Placeholder::make('date')
-                                    ->label('Invoice date')
-                                    ->content('Auto-generated'),
+                                    ->label(__('Invoice date'))
+                                    ->content(__('Auto-generated')),
                                 Forms\Components\Select::make('payment_terms')
-                                    ->label('Payment due')
+                                    ->label(__('Payment due'))
                                     ->options(PaymentTerms::class)
                                     ->softRequired()
                                     ->default($settings->payment_terms)
                                     ->live(),
                                 Forms\Components\Select::make('discount_method')
-                                    ->label('Discount method')
+                                    ->label(__('Discount method'))
                                     ->options(DocumentDiscountMethod::class)
                                     ->softRequired()
                                     ->default($settings->discount_method)
@@ -112,26 +117,26 @@ class RecurringInvoiceResource extends Resource
                             ->orderColumn('line_number')
                             ->reorderAtStart()
                             ->cloneable()
-                            ->addActionLabel('Add an item')
+                            ->addActionLabel(__('Add an item'))
                             ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                    Header::make($settings->resolveColumnLabel('item_name', __('Items')))
                                         ->width('30%'),
-                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                    Header::make($settings->resolveColumnLabel('unit_name', __('Quantity')))
                                         ->width('10%'),
-                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                    Header::make($settings->resolveColumnLabel('price_name', __('Price')))
                                         ->width('10%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Adjustments')->width('30%');
+                                    $headers[] = Header::make(__('Adjustments'))->width('30%');
                                 } else {
-                                    $headers[] = Header::make('Taxes')->width('30%');
+                                    $headers[] = Header::make(__('Taxes'))->width('30%');
                                 }
 
-                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', __('Amount')))
                                     ->width('10%')
                                     ->align('right');
 
@@ -140,9 +145,9 @@ class RecurringInvoiceResource extends Resource
                             ->schema([
                                 Forms\Components\Group::make([
                                     CreateOfferingSelect::make('offering_id')
-                                        ->label('Item')
+                                        ->label(__('Item'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select item')
+                                        ->placeholder(__('Select item'))
                                         ->required()
                                         ->live()
                                         ->inlineSuffix()
@@ -197,7 +202,7 @@ class RecurringInvoiceResource extends Resource
                                             }
                                         }),
                                     Forms\Components\TextInput::make('description')
-                                        ->placeholder('Enter item description')
+                                        ->placeholder(__('Enter item description'))
                                         ->hiddenLabel(),
                                 ])->columnSpan(1),
                                 Forms\Components\TextInput::make('quantity')
@@ -213,9 +218,9 @@ class RecurringInvoiceResource extends Resource
                                     ->default(0),
                                 Forms\Components\Group::make([
                                     CreateAdjustmentSelect::make('salesTaxes')
-                                        ->label('Taxes')
+                                        ->label(__('Taxes'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select taxes')
+                                        ->placeholder(__('Select taxes'))
                                         ->category(AdjustmentCategory::Tax)
                                         ->type(AdjustmentType::Sales)
                                         ->adjustmentsRelationship('salesTaxes')
@@ -227,9 +232,9 @@ class RecurringInvoiceResource extends Resource
                                         ->live()
                                         ->searchable(),
                                     CreateAdjustmentSelect::make('salesDiscounts')
-                                        ->label('Discounts')
+                                        ->label(__('Discounts'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select discounts')
+                                        ->placeholder(__('Select discounts'))
                                         ->category(AdjustmentCategory::Discount)
                                         ->type(AdjustmentType::Sales)
                                         ->adjustmentsRelationship('salesDiscounts')
@@ -312,7 +317,7 @@ class RecurringInvoiceResource extends Resource
                     ->searchable()
                     ->hiddenOn(RecurringInvoicesRelationManager::class),
                 Tables\Columns\TextColumn::make('schedule')
-                    ->label('Schedule')
+                    ->label(__('Schedule'))
                     ->getStateUsing(function (RecurringInvoice $record) {
                         return $record->getScheduleDescription();
                     })
@@ -320,22 +325,22 @@ class RecurringInvoiceResource extends Resource
                         return $record->getTimelineDescription();
                     }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('Created'))
                     ->date()
                     ->sortable()
                     ->showOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('start_date')
-                    ->label('First invoice')
+                    ->label(__('First invoice'))
                     ->date()
                     ->sortable()
                     ->showOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('last_date')
-                    ->label('Last invoice')
+                    ->label(__('Last invoice'))
                     ->date()
                     ->sortable()
                     ->hideOnTabs(['draft']),
                 Tables\Columns\TextColumn::make('next_date')
-                    ->label('Next invoice')
+                    ->label(__('Next invoice'))
                     ->date()
                     ->sortable()
                     ->hideOnTabs(['draft']),

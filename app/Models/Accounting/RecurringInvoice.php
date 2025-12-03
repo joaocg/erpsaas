@@ -220,13 +220,20 @@ class RecurringInvoice extends Document
         $frequency = $this->frequency;
 
         return match (true) {
-            $frequency->isDaily() => 'Repeat daily',
+            $frequency->isDaily() => __('Repeat daily'),
 
-            $frequency->isWeekly() && $this->day_of_week => "Repeat weekly every {$this->day_of_week->getLabel()}",
+            $frequency->isWeekly() && $this->day_of_week => __('Repeat weekly every :day', [
+                'day' => $this->day_of_week->getLabel(),
+            ]),
 
-            $frequency->isMonthly() && $this->day_of_month => "Repeat monthly on the {$this->day_of_month->getLabel()} day",
+            $frequency->isMonthly() && $this->day_of_month => __('Repeat monthly on the :day day', [
+                'day' => $this->day_of_month->getLabel(),
+            ]),
 
-            $frequency->isYearly() && $this->month && $this->day_of_month => "Repeat yearly on {$this->month->getLabel()} {$this->day_of_month->getLabel()}",
+            $frequency->isYearly() && $this->month && $this->day_of_month => __('Repeat yearly on :month :day', [
+                'month' => $this->month->getLabel(),
+                'day' => $this->day_of_month->getLabel(),
+            ]),
 
             $frequency->isCustom() => $this->getCustomScheduleDescription(),
 
@@ -237,20 +244,33 @@ class RecurringInvoice extends Document
     private function getCustomScheduleDescription(): string
     {
         $interval = $this->interval_value > 1
-            ? "{$this->interval_value} {$this->interval_type->getPluralLabel()}"
+            ? __(':count :label', [
+                'count' => $this->interval_value,
+                'label' => $this->interval_type->getPluralLabel(),
+            ])
             : $this->interval_type->getSingularLabel();
 
         $dayDescription = match (true) {
-            $this->interval_type->isWeek() && $this->day_of_week => " on {$this->day_of_week->getLabel()}",
+            $this->interval_type->isWeek() && $this->day_of_week => __(' on :day', [
+                'day' => $this->day_of_week->getLabel(),
+            ]),
 
-            $this->interval_type->isMonth() && $this->day_of_month => " on the {$this->day_of_month->getLabel()} day",
+            $this->interval_type->isMonth() && $this->day_of_month => __(' on the :day day', [
+                'day' => $this->day_of_month->getLabel(),
+            ]),
 
-            $this->interval_type->isYear() && $this->month && $this->day_of_month => " on {$this->month->getLabel()} {$this->day_of_month->getLabel()}",
+            $this->interval_type->isYear() && $this->month && $this->day_of_month => __(' on :month :day', [
+                'month' => $this->month->getLabel(),
+                'day' => $this->day_of_month->getLabel(),
+            ]),
 
             default => ''
         };
 
-        return "Repeat every {$interval}{$dayDescription}";
+        return __('Repeat every :interval:dayDescription', [
+            'interval' => $interval,
+            'dayDescription' => $dayDescription,
+        ]);
     }
 
     public function getEndDescription(): ?string
@@ -260,11 +280,15 @@ class RecurringInvoice extends Document
         }
 
         return match (true) {
-            $this->end_type->isNever() => 'Never',
+            $this->end_type->isNever() => __('Never'),
 
-            $this->end_type->isAfter() && $this->max_occurrences => "After {$this->max_occurrences} " . str($this->max_occurrences === 1 ? 'invoice' : 'invoices'),
+            $this->end_type->isAfter() && $this->max_occurrences => __('After :count invoices', [
+                'count' => $this->max_occurrences,
+            ]),
 
-            $this->end_type->isOn() && $this->end_date => 'On ' . $this->end_date->toDefaultDateFormat(),
+            $this->end_type->isOn() && $this->end_date => __('On :date', [
+                'date' => $this->end_date->toDefaultDateFormat(),
+            ]),
 
             default => null,
         };
@@ -279,11 +303,15 @@ class RecurringInvoice extends Document
         $parts = [];
 
         if ($this->start_date) {
-            $parts[] = 'First Invoice: ' . $this->start_date->toDefaultDateFormat();
+            $parts[] = __('First Invoice: :date', [
+                'date' => $this->start_date->toDefaultDateFormat(),
+            ]);
         }
 
         if ($this->end_type) {
-            $parts[] = 'Ends: ' . $this->getEndDescription();
+            $parts[] = __('Ends: :end', [
+                'end' => $this->getEndDescription(),
+            ]);
         }
 
         return implode(', ', $parts);
@@ -393,10 +421,10 @@ class RecurringInvoice extends Document
     public static function getManageScheduleAction(string $action = Action::class): MountableAction
     {
         return $action::make('manageSchedule')
-            ->label(fn (self $record) => $record->hasSchedule() ? 'Edit schedule' : 'Set schedule')
+            ->label(fn (self $record) => $record->hasSchedule() ? __('Edit schedule') : __('Set schedule'))
             ->icon('heroicon-m-calendar-date-range')
             ->slideOver()
-            ->successNotificationTitle('Schedule saved')
+            ->successNotificationTitle(__('Schedule saved'))
             ->mountUsing(function (self $record, Form $form) {
                 $data = $record->attributesToArray();
 
@@ -406,7 +434,7 @@ class RecurringInvoice extends Document
                 $form->fill($data);
             })
             ->form([
-                CustomSection::make('Frequency')
+                CustomSection::make(__('Frequency'))
                     ->contained(false)
                     ->schema(function (Forms\Get $get) {
                         $frequency = Frequency::parse($get('frequency'));
@@ -416,7 +444,7 @@ class RecurringInvoice extends Document
 
                         return [
                             Forms\Components\Select::make('frequency')
-                                ->label('Repeats')
+                                ->label(__('Repeats'))
                                 ->options(Frequency::class)
                                 ->softRequired()
                                 ->live()
@@ -441,13 +469,13 @@ class RecurringInvoice extends Document
                                     }),
                             ])
                                 ->live()
-                                ->label('Every')
+                                ->label(__('Every'))
                                 ->required()
                                 ->markAsRequired(false)
                                 ->visible($frequency->isCustom()),
 
                             Forms\Components\Select::make('month')
-                                ->label('Month')
+                                ->label(__('Month'))
                                 ->options(Month::class)
                                 ->softRequired()
                                 ->visible($frequency->isYearly() || $intervalType?->isYear())
@@ -458,7 +486,7 @@ class RecurringInvoice extends Document
                                 }),
 
                             Forms\Components\Select::make('day_of_month')
-                                ->label('Day of Month')
+                                ->label(__('Day of Month'))
                                 ->options(function () use ($month) {
                                     if (! $month) {
                                         return DayOfMonth::class;
@@ -481,13 +509,15 @@ class RecurringInvoice extends Document
                             Banner::make('dayOfMonthNotice')
                                 ->info()
                                 ->title(static function () use ($dayOfMonth) {
-                                    return "For months with fewer than {$dayOfMonth->value} days, the last day of the month will be used.";
+                                    return __('For months with fewer than :days days, the last day of the month will be used.', [
+                                        'days' => $dayOfMonth->value,
+                                    ]);
                                 })
                                 ->columnSpanFull()
                                 ->visible($dayOfMonth?->mayExceedMonthLength() && ($frequency->isMonthly() || $intervalType?->isMonth())),
 
                             Forms\Components\Select::make('day_of_week')
-                                ->label('Day of Week')
+                                ->label(__('Day of Week'))
                                 ->options(DayOfWeek::class)
                                 ->softRequired()
                                 ->visible(($frequency->isWeekly() || $intervalType?->isWeek()) ?? false)
@@ -499,11 +529,11 @@ class RecurringInvoice extends Document
                         ];
                     })->columns(2),
 
-                CustomSection::make('Dates & Time')
+                CustomSection::make(__('Dates & Time'))
                     ->contained(false)
                     ->schema([
                         Forms\Components\DatePicker::make('start_date')
-                            ->label('First invoice date')
+                            ->label(__('First invoice date'))
                             ->softRequired()
                             ->live()
                             ->minDate(company_today())
@@ -517,7 +547,7 @@ class RecurringInvoice extends Document
                             $components = [];
 
                             $components[] = Forms\Components\Select::make('end_type')
-                                ->label('End schedule')
+                                ->label(__('End schedule'))
                                 ->options(EndType::class)
                                 ->softRequired()
                                 ->live()
@@ -533,7 +563,7 @@ class RecurringInvoice extends Document
                             if ($endType?->isAfter()) {
                                 $components[] = Forms\Components\TextInput::make('max_occurrences')
                                     ->numeric()
-                                    ->suffix('invoices')
+                                    ->suffix(__('invoices'))
                                     ->live();
                             }
 
@@ -544,7 +574,7 @@ class RecurringInvoice extends Document
 
                             return [
                                 Cluster::make($components)
-                                    ->label('Schedule ends')
+                                    ->label(__('Schedule ends'))
                                     ->required()
                                     ->markAsRequired(false),
                             ];
