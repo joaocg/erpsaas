@@ -22,6 +22,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Pages\Page;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Unique;
@@ -38,7 +39,22 @@ class AccountChart extends Page
 
     public static function getNavigationLabel(): string
     {
-        return __('Chart of Accounts');
+        return __(static::$title);
+    }
+
+    public function getTitle(): string | Htmlable
+    {
+        return __(static::$title);
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __(static::$title);
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __(static::$title);
     }
 
     #[Url]
