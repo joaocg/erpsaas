@@ -9,6 +9,7 @@ use App\Models\Banking\ConnectedBankAccount;
 use App\Models\Common\Client;
 use App\Models\Common\Contact;
 use App\Models\Common\Offering;
+use App\Models\Commission;
 use App\Models\Core\Department;
 use App\Models\Setting\CompanyDefault;
 use App\Models\Setting\CompanyProfile;
@@ -83,6 +84,11 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
         return $this->hasMany(Accounting\Adjustment::class, 'company_id');
     }
 
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class, 'company_id');
+    }
+
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(BankAccount::class, 'company_id');
@@ -122,6 +128,16 @@ class Company extends FilamentCompaniesCompany implements HasAvatar
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class, 'company_id');
+    }
+
+    public function partners(): HasMany
+    {
+        return $this->hasMany(Partner::class, 'company_id');
+    }
+
+    public function partnerClientLinks(): HasMany
+    {
+        return $this->hasMany(PartnerClientLink::class, 'company_id');
     }
 
     public function currencies(): HasMany
