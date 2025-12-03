@@ -14,7 +14,12 @@ enum CommissionStatus: string implements HasColor, HasLabel
 
     public function getLabel(): ?string
     {
-        return $this->name;
+        return match ($this) {
+            self::Pending => __('Pending'),
+            self::Accrued => __('Accrued'),
+            self::Paid => __('Paid'),
+            self::Canceled => __('Canceled'),
+        };
     }
 
     public function getColor(): string | array | null
