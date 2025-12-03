@@ -21,27 +21,22 @@ use Illuminate\Support\Carbon;
 class CommissionResource extends Resource
 {
     protected static ?string $title = 'Commission';
-    protected static ?string $titlePlural= 'Commissions';
 
     protected static ?string $model = Commission::class;
 
-    protected static ?string $tenantModel = Company::class;
-
-    protected static ?string $tenantRelationshipName = 'commissions';
-
     public static function getNavigationLabel(): string
     {
-        return __(static::$titlePlural);
+        return __('Commissions');
     }
 
     public static function getModelLabel(): string
     {
-        return __(static::$title);
+        return __('Commission');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __(static::$titlePlural);
+        return __('Commissions');
     }
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';

@@ -385,39 +385,43 @@ class BillResource extends Resource
     {
         return $table
             ->defaultSort('due_date')
-                    ->columns([
-                        Columns::id(),
-                        Tables\Columns\TextColumn::make('status')
-                            ->badge()
-                            ->searchable(),
-                        Tables\Columns\TextColumn::make('due_date')
-                            ->label(__('Due'))
-                            ->asRelativeDay()
-                            ->sortable(),
-                        Tables\Columns\TextColumn::make('date')
-                            ->date()
-                            ->sortable(),
-                        Tables\Columns\TextColumn::make('bill_number')
-                            ->label(__('Number'))
-                            ->searchable()
-                            ->sortable(),
-                        Tables\Columns\TextColumn::make('vendor.name')
+            ->columns([
+                Columns::id(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('due_date')
+                    ->label(__('Due'))
+                    ->asRelativeDay()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('date')
+                    ->label(__('Date'))
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('bill_number')
+                    ->label(__('Number'))
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('vendor.name')
+                    ->label(__('Vendor'))
                     ->sortable()
                     ->searchable()
                     ->hiddenOn(BillsRelationManager::class),
-                        Tables\Columns\TextColumn::make('total')
-                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                            ->sortable()
-                            ->toggleable(),
-                        Tables\Columns\TextColumn::make('amount_paid')
-                            ->label(__('Amount paid'))
-                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                            ->sortable()
-                            ->toggleable(),
-                        Tables\Columns\TextColumn::make('amount_due')
-                            ->label(__('Amount due'))
-                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                            ->sortable(),
+                Tables\Columns\TextColumn::make('total')
+                    ->label(__('Total'))
+                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('amount_paid')
+                    ->label(__('Amount paid'))
+                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('amount_due')
+                    ->label(__('Amount due'))
+                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor')
