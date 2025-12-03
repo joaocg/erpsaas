@@ -19,6 +19,6 @@ enum DayOfWeek: int implements HasLabel
 
     public function getLabel(): ?string
     {
-        return $this->name;
+        return __($this->name);
     }
 }

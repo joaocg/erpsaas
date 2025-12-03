@@ -39,7 +39,7 @@ class ListCompanyCurrencies extends Component implements HasForms, HasTable
                     ->weight(FontWeight::Medium)
                     ->icon(static fn (Currency $record) => $record->isEnabled() ? 'heroicon-o-lock-closed' : null)
                     ->tooltip(function (Currency $record) {
-                        $tooltipMessage = translate('Default :record', [
+                        $tooltipMessage = __('Default :record', [
                             'record' => $this->getTableModelLabel(),
                         ]);
 

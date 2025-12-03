@@ -28,12 +28,27 @@ class OfferingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-square-3-stack-3d';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Offerings');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Offerings');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Offering');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Banner::make('inactiveAdjustments')
-                    ->label('Inactive adjustments')
+                    ->label(__('Inactive adjustments'))
                     ->warning()
                     ->icon('heroicon-o-exclamation-triangle')
                     ->visible(fn (?Offering $record) => $record?->hasInactiveAdjustments())
@@ -51,7 +66,9 @@ class OfferingResource extends Resource
                             return "<span class='font-medium'>{$name}</span>";
                         })->join(', ');
 
-                        $output = "<p class='text-sm'>This offering contains inactive adjustments that need to be addressed: {$adjustmentsList}</p>";
+                        $output = __('<p class="text-sm">This offering contains inactive adjustments that need to be addressed: :adjustments</p>', [
+                            'adjustments' => $adjustmentsList,
+                        ]);
 
                         return new HtmlString($output);
                     }),
@@ -65,7 +82,7 @@ class OfferingResource extends Resource
 
     public static function getGeneralSection(bool $hasAttributeChoices = true): Forms\Components\Section
     {
-        return Forms\Components\Section::make('General')
+        return Forms\Components\Section::make(__('General'))
             ->schema([
                 RadioDeck::make('type')
                     ->options(OfferingType::class)
@@ -75,21 +92,23 @@ class OfferingResource extends Resource
                     ->columns()
                     ->required(),
                 Forms\Components\TextInput::make('name')
+                    ->label(__('Name'))
                     ->autofocus()
                     ->required()
                     ->columnStart(1)
                     ->maxLength(255),
                 Forms\Components\TextInput::make('price')
+                    ->label(__('Price'))
                     ->required()
                     ->money(),
                 Forms\Components\Textarea::make('description')
-                    ->label('Description')
+                    ->label(__('Description'))
                     ->columnSpan(2)
                     ->rows(3),
                 Forms\Components\CheckboxList::make('attributes')
                     ->options([
-                        'Sellable' => 'Sellable',
-                        'Purchasable' => 'Purchasable',
+                        'Sellable' => __('Sellable'),
+                        'Purchasable' => __('Purchasable'),
                     ])
                     ->visible($hasAttributeChoices)
                     ->hiddenLabel()
@@ -97,30 +116,30 @@ class OfferingResource extends Resource
                     ->live()
                     ->bulkToggleable()
                     ->validationMessages([
-                        'required' => 'The offering must be either sellable or purchasable.',
+                        'required' => __('The offering must be either sellable or purchasable.'),
                     ]),
             ])->columns();
     }
 
     public static function getSellableSection(): Forms\Components\Section
     {
-        return Forms\Components\Section::make('Sale Information')
+        return Forms\Components\Section::make(__('Sale Information'))
             ->schema([
                 CreateAccountSelect::make('income_account_id')
-                    ->label('Income account')
+                    ->label(__('Income account'))
                     ->category(AccountCategory::Revenue)
                     ->type(AccountType::OperatingRevenue)
                     ->required()
                     ->validationMessages([
-                        'required' => 'The income account is required for sellable offerings.',
+                        'required' => __('The income account is required for sellable offerings.'),
                     ]),
                 CreateAdjustmentSelect::make('salesTaxes')
-                    ->label('Sales tax')
+                    ->label(__('Sales tax'))
                     ->category(AdjustmentCategory::Tax)
                     ->type(AdjustmentType::Sales)
                     ->multiple(),
                 CreateAdjustmentSelect::make('salesDiscounts')
-                    ->label('Sales discount')
+                    ->label(__('Sales discount'))
                     ->category(AdjustmentCategory::Discount)
                     ->type(AdjustmentType::Sales)
                     ->multiple(),
@@ -131,23 +150,23 @@ class OfferingResource extends Resource
 
     public static function getPurchasableSection(): Forms\Components\Section
     {
-        return Forms\Components\Section::make('Purchase Information')
+        return Forms\Components\Section::make(__('Purchase Information'))
             ->schema([
                 CreateAccountSelect::make('expense_account_id')
-                    ->label('Expense account')
+                    ->label(__('Expense account'))
                     ->category(AccountCategory::Expense)
                     ->type(AccountType::OperatingExpense)
                     ->required()
                     ->validationMessages([
-                        'required' => 'The expense account is required for purchasable offerings.',
+                        'required' => __('The expense account is required for purchasable offerings.'),
                     ]),
                 CreateAdjustmentSelect::make('purchaseTaxes')
-                    ->label('Purchase tax')
+                    ->label(__('Purchase tax'))
                     ->category(AdjustmentCategory::Tax)
                     ->type(AdjustmentType::Purchase)
                     ->multiple(),
                 CreateAdjustmentSelect::make('purchaseDiscounts')
-                    ->label('Purchase discount')
+                    ->label(__('Purchase discount'))
                     ->category(AdjustmentCategory::Discount)
                     ->type(AdjustmentType::Purchase)
                     ->multiple(),
@@ -170,13 +189,28 @@ class OfferingResource extends Resource
             })
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name'),
+                    ->label(__('Name')),
                 Tables\Columns\TextColumn::make('attributes')
-                    ->label('Attributes')
+                    ->label(__('Attributes'))
+                    ->formatStateUsing(function (?string $state) {
+                        $attributes = collect(preg_split('/\s*&\s*/', $state ?? '', -1, PREG_SPLIT_NO_EMPTY));
+
+                        return $attributes
+                            ->map(function (string $attribute) {
+                                return match ($attribute) {
+                                    'Sellable' => __('Sellable'),
+                                    'Purchasable' => __('Purchasable'),
+                                    default => $attribute,
+                                };
+                            })
+                            ->implode(', ');
+                    })
                     ->badge(),
                 Tables\Columns\TextColumn::make('type')
+                    ->label(__('Type'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
+                    ->label(__('Price'))
                     ->currency()
                     ->sortable()
                     ->description(function (Offering $record) {
@@ -190,7 +224,10 @@ class OfferingResource extends Resource
 
                         $adjustmentsList = Str::of($adjustments)->limit(40);
 
-                        return "+ {$adjustmentsList}";
+                        return __(
+                            '+ :adjustments',
+                            ['adjustments' => $adjustmentsList],
+                        );
                     }),
             ])
             ->filters([
