@@ -4,6 +4,7 @@ namespace App\Filament\Company\Resources\Sales;
 
 use App\Enums\CommissionStatus;
 use App\Filament\Company\Resources\Sales\CommissionResource\Pages;
+use App\Models\Company;
 use App\Models\Commission;
 use App\Services\CommissionService;
 use Filament\Forms;
@@ -16,6 +17,10 @@ use Illuminate\Support\Carbon;
 class CommissionResource extends Resource
 {
     protected static ?string $model = Commission::class;
+
+    protected static ?string $tenantModel = Company::class;
+
+    protected static ?string $tenantRelationshipName = 'commissions';
 
     public static function getNavigationLabel(): string
     {
