@@ -61,12 +61,12 @@ class BillResource extends Resource
 
         return $form
             ->schema([
-                Forms\Components\Section::make('Bill Details')
+                Forms\Components\Section::make(__('Bill Details'))
                     ->schema([
                         Forms\Components\Split::make([
                             Forms\Components\Group::make([
                                 CreateVendorSelect::make('vendor_id')
-                                    ->label('Vendor')
+                                    ->label(__('Vendor'))
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
@@ -84,14 +84,14 @@ class BillResource extends Resource
                             ]),
                             Forms\Components\Group::make([
                                 Forms\Components\TextInput::make('bill_number')
-                                    ->label('Bill number')
+                                    ->label(__('Bill number'))
                                     ->default(static fn () => Bill::getNextDocumentNumber())
                                     ->required(),
                                 Forms\Components\TextInput::make('order_number')
-                                    ->label('P.O/S.O Number'),
+                                    ->label(__('P.O/S.O Number')),
                                 Cluster::make([
                                     Forms\Components\DatePicker::make('date')
-                                        ->label('Bill date')
+                                        ->label(__('Bill date'))
                                         ->live()
                                         ->default(company_today()->toDateString())
                                         ->disabled(function (?Bill $record) {
@@ -114,13 +114,13 @@ class BillResource extends Resource
                                             }
                                         }),
                                     Forms\Components\Select::make('payment_terms')
-                                        ->label('Payment terms')
+                                        ->label(__('Payment terms'))
                                         ->options(function () {
                                             return collect(PaymentTerms::cases())
                                                 ->mapWithKeys(function (PaymentTerms $paymentTerm) {
                                                     return [$paymentTerm->value => $paymentTerm->getLabel()];
                                                 })
-                                                ->put('custom', 'Custom')
+                                                ->put('custom', __('Custom'))
                                                 ->toArray();
                                         })
                                         ->selectablePlaceholder(false)
@@ -137,11 +137,11 @@ class BillResource extends Resource
                                                 $set('due_date', Carbon::parse($date)->addDays($terms->getDays())->toDateString());
                                             }
                                         }),
-                                ])
-                                    ->label('Bill date')
+                            ])
+                                    ->label(__('Bill date'))
                                     ->columns(3),
                                 Forms\Components\DatePicker::make('due_date')
-                                    ->label('Due date')
+                                    ->label(__('Due date'))
                                     ->default(function () use ($settings) {
                                         return company_today()->addDays($settings->payment_terms->getDays())->toDateString();
                                     })
@@ -167,7 +167,7 @@ class BillResource extends Resource
                                         }
                                     }),
                                 Forms\Components\Select::make('discount_method')
-                                    ->label('Discount method')
+                                    ->label(__('Discount method'))
                                     ->options(DocumentDiscountMethod::class)
                                     ->softRequired()
                                     ->default($settings->discount_method)
@@ -190,26 +190,26 @@ class BillResource extends Resource
                             ->orderColumn('line_number')
                             ->reorderAtStart()
                             ->cloneable()
-                            ->addActionLabel('Add an item')
+                            ->addActionLabel(__('Add an item'))
                             ->headers(function (Forms\Get $get) use ($settings) {
                                 $hasDiscounts = DocumentDiscountMethod::parse($get('discount_method'))->isPerLineItem();
 
                                 $headers = [
-                                    Header::make($settings->resolveColumnLabel('item_name', 'Items'))
+                                    Header::make($settings->resolveColumnLabel('item_name', __('Items')))
                                         ->width('30%'),
-                                    Header::make($settings->resolveColumnLabel('unit_name', 'Quantity'))
+                                    Header::make($settings->resolveColumnLabel('unit_name', __('Quantity')))
                                         ->width('10%'),
-                                    Header::make($settings->resolveColumnLabel('price_name', 'Price'))
+                                    Header::make($settings->resolveColumnLabel('price_name', __('Price')))
                                         ->width('10%'),
                                 ];
 
                                 if ($hasDiscounts) {
-                                    $headers[] = Header::make('Adjustments')->width('30%');
+                                    $headers[] = Header::make(__('Adjustments'))->width('30%');
                                 } else {
-                                    $headers[] = Header::make('Taxes')->width('30%');
+                                    $headers[] = Header::make(__('Taxes'))->width('30%');
                                 }
 
-                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', 'Amount'))
+                                $headers[] = Header::make($settings->resolveColumnLabel('amount_name', __('Amount')))
                                     ->width('10%')
                                     ->align('right');
 
@@ -218,9 +218,9 @@ class BillResource extends Resource
                             ->schema([
                                 Forms\Components\Group::make([
                                     CreateOfferingSelect::make('offering_id')
-                                        ->label('Item')
+                                        ->label(__('Item'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select item')
+                                        ->placeholder(__('Select item'))
                                         ->required()
                                         ->live()
                                         ->inlineSuffix()
@@ -273,9 +273,9 @@ class BillResource extends Resource
                                             if ($isPerLineItem) {
                                                 $set('purchaseDiscounts', $offeringRecord->purchaseDiscounts->pluck('id')->toArray());
                                             }
-                                        }),
+                                    }),
                                     Forms\Components\TextInput::make('description')
-                                        ->placeholder('Enter item description')
+                                        ->placeholder(__('Enter item description'))
                                         ->hiddenLabel(),
                                 ])->columnSpan(1),
                                 Forms\Components\TextInput::make('quantity')
@@ -291,9 +291,9 @@ class BillResource extends Resource
                                     ->default(0),
                                 Forms\Components\Group::make([
                                     CreateAdjustmentSelect::make('purchaseTaxes')
-                                        ->label('Taxes')
+                                        ->label(__('Taxes'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select taxes')
+                                        ->placeholder(__('Select taxes'))
                                         ->category(AdjustmentCategory::Tax)
                                         ->type(AdjustmentType::Purchase)
                                         ->adjustmentsRelationship('purchaseTaxes')
@@ -305,9 +305,9 @@ class BillResource extends Resource
                                         ->live()
                                         ->searchable(),
                                     CreateAdjustmentSelect::make('purchaseDiscounts')
-                                        ->label('Discounts')
+                                        ->label(__('Discounts'))
                                         ->hiddenLabel()
-                                        ->placeholder('Select discounts')
+                                        ->placeholder(__('Select discounts'))
                                         ->category(AdjustmentCategory::Discount)
                                         ->type(AdjustmentType::Purchase)
                                         ->adjustmentsRelationship('purchaseDiscounts')
@@ -375,39 +375,39 @@ class BillResource extends Resource
     {
         return $table
             ->defaultSort('due_date')
-            ->columns([
-                Columns::id(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('due_date')
-                    ->label('Due')
-                    ->asRelativeDay()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('bill_number')
-                    ->label('Number')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('vendor.name')
+                    ->columns([
+                        Columns::id(),
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->searchable(),
+                        Tables\Columns\TextColumn::make('due_date')
+                            ->label(__('Due'))
+                            ->asRelativeDay()
+                            ->sortable(),
+                        Tables\Columns\TextColumn::make('date')
+                            ->date()
+                            ->sortable(),
+                        Tables\Columns\TextColumn::make('bill_number')
+                            ->label(__('Number'))
+                            ->searchable()
+                            ->sortable(),
+                        Tables\Columns\TextColumn::make('vendor.name')
                     ->sortable()
                     ->searchable()
                     ->hiddenOn(BillsRelationManager::class),
-                Tables\Columns\TextColumn::make('total')
-                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('amount_paid')
-                    ->label('Amount paid')
-                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('amount_due')
-                    ->label('Amount due')
-                    ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
-                    ->sortable(),
+                        Tables\Columns\TextColumn::make('total')
+                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                            ->sortable()
+                            ->toggleable(),
+                        Tables\Columns\TextColumn::make('amount_paid')
+                            ->label(__('Amount paid'))
+                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                            ->sortable()
+                            ->toggleable(),
+                        Tables\Columns\TextColumn::make('amount_due')
+                            ->label(__('Amount due'))
+                            ->currencyWithConversion(static fn (Bill $record) => $record->currency_code)
+                            ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('vendor')
@@ -419,19 +419,19 @@ class BillResource extends Resource
                     ->options(BillStatus::class)
                     ->native(false),
                 Tables\Filters\TernaryFilter::make('has_payments')
-                    ->label('Has payments')
+                    ->label(__('Has payments'))
                     ->queries(
                         true: fn (Builder $query) => $query->whereHas('payments'),
                         false: fn (Builder $query) => $query->whereDoesntHave('payments'),
                     ),
                 DateRangeFilter::make('date')
-                    ->fromLabel('From date')
-                    ->untilLabel('To date')
-                    ->indicatorLabel('Date'),
+                    ->fromLabel(__('From date'))
+                    ->untilLabel(__('To date'))
+                    ->indicatorLabel(__('Date')),
                 DateRangeFilter::make('due_date')
-                    ->fromLabel('From due date')
-                    ->untilLabel('To due date')
-                    ->indicatorLabel('Due'),
+                    ->fromLabel(__('From due date'))
+                    ->untilLabel(__('To due date'))
+                    ->indicatorLabel(__('Due')),
             ])
             ->headerActions([
                 Tables\Actions\ExportAction::make()
@@ -446,7 +446,7 @@ class BillResource extends Resource
                             ->url(static fn (Bill $record) => Pages\ViewBill::getUrl(['record' => $record])),
                         Bill::getReplicateAction(Tables\Actions\ReplicateAction::class),
                         Tables\Actions\Action::make('recordPayment')
-                            ->label('Record payment')
+                            ->label(__('Record payment'))
                             ->slideOver()
                             ->modalWidth(MaxWidth::TwoExtraLarge)
                             ->icon('heroicon-m-credit-card')
@@ -460,14 +460,14 @@ class BillResource extends Resource
                                 ]);
                             })
                             ->databaseTransaction()
-                            ->successNotificationTitle('Payment recorded')
+                            ->successNotificationTitle(__('Payment recorded'))
                             ->form([
                                 Forms\Components\DatePicker::make('posted_at')
-                                    ->label('Date'),
+                                    ->label(__('Date')),
                                 Forms\Components\Grid::make()
                                     ->schema([
                                         Forms\Components\Select::make('bank_account_id')
-                                            ->label('Account')
+                                            ->label(__('Account'))
                                             ->required()
                                             ->live()
                                             ->options(function () {
@@ -487,7 +487,7 @@ class BillResource extends Resource
                                             })
                                             ->searchable(),
                                         Forms\Components\TextInput::make('amount')
-                                            ->label('Amount')
+                                            ->label(__('Amount'))
                                             ->required()
                                             ->money(fn (Bill $record) => $record->currency_code)
                                             ->live(onBlur: true)
@@ -503,27 +503,27 @@ class BillResource extends Resource
                                                 $amount = CurrencyConverter::convertToCents($state, 'USD');
 
                                                 if ($amount <= 0) {
-                                                    return 'Please enter a valid positive amount';
+                                                    return __('Please enter a valid positive amount');
                                                 }
 
                                                 $newAmountDue = $amountDue - $amount;
 
                                                 return match (true) {
-                                                    $newAmountDue > 0 => 'Amount due after payment will be ' . CurrencyConverter::formatCentsToMoney($newAmountDue, $billCurrency),
-                                                    $newAmountDue === 0 => 'Bill will be fully paid',
-                                                    default => 'Amount exceeds bill total by ' . CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $billCurrency),
+                                                    $newAmountDue > 0 => __('Amount due after payment will be :amount', ['amount' => CurrencyConverter::formatCentsToMoney($newAmountDue, $billCurrency)]),
+                                                    $newAmountDue === 0 => __('Bill will be fully paid'),
+                                                    default => __('Amount exceeds bill total by :amount', ['amount' => CurrencyConverter::formatCentsToMoney(abs($newAmountDue), $billCurrency)]),
                                                 };
                                             })
                                             ->rules([
                                                 static fn (): Closure => static function (string $attribute, $value, Closure $fail) {
                                                     if (! CurrencyConverter::isValidAmount($value, 'USD')) {
-                                                        $fail('Please enter a valid amount');
+                                                        $fail(__('Please enter a valid amount'));
                                                     }
                                                 },
                                             ]),
                                     ])->columns(2),
                                 Forms\Components\Placeholder::make('currency_conversion')
-                                    ->label('Currency Conversion')
+                                    ->label(__('Currency Conversion'))
                                     ->content(function (Forms\Get $get, Bill $record) {
                                         $amount = $get('amount');
                                         $bankAccountId = $get('bank_account_id');
@@ -556,7 +556,10 @@ class BillResource extends Resource
 
                                         $formattedBankAmount = CurrencyConverter::formatCentsToMoney($amountInBankCurrencyCents, $bankCurrency);
 
-                                        return "Payment will be recorded as {$formattedBankAmount} in the bank account's currency ({$bankCurrency}).";
+                                        return __('Payment will be recorded as :amount in the bank account\'s currency (:currency).', [
+                                            'amount' => $formattedBankAmount,
+                                            'currency' => $bankCurrency,
+                                        ]);
                                     })
                                     ->hidden(function (Forms\Get $get, Bill $record) {
                                         $bankAccountId = $get('bank_account_id');
@@ -577,11 +580,11 @@ class BillResource extends Resource
                                         return $billCurrency === $bankCurrency;
                                     }),
                                 Forms\Components\Select::make('payment_method')
-                                    ->label('Payment method')
+                                    ->label(__('Payment method'))
                                     ->required()
                                     ->options(PaymentMethod::class),
                                 Forms\Components\Textarea::make('notes')
-                                    ->label('Notes'),
+                                    ->label(__('Notes')),
                             ])
                             ->action(function (Bill $record, Tables\Actions\Action $action, array $data) {
                                 $record->recordPayment($data);
@@ -596,11 +599,11 @@ class BillResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ReplicateBulkAction::make()
-                        ->label('Replicate')
+                        ->label(__('Replicate'))
                         ->modalWidth(MaxWidth::Large)
-                        ->modalDescription('Replicating bills will also replicate their line items. Are you sure you want to proceed?')
-                        ->successNotificationTitle('Bills replicated successfully')
-                        ->failureNotificationTitle('Failed to replicate bills')
+                        ->modalDescription(__('Replicating bills will also replicate their line items. Are you sure you want to proceed?'))
+                        ->successNotificationTitle(__('Bills replicated successfully'))
+                        ->failureNotificationTitle(__('Failed to replicate bills'))
                         ->databaseTransaction()
                         ->deselectRecordsAfterCompletion()
                         ->excludeAttributes([
