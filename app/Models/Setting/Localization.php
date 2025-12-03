@@ -109,7 +109,17 @@ class Localization extends Model
 
     public static function getAllLanguages(): array
     {
-        return Transmatic::getSupportedLanguages();
+        $languages = Transmatic::getSupportedLanguages();
+
+        if (array_key_exists('pt', $languages)) {
+            $languages['pt'] = __('Portuguese (Portugal)');
+        }
+
+        if (array_key_exists('pt_BR', $languages)) {
+            $languages['pt_BR'] = __('Portuguese (Brazil)');
+        }
+
+        return $languages;
     }
 
     public static function newFactory(): Factory

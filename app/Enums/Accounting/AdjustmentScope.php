@@ -9,6 +9,6 @@ enum AdjustmentScope: string
 
     public function getLabel(): ?string
     {
-        return translate($this->name);
+        return __($this->name);
     }
 }

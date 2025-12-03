@@ -21,10 +21,10 @@ class ListPartners extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make('All'),
-            'active' => Tab::make('Active')
+            'all' => Tab::make(__('All')),
+            'active' => Tab::make(__('Active'))
                 ->modifyQueryUsing(fn ($query) => $query->where('active', true)),
-            'inactive' => Tab::make('Inactive')
+            'inactive' => Tab::make(__('Inactive'))
                 ->modifyQueryUsing(fn ($query) => $query->where('active', false)),
         ];
     }

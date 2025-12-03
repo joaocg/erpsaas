@@ -19,7 +19,7 @@ enum BankAccountType: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return translate($this->name);
+        return __($this->name);
     }
 
     public function getDefaultSubtype(): string
