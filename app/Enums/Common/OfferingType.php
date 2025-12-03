@@ -12,7 +12,7 @@ enum OfferingType: string implements HasIcons, HasLabel
 
     public function getLabel(): string
     {
-        return $this->name;
+        return __($this->name);
     }
 
     public function getIcons(): ?string

@@ -95,9 +95,9 @@
             navigationStack: ['main'],
             theme: localStorage.getItem('theme') || '{{ filament()->getDefaultThemeMode()->value }}',
             themeLabels: {
-                light: 'Off',
-                dark: 'On',
-                system: 'System',
+                light: '{{ __('Off') }}',
+                dark: '{{ __('On') }}',
+                system: '{{ __('System') }}',
             },
 
             toggleDropdown() {

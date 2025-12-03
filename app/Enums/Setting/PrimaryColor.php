@@ -68,7 +68,7 @@ enum PrimaryColor: string implements HasColor, HasLabel
 
     public function getLabel(): ?string
     {
-        return ucfirst(translate($this->value));
+        return ucfirst(__($this->value));
     }
 
     /**
