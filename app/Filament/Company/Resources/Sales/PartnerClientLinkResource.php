@@ -16,8 +16,6 @@ class PartnerClientLinkResource extends Resource
 {
     protected static ?string $model = PartnerClientLink::class;
 
-    protected static ?string $tenantRelationshipName = 'partnerClientLinks';
-
     public static function getNavigationLabel(): string
     {
         return __('Partner Client Links');
@@ -29,26 +27,26 @@ class PartnerClientLinkResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Partner & Client')
+                Forms\Components\Section::make(__('Partner & Client'))
                     ->schema([
                         Forms\Components\Select::make('partner_id')
-                            ->label('Partner')
+                            ->label(__('Partner'))
                             ->relationship('partner', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('client_id')
-                            ->label('Client')
+                            ->label(__('Client'))
                             ->relationship('client', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\DatePicker::make('linked_at')
-                            ->label('Linked at')
+                            ->label(__('Linked at'))
                             ->default(now())
                             ->required(),
                         Forms\Components\Textarea::make('notes')
-                            ->label('Notes')
+                            ->label(__('Notes'))
                             ->columnSpanFull(),
                     ])->columns(2),
             ]);
@@ -59,30 +57,30 @@ class PartnerClientLinkResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('partner.name')
-                    ->label('Partner')
+                    ->label(__('Partner'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client.name')
-                    ->label('Client')
+                    ->label(__('Client'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('linked_at')
-                    ->label('Linked at')
+                    ->label(__('Linked at'))
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('notes')
-                    ->label('Notes')
+                    ->label(__('Notes'))
                     ->limit(50)
                     ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('partner_id')
-                    ->label('Partner')
+                    ->label(__('Partner'))
                     ->relationship('partner', 'name')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('client_id')
-                    ->label('Client')
+                    ->label(__('Client'))
                     ->relationship('client', 'name')
                     ->searchable()
                     ->preload(),

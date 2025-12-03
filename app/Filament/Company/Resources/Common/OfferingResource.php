@@ -30,7 +30,7 @@ class OfferingResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return __('Produto/Serviço');
+        return __('Produtos/Serviços');
     }
 
     public static function getPluralModelLabel(): string
