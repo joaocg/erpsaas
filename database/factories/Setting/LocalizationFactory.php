@@ -32,8 +32,10 @@ class LocalizationFactory extends Factory
         ];
     }
 
-    public function withCountry(string $code, string $language = 'en'): Factory
+    public function withCountry(string $code, ?string $language = null): Factory
     {
+        $language ??= config('app.locale');
+
         $number_format = NumberFormat::fromLanguageAndCountry($language, $code) ?? NumberFormat::DEFAULT;
         $percent_first = Localization::isPercentFirst($language, $code) ?? false;
 
