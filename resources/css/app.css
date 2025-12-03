@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.fi-logo {
+    background: #4f46e5;
+    padding: 8px;
+    border-radius: .5rem;
+    padding-left: 11px;
+    height: 3.8rem !important;
+}
