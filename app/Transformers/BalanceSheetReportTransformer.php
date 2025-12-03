@@ -10,11 +10,11 @@ use App\Utilities\Currency\CurrencyAccessor;
 
 class BalanceSheetReportTransformer extends SummaryReportTransformer
 {
-    protected string $totalAssets;
+    protected string $totalAssets = '';
 
-    protected string $totalLiabilities;
+    protected string $totalLiabilities = '';
 
-    protected string $totalEquity;
+    protected string $totalEquity = '';
 
     public function __construct(ReportDTO $report)
     {
@@ -35,6 +35,7 @@ class BalanceSheetReportTransformer extends SummaryReportTransformer
                 'Assets' => $this->totalAssets = $accountCategory->summary->endingBalance ?? '',
                 'Liabilities' => $this->totalLiabilities = $accountCategory->summary->endingBalance ?? '',
                 'Equity' => $this->totalEquity = $accountCategory->summary->endingBalance ?? '',
+                default => null,
             };
         }
     }
