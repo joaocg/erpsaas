@@ -9,11 +9,11 @@ use App\Utilities\Currency\CurrencyAccessor;
 
 class IncomeStatementReportTransformer extends SummaryReportTransformer
 {
-    protected string $totalRevenue;
+    protected string $totalRevenue = '';
 
-    protected string $totalCogs;
+    protected string $totalCogs = '';
 
-    protected string $totalExpenses;
+    protected string $totalExpenses = '';
 
     public function __construct(ReportDTO $report)
     {
@@ -39,6 +39,7 @@ class IncomeStatementReportTransformer extends SummaryReportTransformer
                 'Revenue' => $this->totalRevenue = $accountCategory->summary->netMovement ?? '',
                 'Cost of Goods Sold' => $this->totalCogs = $accountCategory->summary->netMovement ?? '',
                 'Expenses' => $this->totalExpenses = $accountCategory->summary->netMovement ?? '',
+                default => null,
             };
         }
     }
