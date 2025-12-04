@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Resources\Sales;
 
 use App\Filament\Company\Resources\Sales\ClientResource\Pages;
+use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\ClientExpensesRelationManager;
 use App\Filament\Exports\Common\ClientExporter;
 use App\Filament\Forms\Components\AddressFields;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -339,7 +340,7 @@ class ClientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ClientExpensesRelationManager::class,
         ];
     }
 
