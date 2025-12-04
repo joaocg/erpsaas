@@ -14,6 +14,8 @@ class ContractResource extends Resource
 {
     protected static ?string $model = Contract::class;
 
+    protected static ?string $slug = 'sales/contracts';
+
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     public static function getNavigationLabel(): string
