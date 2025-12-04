@@ -35,9 +35,19 @@ class Client extends Model
         'account_number',
         'website',
         'notes',
+        'balance',
         'created_by',
         'updated_by',
     ];
+
+    protected $casts = [
+        'balance' => 'decimal:2',
+    ];
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(\App\Models\ClientExpense::class);
+    }
 
     public static function createWithRelations(array $data): self
     {
