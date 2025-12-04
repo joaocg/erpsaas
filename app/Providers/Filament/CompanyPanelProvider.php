@@ -31,12 +31,14 @@ use App\Filament\Company\Resources\Common\OfferingResource;
 use App\Filament\Company\Resources\Purchases\BillResource;
 use App\Filament\Company\Resources\Purchases\VendorResource;
 use App\Filament\Company\Resources\Sales\ClientResource;
+use App\Filament\Company\Resources\Sales\ContractResource;
 use App\Filament\Company\Resources\Sales\EstimateResource;
 use App\Filament\Company\Resources\Sales\InvoiceResource;
 use App\Filament\Company\Resources\Sales\PartnerClientLinkResource;
 use App\Filament\Company\Resources\Sales\PartnerResource;
 use App\Filament\Company\Resources\Sales\CommissionResource;
 use App\Filament\Company\Resources\Sales\RecurringInvoiceResource;
+use App\Filament\Company\Resources\Sales\ServiceResource;
 use App\Filament\Components\PanelShiftDropdown;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\User\Clusters\Account;
@@ -144,6 +146,7 @@ class CompanyPanelProvider extends PanelProvider
                             ->items([
                                 ...PartnerResource::getNavigationItems(),
                                 ...ClientResource::getNavigationItems(),
+                                ...ContractResource::getNavigationItems(),
                                 ...EstimateResource::getNavigationItems(),
                                 ...InvoiceResource::getNavigationItems(),
                                 ...PartnerClientLinkResource::getNavigationItems(),
@@ -175,6 +178,7 @@ class CompanyPanelProvider extends PanelProvider
                             ->localizeLabel()
                             ->icon('heroicon-o-wrench-screwdriver')
                             ->items([
+                                ...ServiceResource::getNavigationItems(),
                                 ...ConnectedAccount::getNavigationItems(),
                                 ...LiveCurrency::getNavigationItems(),
                             ]),
