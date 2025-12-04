@@ -13,4 +13,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('documents/{documentType}/{id}/print', [DocumentPrintController::class, 'show'])
         ->middleware(AllowSameOriginFrame::class)
         ->name('documents.print');
+
+    Route::redirect(
+        '/company/sales/contracts',
+        fn () => route('filament.company.resources.sales.invoices.index')
+    )->name('filament.company.resources.sales.contracts.index');
 });
