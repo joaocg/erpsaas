@@ -192,6 +192,10 @@ class CompanyPanelProvider extends PanelProvider
             ->tenant(Company::class)
             ->tenantProfile(ManageCompany::class)
             ->tenantRegistration(CreateCompany::class)
+            ->resources([
+                ContractResource::class,
+                ServiceResource::class,
+            ])
             ->discoverResources(in: app_path('Filament/Company/Resources'), for: 'App\\Filament\\Company\\Resources')
             ->discoverPages(in: app_path('Filament/Company/Pages'), for: 'App\\Filament\\Company\\Pages')
             ->discoverClusters(in: app_path('Filament/Company/Clusters'), for: 'App\\Filament\\Company\\Clusters')
