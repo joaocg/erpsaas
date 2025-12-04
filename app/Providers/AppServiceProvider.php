@@ -3,10 +3,20 @@
 namespace App\Providers;
 
 use App\Http\Responses\LoginRedirectResponse;
+use App\Models\ClientExpense;
 use App\Models\Export;
 use App\Models\Import;
 use App\Models\Notification;
+use App\Models\PartnerAdvance;
+use App\Models\Contract;
+use App\Models\Service;
+use App\Models\ServiceActivity;
 use App\Services\DateRangeService;
+use App\Observers\ClientExpenseObserver;
+use App\Observers\ContractObserver;
+use App\Observers\PartnerAdvanceObserver;
+use App\Observers\ServiceActivityObserver;
+use App\Observers\ServiceObserver;
 use Filament\Actions\Exports\Models\Export as BaseExport;
 use Filament\Actions\Imports\Models\Import as BaseImport;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
@@ -47,5 +57,11 @@ class AppServiceProvider extends ServiceProvider
             Js::make('history-fix', __DIR__ . '/../../resources/js/history-fix.js'),
             Js::make('custom-print', __DIR__ . '/../../resources/js/custom-print.js'),
         ]);
+
+        Service::observe(ServiceObserver::class);
+        ServiceActivity::observe(ServiceActivityObserver::class);
+        ClientExpense::observe(ClientExpenseObserver::class);
+        Contract::observe(ContractObserver::class);
+        PartnerAdvance::observe(PartnerAdvanceObserver::class);
     }
 }
