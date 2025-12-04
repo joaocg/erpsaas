@@ -26,62 +26,78 @@ enum AccountType: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::CurrentAsset => 'Current Asset',
-            self::NonCurrentAsset => 'Non-Current Asset',
-            self::ContraAsset => 'Contra Asset',
-            self::CurrentLiability => 'Current Liability',
-            self::NonCurrentLiability => 'Non-Current Liability',
-            self::ContraLiability => 'Contra Liability',
-            self::Equity => 'Equity',
-            self::ContraEquity => 'Contra Equity',
-            self::OperatingRevenue => 'Operating Revenue',
-            self::NonOperatingRevenue => 'Non-Operating Revenue',
-            self::ContraRevenue => 'Contra Revenue',
-            self::UncategorizedRevenue => 'Uncategorized Revenue',
-            self::OperatingExpense => 'Operating Expense',
-            self::NonOperatingExpense => 'Non-Operating Expense',
-            self::ContraExpense => 'Contra Expense',
-            self::UncategorizedExpense => 'Uncategorized Expense',
+            self::CurrentAsset         => __('Current Asset'),
+            self::NonCurrentAsset      => __('Non-Current Asset'),
+            self::ContraAsset          => __('Contra Asset'),
+            self::CurrentLiability     => __('Current Liability'),
+            self::NonCurrentLiability  => __('Non-Current Liability'),
+            self::ContraLiability      => __('Contra Liability'),
+            self::Equity               => __('Equity'),
+            self::ContraEquity         => __('Contra Equity'),
+            self::OperatingRevenue     => __('Operating Revenue'),
+            self::NonOperatingRevenue  => __('Non-Operating Revenue'),
+            self::ContraRevenue        => __('Contra Revenue'),
+            self::UncategorizedRevenue => __('Uncategorized Revenue'),
+            self::OperatingExpense     => __('Operating Expense'),
+            self::NonOperatingExpense  => __('Non-Operating Expense'),
+            self::ContraExpense        => __('Contra Expense'),
+            self::UncategorizedExpense => __('Uncategorized Expense'),
         };
     }
 
     public function getPluralLabel(): ?string
     {
         return match ($this) {
-            self::CurrentAsset => 'Current Assets',
-            self::NonCurrentAsset => 'Non-Current Assets',
-            self::ContraAsset => 'Contra Assets',
-            self::CurrentLiability => 'Current Liabilities',
-            self::NonCurrentLiability => 'Non-Current Liabilities',
-            self::ContraLiability => 'Contra Liabilities',
-            self::Equity => 'Equity',
-            self::ContraEquity => 'Contra Equity',
-            self::OperatingRevenue => 'Operating Revenue',
-            self::NonOperatingRevenue => 'Non-Operating Revenue',
-            self::ContraRevenue => 'Contra Revenue',
-            self::UncategorizedRevenue => 'Uncategorized Revenue',
-            self::OperatingExpense => 'Operating Expenses',
-            self::NonOperatingExpense => 'Non-Operating Expenses',
-            self::ContraExpense => 'Contra Expenses',
-            self::UncategorizedExpense => 'Uncategorized Expenses',
+            self::CurrentAsset         => __('Current Assets'),
+            self::NonCurrentAsset      => __('Non-Current Assets'),
+            self::ContraAsset          => __('Contra Assets'),
+            self::CurrentLiability     => __('Current Liabilities'),
+            self::NonCurrentLiability  => __('Non-Current Liabilities'),
+            self::ContraLiability      => __('Contra Liabilities'),
+            self::Equity               => __('Equity'),
+            self::ContraEquity         => __('Contra Equity'),
+            self::OperatingRevenue     => __('Operating Revenue'),
+            self::NonOperatingRevenue  => __('Non-Operating Revenue'),
+            self::ContraRevenue        => __('Contra Revenue'),
+            self::UncategorizedRevenue => __('Uncategorized Revenue'),
+            self::OperatingExpense     => __('Operating Expenses'),
+            self::NonOperatingExpense  => __('Non-Operating Expenses'),
+            self::ContraExpense        => __('Contra Expenses'),
+            self::UncategorizedExpense => __('Uncategorized Expenses'),
         };
     }
 
     public function getCategory(): AccountCategory
     {
         return match ($this) {
-            self::CurrentAsset, self::NonCurrentAsset, self::ContraAsset => AccountCategory::Asset,
-            self::CurrentLiability, self::NonCurrentLiability, self::ContraLiability => AccountCategory::Liability,
-            self::Equity, self::ContraEquity => AccountCategory::Equity,
-            self::OperatingRevenue, self::NonOperatingRevenue, self::ContraRevenue, self::UncategorizedRevenue => AccountCategory::Revenue,
-            self::OperatingExpense, self::NonOperatingExpense, self::ContraExpense, self::UncategorizedExpense => AccountCategory::Expense,
+            self::CurrentAsset,
+            self::NonCurrentAsset,
+            self::ContraAsset => AccountCategory::Asset,
+
+            self::CurrentLiability,
+            self::NonCurrentLiability,
+            self::ContraLiability => AccountCategory::Liability,
+
+            self::Equity,
+            self::ContraEquity => AccountCategory::Equity,
+
+            self::OperatingRevenue,
+            self::NonOperatingRevenue,
+            self::ContraRevenue,
+            self::UncategorizedRevenue => AccountCategory::Revenue,
+
+            self::OperatingExpense,
+            self::NonOperatingExpense,
+            self::ContraExpense,
+            self::UncategorizedExpense => AccountCategory::Expense,
         };
     }
 
     public function isUncategorized(): bool
     {
         return match ($this) {
-            self::UncategorizedRevenue, self::UncategorizedExpense => true,
+            self::UncategorizedRevenue,
+            self::UncategorizedExpense => true,
             default => false,
         };
     }
@@ -105,12 +121,6 @@ enum AccountType: string implements HasLabel
         return ! $this->isNormalDebitBalance();
     }
 
-    /**
-     * Determines if the account is a nominal account.
-     *
-     * In accounting, nominal accounts are temporary accounts that are closed at the end of each accounting period,
-     * with their net balances transferred to Retained Earnings (a real account).
-     */
     public function isNominal(): bool
     {
         return in_array($this->getCategory(), [
@@ -119,12 +129,6 @@ enum AccountType: string implements HasLabel
         ], true);
     }
 
-    /**
-     * Determines if the account is a real account.
-     *
-     * In accounting, assets, liabilities, and equity are real accounts which are permanent accounts that retain their balances across accounting periods.
-     * They are not closed at the end of each accounting period.
-     */
     public function isReal(): bool
     {
         return ! $this->isNominal();

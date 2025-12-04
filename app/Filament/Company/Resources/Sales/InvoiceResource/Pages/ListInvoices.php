@@ -49,7 +49,7 @@ class ListInvoices extends ListRecords
                         $clientName = $recurringInvoice?->client?->name;
 
                         if (! $clientName) {
-                            return 'You are currently viewing invoices created from a recurring invoice';
+                            return __('You are currently viewing invoices created from a recurring invoice');
                         }
 
                         $recurringInvoiceUrl = ViewRecurringInvoice::getUrl([
@@ -58,17 +58,17 @@ class ListInvoices extends ListRecords
 
                         $link = Blade::render('filament::components.link', [
                             'href' => $recurringInvoiceUrl,
-                            'slot' => 'a recurring invoice for ' . $clientName,
+                            'slot' => __('a recurring invoice for :clientName', ['clientName' => $clientName]),
                         ]);
 
                         return new HtmlString(
-                            "You are currently viewing invoices created from {$link}"
+                            __('You are currently viewing invoices created from :link', ['link' => $link])
                         );
                     })
                     ->visible(fn () => ! empty($this->recurringInvoice))
                     ->actions([
                         Action::make('clearFilter')
-                            ->label('Clear filter')
+                            ->label(__('Clear filter'))
                             ->button()
                             ->outlined()
                             ->action('clearFilter'),
@@ -80,6 +80,7 @@ class ListInvoices extends ListRecords
     {
         return [
             Actions\Action::make('recordPayments')
+                ->label(__('Record payments'))
                 ->outlined()
                 ->url(RecordPayments::getUrl()),
             Actions\CreateAction::make(),
@@ -108,16 +109,16 @@ class ListInvoices extends ListRecords
     {
         return [
             'all' => Tab::make()
-                ->label('All'),
+                ->label(__('All')),
 
             'unpaid' => Tab::make()
-                ->label('Unpaid')
+                ->label(__('Unpaid'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->unpaid();
                 }),
 
             'draft' => Tab::make()
-                ->label('Draft')
+                ->label(__('Draft'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->where('status', InvoiceStatus::Draft);
                 }),
