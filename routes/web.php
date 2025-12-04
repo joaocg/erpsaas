@@ -15,7 +15,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('documents.print');
 
     Route::get('/company/{tenant}/sales/contracts', function (string $tenant) {
-        return redirect()->route('filament.company.resources.sales.invoices.index', ['tenant' => $tenant]);
+        return redirect()->route('filament.company.resources.sales.recurring-invoices.index', ['tenant' => $tenant]);
     })->name('filament.company.resources.sales.contracts.index');
 
     Route::get('/company/{tenant}/sales/services', function (string $tenant) {
@@ -31,7 +31,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::redirect(
         '/company/sales/contracts',
-        fn () => route('filament.company.resources.sales.invoices.index')
+        fn () => route('filament.company.resources.sales.recurring-invoices.index')
     );
 
     Route::redirect(
