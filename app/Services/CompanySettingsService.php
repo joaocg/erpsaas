@@ -40,7 +40,7 @@ class CompanySettingsService
                 ->value('code') ?? 'USD';
 
             return [
-                'default_language' => $company->locale->language ?? config('transmatic.source_locale'),
+                'default_language' => $company->locale->language ?? config('app.locale'),
                 'default_timezone' => $company->locale->timezone ?? config('app.timezone'),
                 'default_currency' => $defaultCurrency,
                 'default_date_format' => $company->locale->date_format->value ?? DateFormat::DEFAULT,
@@ -66,7 +66,7 @@ class CompanySettingsService
     public static function getDefaultSettings(): array
     {
         return [
-            'default_language' => config('transmatic.source_locale'),
+            'default_language' => config('app.locale'),
             'default_timezone' => config('app.timezone'),
             'default_currency' => 'USD',
             'default_date_format' => DateFormat::DEFAULT,
@@ -84,7 +84,7 @@ class CompanySettingsService
 
     public static function getDefaultLanguage(?int $companyId = null): string
     {
-        return self::getSpecificSetting($companyId, 'default_language', config('transmatic.source_locale'));
+        return self::getSpecificSetting($companyId, 'default_language', config('app.locale'));
     }
 
     public static function getDefaultTimezone(?int $companyId = null): string

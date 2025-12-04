@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\Blamable;
 use App\Concerns\CompanyOwned;
 use App\Models\Common\Client;
+use App\Models\PartnerAdvance;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,7 @@ class Partner extends Model
         'email',
         'phone',
         'commission_percent',
+        'current_balance',
         'active',
         'created_by',
         'updated_by',
@@ -35,6 +37,7 @@ class Partner extends Model
     protected $casts = [
         'active' => 'boolean',
         'commission_percent' => 'decimal:2',
+        'current_balance' => 'decimal:2',
     ];
 
     public function company(): BelongsTo
@@ -62,6 +65,11 @@ class Partner extends Model
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
+    }
+
+    public function advances(): HasMany
+    {
+        return $this->hasMany(PartnerAdvance::class);
     }
 
     public function legalCases(): HasMany

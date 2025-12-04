@@ -21,6 +21,7 @@ class ListBills extends ListRecords
     {
         return [
             Actions\Action::make('payBills')
+                ->label(__('Pay Bills'))
                 ->outlined()
                 ->url(PayBills::getUrl()),
             Actions\CreateAction::make(),
@@ -43,16 +44,16 @@ class ListBills extends ListRecords
     {
         return [
             'all' => Tab::make()
-                ->label('All'),
+                ->label(__('All')),
 
             'unpaid' => Tab::make()
-                ->label('Unpaid')
+                ->label(__('Unpaid'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->unpaid();
                 }),
 
             'paid' => Tab::make()
-                ->label('Paid')
+                ->label(__('Paid'))
                 ->modifyQueryUsing(function (Builder $query) {
                     $query->where('status', BillStatus::Paid);
                 }),

@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Resources\Sales;
 
 use App\Filament\Company\Resources\Sales\PartnerResource\Pages;
+use App\Filament\Company\Resources\Sales\PartnerResource\RelationManagers\PartnerAdvancesRelationManager;
 use App\Models\Partner;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -122,6 +123,13 @@ class PartnerResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            PartnerAdvancesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
