@@ -13,4 +13,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('documents/{documentType}/{id}/print', [DocumentPrintController::class, 'show'])
         ->middleware(AllowSameOriginFrame::class)
         ->name('documents.print');
+
+    Route::get('/company/{tenant}/sales/contracts', function (string $tenant) {
+        return redirect()->route('filament.company.resources.sales.invoices.index', ['tenant' => $tenant]);
+    })->name('filament.company.resources.sales.contracts.index');
+
+    Route::redirect(
+        '/company/sales/contracts',
+        fn () => route('filament.company.resources.sales.invoices.index')
+    );
 });
