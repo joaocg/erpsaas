@@ -27,6 +27,16 @@ class DepartmentResource extends Resource
         return __($modelLabel);
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return __('Departments');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Departments');
+    }
+
     public static function form(Form $form): Form
     {
         return $form

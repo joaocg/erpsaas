@@ -3,6 +3,7 @@
 namespace App\Filament\Company\Resources\Sales;
 
 use App\Filament\Company\Resources\Sales\ClientResource\Pages;
+use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\ClientExpensesRelationManager;
 use App\Filament\Exports\Common\ClientExporter;
 use App\Filament\Forms\Components\AddressFields;
 use App\Filament\Forms\Components\CreateCurrencySelect;
@@ -31,28 +32,41 @@ class ClientResource extends Resource
         return __('Clients');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('Client');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Clients');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('General Information')
+                Forms\Components\Section::make(__('General Information'))
                     ->schema([
                         Forms\Components\Group::make()
                             ->columns()
                             ->schema([
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Client name')
+                                    ->label(__('Client name'))
                                     ->required()
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('account_number')
+                                    ->label(__('Account number'))
                                     ->maxLength(255)
                                     ->columnStart(1),
                                 Forms\Components\TextInput::make('website')
+                                    ->label(__('Website'))
                                     ->maxLength(255),
                                 Forms\Components\Textarea::make('notes')
+                                    ->label(__('Notes'))
                                     ->columnSpanFull(),
                             ]),
-                        CustomSection::make('Primary Contact')
+                        CustomSection::make(__('Primary Contact'))
                             ->relationship('primaryContact')
                             ->saveRelationshipsUsing(null)
                             ->saveRelationshipsBeforeChildrenUsing(null)
@@ -62,13 +76,13 @@ class ClientResource extends Resource
                                 Forms\Components\Hidden::make('is_primary')
                                     ->default(true),
                                 Forms\Components\TextInput::make('first_name')
-                                    ->label('First name')
+                                    ->label(__('First name'))
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('last_name')
-                                    ->label('Last name')
+                                    ->label(__('Last name'))
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('email')
-                                    ->label('Email')
+                                    ->label(__('Email'))
                                     ->email()
                                     ->columnSpanFull()
                                     ->maxLength(255),
@@ -83,25 +97,25 @@ class ClientResource extends Resource
                                         Forms\Components\Builder\Block::make('primary')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
-                                                    ->label('Phone')
+                                                    ->label(__('Phone'))
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('mobile')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
-                                                    ->label('Mobile')
+                                                    ->label(__('Mobile'))
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('toll_free')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
-                                                    ->label('Toll free')
+                                                    ->label(__('Toll free'))
                                                     ->maxLength(15),
                                             ])->maxItems(1),
                                         Forms\Components\Builder\Block::make('fax')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
-                                                    ->label('Fax')
+                                                    ->label(__('Fax'))
                                                     ->live()
                                                     ->maxLength(15),
                                             ])->maxItems(1),
@@ -109,7 +123,7 @@ class ClientResource extends Resource
                                     ->deletable(fn (PhoneBuilder $builder) => $builder->getItemsCount() > 1)
                                     ->reorderable(false)
                                     ->blockNumbers(false)
-                                    ->addActionLabel('Add Phone'),
+                                    ->addActionLabel(__('Add Phone')),
                             ])->columns(),
                         Forms\Components\Repeater::make('secondaryContacts')
                             ->relationship()
@@ -125,7 +139,7 @@ class ClientResource extends Resource
                             ->maxItems(3)
                             ->itemLabel(function (Forms\Components\Repeater $component, array $state): ?string {
                                 if ($component->getItemsCount() === 1) {
-                                    return 'Secondary Contact';
+                                    return __('Secondary Contact');
                                 }
 
                                 $firstName = $state['first_name'] ?? null;
@@ -139,20 +153,20 @@ class ClientResource extends Resource
                                     return $firstName;
                                 }
 
-                                return 'Secondary Contact';
+                                return __('Secondary Contact');
                             })
-                            ->addActionLabel('Add Contact')
+                            ->addActionLabel(__('Add Contact'))
                             ->schema([
                                 Forms\Components\TextInput::make('first_name')
-                                    ->label('First name')
+                                    ->label(__('First name'))
                                     ->live(onBlur: true)
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('last_name')
-                                    ->label('Last name')
+                                    ->label(__('Last name'))
                                     ->live(onBlur: true)
                                     ->maxLength(255),
                                 Forms\Components\TextInput::make('email')
-                                    ->label('Email')
+                                    ->label(__('Email'))
                                     ->email()
                                     ->maxLength(255),
                                 PhoneBuilder::make('phones')
@@ -165,7 +179,7 @@ class ClientResource extends Resource
                                         Forms\Components\Builder\Block::make('primary')
                                             ->schema([
                                                 Forms\Components\TextInput::make('number')
-                                                    ->label('Phone')
+                                                    ->label(__('Phone'))
                                                     ->maxLength(255),
                                             ])->maxItems(1),
                                     ])
@@ -175,11 +189,11 @@ class ClientResource extends Resource
                                     ->blockNumbers(false),
                             ]),
                     ])->columns(1),
-                Forms\Components\Section::make('Billing')
+                Forms\Components\Section::make(__('Billing'))
                     ->schema([
                         CreateCurrencySelect::make('currency_code')
                             ->softRequired(),
-                        CustomSection::make('Billing Address')
+                        CustomSection::make(__('Billing Address'))
                             ->relationship('billingAddress')
                             ->saveRelationshipsUsing(null)
                             ->saveRelationshipsBeforeChildrenUsing(null)
@@ -192,7 +206,7 @@ class ClientResource extends Resource
                             ])->columns(),
                     ])
                     ->columns(1),
-                Forms\Components\Section::make('Shipping')
+                Forms\Components\Section::make(__('Shipping'))
                     ->relationship('shippingAddress')
                     ->saveRelationshipsUsing(null)
                     ->saveRelationshipsBeforeChildrenUsing(null)
@@ -201,16 +215,16 @@ class ClientResource extends Resource
                         Forms\Components\Hidden::make('type')
                             ->default('shipping'),
                         Forms\Components\TextInput::make('recipient')
-                            ->label('Recipient')
+                            ->label(__('Recipient'))
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
-                            ->label('Phone')
+                            ->label(__('Phone'))
                             ->maxLength(255),
-                        CustomSection::make('Shipping Address')
+                        CustomSection::make(__('Shipping Address'))
                             ->contained(false)
                             ->schema([
                                 Forms\Components\Checkbox::make('same_as_billing')
-                                    ->label('Same as billing address')
+                                    ->label(__('Same as billing address'))
                                     ->live()
                                     ->afterStateHydrated(function (?Address $record, Forms\Components\Checkbox $component) {
                                         if (! $record || $record->parent_address_id) {
@@ -243,7 +257,7 @@ class ClientResource extends Resource
                                 AddressFields::make()
                                     ->visible(static fn (Get $get) => ! $get('same_as_billing')),
                                 Forms\Components\Textarea::make('notes')
-                                    ->label('Delivery instructions')
+                                    ->label(__('Delivery instructions'))
                                     ->maxLength(255)
                                     ->columnSpanFull(),
                             ])->columns(),
@@ -261,20 +275,20 @@ class ClientResource extends Resource
                     ->sortable()
                     ->description(static fn (Client $client) => $client->primaryContact?->full_name),
                 Tables\Columns\TextColumn::make('primaryContact.email')
-                    ->label('Email')
+                    ->label(__('Email'))
                     ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('primaryContact.phones')
-                    ->label('Phone')
+                    ->label(__('Phone'))
                     ->toggleable()
                     ->state(static fn (Client $client) => $client->primaryContact?->first_available_phone),
                 Tables\Columns\TextColumn::make('billingAddress.address_string')
-                    ->label('Billing address')
+                    ->label(__('Billing address'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->listWithLineBreaks(),
                 Tables\Columns\TextColumn::make('balance')
-                    ->label('Balance')
+                    ->label(__('Balance'))
                     ->getStateUsing(function (Client $client) {
                         return $client->invoices()
                             ->unpaid()
@@ -293,7 +307,7 @@ class ClientResource extends Resource
 
                         $formattedOverdue = CurrencyConverter::formatCentsToMoney($overdue);
 
-                        return "Overdue: {$formattedOverdue}";
+                        return __('Overdue: :amount', ['amount' => $formattedOverdue]);
                     })
                     ->sortable(query: function (Builder $query, string $direction) {
                         return $query
