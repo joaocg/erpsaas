@@ -45,9 +45,13 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Filament\\Support\\": "app/Support/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         },
+        "classmap": [
+            "app/Support/Concerns"
+        ],
         "files": [
             "app/Helpers/helpers.php"
         ]
