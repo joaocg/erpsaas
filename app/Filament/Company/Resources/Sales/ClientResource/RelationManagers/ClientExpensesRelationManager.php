@@ -9,7 +9,7 @@ use Filament\Tables\Table;
 
 class ClientExpensesRelationManager extends RelationManager
 {
-    protected static string $relationship = 'clientExpensesPlaceholder';
+    protected static string $relationship = 'transactions';
 
     public function form(Form $form): Form
     {
@@ -19,7 +19,7 @@ class ClientExpensesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->query(Transaction::query()->whereRaw('0 = 1'))
+            ->query($this->getRelationship()->whereRaw('0 = 1'))
             ->columns([]);
     }
 }
