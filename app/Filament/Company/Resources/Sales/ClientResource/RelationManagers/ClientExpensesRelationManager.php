@@ -11,11 +11,6 @@ class ClientExpensesRelationManager extends RelationManager
 {
     protected static string $relationship = 'clientExpensesPlaceholder';
 
-    public static function canViewForRecord(mixed $ownerRecord): bool
-    {
-        return true;
-    }
-
     public function form(Form $form): Form
     {
         return $form;
