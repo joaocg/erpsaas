@@ -44,12 +44,12 @@ class PayBills extends ListRecords
 
     public function getBreadcrumb(): ?string
     {
-        return 'Pay';
+        return __('Pay');
     }
 
     public function getTitle(): string | Htmlable
     {
-        return 'Pay Bills';
+        return __('Pay Bills');
     }
 
     public function mount(): void
@@ -67,14 +67,18 @@ class PayBills extends ListRecords
             Actions\Action::make('processPayments')
                 ->color('primary')
                 ->requiresConfirmation()
-                ->modalHeading('Confirm payments')
+                ->modalHeading(__('Confirm payments'))
                 ->modalDescription(function () {
                     $billCount = collect($this->paymentAmounts)->filter(fn ($amount) => $amount > 0)->count();
                     $totalAmount = array_sum($this->paymentAmounts);
                     $currencyCode = $this->getTableFilterState('currency_code')['value'];
                     $totalFormatted = CurrencyConverter::formatCentsToMoney($totalAmount, $currencyCode, true);
 
-                    return "You are about to pay {$billCount} " . Str::plural('bill', $billCount) . " for a total of {$totalFormatted}. This action cannot be undone.";
+                    return __('You are about to pay :count :bill for a total of :amount. This action cannot be undone.', [
+                        'count' => $billCount,
+                        'bill' => Str::plural(__('bill'), $billCount),
+                        'amount' => $totalFormatted,
+                    ]);
                 })
                 ->action(function () {
                     $data = $this->data;
@@ -111,8 +115,12 @@ class PayBills extends ListRecords
                     $totalFormatted = CurrencyConverter::formatCentsToMoney($totalPaid, $currencyCode, true);
 
                     Notification::make()
-                        ->title('Bills paid successfully')
-                        ->body("Paid {$paidCount} " . Str::plural('bill', $paidCount) . " for a total of {$totalFormatted}")
+                        ->title(__('Bills paid successfully'))
+                        ->body(__('Paid :count :bill for a total of :amount', [
+                            'count' => $paidCount,
+                            'bill' => Str::plural(__('bill'), $paidCount),
+                            'amount' => $totalFormatted,
+                        ]))
                         ->success()
                         ->send();
 
@@ -141,7 +149,7 @@ class PayBills extends ListRecords
                 Forms\Components\Grid::make(3)
                     ->schema([
                         Forms\Components\Select::make('bank_account_id')
-                            ->label('Account')
+                            ->label(__('Account'))
                             ->options(static function () {
                                 return Transaction::getBankAccountOptionsFlat();
                             })
@@ -150,11 +158,11 @@ class PayBills extends ListRecords
                             ->searchable()
                             ->softRequired(),
                         Forms\Components\DatePicker::make('posted_at')
-                            ->label('Date')
+                            ->label(__('Date'))
                             ->default(company_today()->toDateString())
                             ->softRequired(),
                         Forms\Components\Select::make('payment_method')
-                            ->label('Payment method')
+                            ->label(__('Payment method'))
                             ->selectablePlaceholder(false)
                             ->options(PaymentMethod::class)
                             ->default(PaymentMethod::BankPayment)
@@ -176,20 +184,20 @@ class PayBills extends ListRecords
             ->paginated(false)
             ->columns([
                 TextColumn::make('vendor.name')
-                    ->label('Vendor')
+                    ->label(__('Vendor'))
                     ->sortable(),
                 TextColumn::make('bill_number')
-                    ->label('Bill number')
+                    ->label(__('Bill number'))
                     ->sortable(),
                 TextColumn::make('due_date')
-                    ->label('Due date')
+                    ->label(__('Due date'))
                     ->defaultDateFormat()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('amount_due')
-                    ->label('Amount due')
+                    ->label(__('Amount due'))
                     ->currency(static fn (Bill $record) => $record->currency_code)
                     ->alignEnd()
                     ->sortable()
@@ -227,7 +235,7 @@ class PayBills extends ListRecords
                     ->default('')
                     ->alignCenter()
                     ->width('3rem')
-                    ->tooltip('Apply full amount')
+                    ->tooltip(__('Apply full amount'))
                     ->action(
                         Tables\Actions\Action::make('applyFullPayment')
                             ->action(function (Bill $record) {
@@ -235,7 +243,7 @@ class PayBills extends ListRecords
                             }),
                     ),
                 CustomTextInputColumn::make('payment_amount')
-                    ->label('Payment amount')
+                    ->label(__('Payment amount'))
                     ->alignEnd()
                     ->navigable()
                     ->mask(RawJs::make('$money($input)'))
@@ -286,7 +294,7 @@ class PayBills extends ListRecords
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('applyFullAmounts')
-                    ->label('Apply full amounts')
+                    ->label(__('Apply full amounts'))
                     ->icon('heroicon-o-banknotes')
                     ->color('primary')
                     ->deselectRecordsAfterCompletion()
@@ -296,7 +304,7 @@ class PayBills extends ListRecords
                         });
                     }),
                 Tables\Actions\BulkAction::make('clearAmounts')
-                    ->label('Clear amounts')
+                    ->label(__('Clear amounts'))
                     ->icon('heroicon-o-x-mark')
                     ->color('gray')
                     ->deselectRecordsAfterCompletion()
@@ -308,7 +316,7 @@ class PayBills extends ListRecords
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('currency_code')
-                    ->label('Currency')
+                    ->label(__('Currency'))
                     ->selectablePlaceholder(false)
                     ->default(CurrencyAccessor::getDefaultCurrency())
                     ->options(Currency::query()->pluck('name', 'code')->toArray())
@@ -334,7 +342,7 @@ class PayBills extends ListRecords
                         return Tables\Filters\Indicator::make("{$indicator}: {$label}")->removable(false);
                     }),
                 Tables\Filters\SelectFilter::make('vendor_id')
-                    ->label('Vendor')
+                    ->label(__('Vendor'))
                     ->options(fn () => Vendor::query()->pluck('name', 'id')->toArray())
                     ->searchable(),
                 Tables\Filters\SelectFilter::make('status')

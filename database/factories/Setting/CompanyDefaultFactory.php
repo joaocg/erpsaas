@@ -34,13 +34,15 @@ class CompanyDefaultFactory extends Factory
         ];
     }
 
-    public function withDefault(User $user, Company $company, ?string $currencyCode, string $countryCode, string $language = 'en'): static
+    public function withDefault(User $user, Company $company, ?string $currencyCode, string $countryCode, ?string $language = null): static
     {
         if ($currencyCode === null) {
             /** @var CurrencyCode $currencyFaker */
             $currencyFaker = $this->faker;
             $currencyCode = $currencyFaker->currencyCode($countryCode);
         }
+
+        $language ??= config('app.locale');
 
         $currency = $this->createCurrency($company, $user, $currencyCode);
         $this->createDocumentDefaults($company, $user);

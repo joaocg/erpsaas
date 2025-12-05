@@ -15,7 +15,13 @@ enum BillStatus: string implements HasColor, HasLabel
 
     public function getLabel(): ?string
     {
-        return $this->name;
+        return match ($this) {
+            self::Overdue => __('Overdue'),
+            self::Partial => __('Partial'),
+            self::Paid => __('Paid'),
+            self::Open => __('Open'),
+            self::Void => __('Void'),
+        };
     }
 
     public function getColor(): string | array | null
