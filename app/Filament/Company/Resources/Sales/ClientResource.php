@@ -10,7 +10,6 @@ use App\Filament\Forms\Components\CreateCurrencySelect;
 use App\Filament\Forms\Components\CustomSection;
 use App\Filament\Forms\Components\PhoneBuilder;
 use App\Filament\Tables\Columns;
-use App\Filament\Company\Resources\Sales\ClientResource\RelationManagers\ClientExpensesRelationManager;
 use App\Models\Common\Address;
 use App\Models\Common\Client;
 use App\Utilities\Currency\CurrencyConverter;
@@ -341,7 +340,7 @@ class ClientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ClientResource\RelationManagers\ClientExpensesRelationManager::class,
+            ClientExpensesRelationManager::class,
         ];
     }
 
